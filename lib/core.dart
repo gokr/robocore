@@ -11,8 +11,12 @@ const apiUrl = "https://mainnet.eth.aragon.network";
 
 final raw = pow(10, 18);
 
-NumberFormat coreFormatter = NumberFormat("###.000#");
-String format(num x) => coreFormatter.format(x);
+NumberFormat decimal4Formatter = NumberFormat("###.000#");
+NumberFormat decimal2Formatter = NumberFormat("###.0#");
+NumberFormat decimal0Formatter = NumberFormat("###");
+String dec4(num x) => decimal4Formatter.format(x);
+String dec2(num x) => decimal2Formatter.format(x);
+String dec0(num x) => decimal0Formatter.format(x);
 
 /// Get 18 decimal point
 num raw2real(BigInt x) => x.toDouble() / raw;

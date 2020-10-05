@@ -29,7 +29,7 @@ class Robocore {
     // print("Balance: ${b.getValueInUnit(EtherUnit.ether)}");
     print(await core.totalLPTokensMinted());
     print(await core.totalETHContributed());
-    print(coreFormatter
+    print(decimal4Formatter
         .format(raw2real(await core.cumulativeRewardsSinceStart())));
   }
 
@@ -77,7 +77,7 @@ class Robocore {
         await getPriceInfo();
         await e.message.channel.send(
             content:
-                "1 CORE = ${format(priceETH)} ETH\nPooled CORE: ${format(poolCORE)}, ETH: ${format(poolETH)}");
+                "1 CORE = ${dec4(priceETH)} ETH\nPooled CORE: ${dec0(poolCORE)}, ETH: ${dec0(poolETH)}");
       }
       if (e.message.content == "!faq") {
         // Create embed with author and footer section.
@@ -102,7 +102,7 @@ class Robocore {
         final embed = EmbedBuilder()
           ..addField(
               name: "Cumulative rewards",
-              content: "${coreFormatter.format(raw2real(rewards))} CORE")
+              content: "${decimal4Formatter.format(raw2real(rewards))} CORE")
           ..addAuthor((author) {
             author.name = e.message.author.username;
             author.iconUrl = e.message.author.avatarURL();
