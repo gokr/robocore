@@ -1,5 +1,5 @@
 import 'package:logging/logging.dart';
-import 'package:robocore/discord.dart';
+import 'package:robocore/robocore.dart';
 
 main(List<String> arguments) async {
   Logger.root.level = Level.ALL;
