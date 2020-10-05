@@ -32,6 +32,11 @@ class Core {
       EthereumAddress.fromHex('0xc5cacb708425961594b63ec171f4df27a9c0d8c9');
   late DeployedContract coreVault;
 
+  // UniswapPair contract address, UniswapPair.json
+  EthereumAddress uniswapPairAddr =
+      EthereumAddress.fromHex('0x32ce7e48debdccbfe0cd037cc89526e4382cb81b');
+  late DeployedContract uniswapPair;
+
   Core() {
     httpClient = new Client();
     ethClient = new Web3Client(apiUrl, httpClient);
@@ -58,6 +63,7 @@ class Core {
   _readContracts() async {
     core = await _readContract('CORE.json', coreAddr);
     coreVault = await _readContract('CoreVault.json', coreVaultAddr);
+    uniswapPair = await _readContract('UniswapPair.json', uniswapPairAddr);
   }
 
   Future<DeployedContract> _readContract(
@@ -91,6 +97,15 @@ class Core {
         sender: address,
         contract: coreVault,
         function: coreVault.function('cumulativeRewardsSinceStart'),
+        params: []);
+    return core.first;
+  }
+
+  Future<BigInt> price0CumulativeLast() async {
+    final core = await ethClient.call(
+        sender: address,
+        contract: uniswapPair,
+        function: uniswapPair.function('price0CumulativeLast'),
         params: []);
     return core.first;
   }
