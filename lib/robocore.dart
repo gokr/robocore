@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:cron/cron.dart';
 import 'package:logging/logging.dart';
@@ -17,7 +18,14 @@ class Robocore {
 
   // Keeping track of some state, queried every minute
   late BigInt rewards;
-  late num priceETH, poolCORE, poolETH;
+  late num priceETHinUSD,
+      priceETHinCORE,
+      priceCOREinETH,
+      priceCOREinUSD,
+      poolCORE,
+      poolETH,
+      poolETHinUSD,
+      poolCOREinUSD;
 
   // Just testing stuff
   test() async {
@@ -30,7 +38,7 @@ class Robocore {
     print(await core.totalLPTokensMinted());
     print(await core.totalETHContributed());
     print(decimal4Formatter
-        .format(raw2real(await core.cumulativeRewardsSinceStart())));
+        .format(raw18(await core.cumulativeRewardsSinceStart())));
   }
 
   /// Run contract queries
@@ -41,10 +49,17 @@ class Robocore {
   getPriceInfo() async {
     //  var price0 = await core.price0CumulativeLast();
     //  var price1 = await core.price1CumulativeLast();
-    var reserves = await core.getReserves();
-    poolCORE = raw2real(reserves[0]);
-    poolETH = raw2real(reserves[1]);
-    priceETH = poolETH / poolCORE;
+    var reserves = await core.getReservesCORE2ETH();
+    poolCORE = raw18(reserves[0]);
+    poolETH = raw18(reserves[1]);
+    reserves = await core.getReservesETH2USDT();
+    print(reserves);
+    priceETHinUSD = raw6(reserves[1]) / raw18(reserves[0]);
+    priceETHinCORE = poolCORE / poolETH;
+    priceCOREinETH = poolETH / poolCORE;
+    priceCOREinUSD = priceCOREinETH * priceETHinUSD;
+    poolCOREinUSD = poolCORE * priceCOREinUSD;
+    poolETHinUSD = poolETH * priceETHinUSD;
   }
 
   start() async {
@@ -75,9 +90,25 @@ class Robocore {
       }
       if (e.message.content == "!price") {
         await getPriceInfo();
-        await e.message.channel.send(
-            content:
-                "1 CORE = ${dec4(priceETH)} ETH\nPooled CORE: ${dec0(poolCORE)}, ETH: ${dec0(poolETH)}");
+        // Create embed with author and footer section.
+        final embed = EmbedBuilder()
+          ..addField(
+              name: "Price CORE",
+              content:
+                  "1 CORE = ${dec4(priceCOREinETH)} ETH, ${usd2(priceCOREinUSD)}")
+          ..addField(
+              name: "Price ETH",
+              content:
+                  "1 ETH = ${dec6(priceETHinCORE)} CORE, ${usd2(priceETHinUSD)}")
+          ..addField(name: "Pooled CORE", content: "${dec0(poolCORE)} CORE")
+          ..addField(
+              name: "Pooled ETH",
+              content: "${dec0(poolETH)} ETH, ${usd0(poolETHinUSD)}")
+          ..color = (e.message.author is CacheMember)
+              ? (e.message.author as CacheMember).color
+              : DiscordColor.black;
+        // Sent an embed to channel where message received was sent
+        e.message.channel.send(embed: embed);
       }
       if (e.message.content == "!faq") {
         // Create embed with author and footer section.
@@ -102,11 +133,7 @@ class Robocore {
         final embed = EmbedBuilder()
           ..addField(
               name: "Cumulative rewards",
-              content: "${decimal4Formatter.format(raw2real(rewards))} CORE")
-          ..addAuthor((author) {
-            author.name = e.message.author.username;
-            author.iconUrl = e.message.author.avatarURL();
-          })
+              content: "${dec4(raw18(rewards))} CORE")
           ..addFooter((footer) {
             footer.text = "Keep HODLING";
           })
@@ -117,8 +144,14 @@ class Robocore {
         e.message.channel.send(embed: embed);
       }
       if (e.message.mentions.contains(me)) {
+        const replies = [
+          "Who, me? I am good! :smile:",
+          "Well, thank you! :blush:",
+          "You are crazy man, just crazy"
+        ];
+        var reply = replies[Random().nextInt(replies.length)];
         // Personal messages
-        await e.message.channel.send(content: "Who, me? I am good! :smile:");
+        await e.message.channel.send(content: reply);
       }
     });
   }
