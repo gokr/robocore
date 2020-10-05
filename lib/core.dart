@@ -12,7 +12,10 @@ const apiUrl = "https://mainnet.eth.aragon.network";
 final raw = pow(10, 18);
 
 NumberFormat coreFormatter = NumberFormat("###.000#");
-num raw2Core(BigInt x) => x.toDouble() / raw;
+String format(num x) => coreFormatter.format(x);
+
+/// Get 18 decimal point
+num raw2real(BigInt x) => x.toDouble() / raw;
 
 class Core {
   // Me
@@ -101,11 +104,29 @@ class Core {
     return core.first;
   }
 
+  Future<List<dynamic>> getReserves() async {
+    final result = await ethClient.call(
+        sender: address,
+        contract: uniswapPair,
+        function: uniswapPair.function('getReserves'),
+        params: []);
+    return result;
+  }
+
   Future<BigInt> price0CumulativeLast() async {
     final core = await ethClient.call(
         sender: address,
         contract: uniswapPair,
         function: uniswapPair.function('price0CumulativeLast'),
+        params: []);
+    return core.first;
+  }
+
+  Future<BigInt> price1CumulativeLast() async {
+    final core = await ethClient.call(
+        sender: address,
+        contract: uniswapPair,
+        function: uniswapPair.function('price1CumulativeLast'),
         params: []);
     return core.first;
   }

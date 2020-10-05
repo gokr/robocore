@@ -17,6 +17,7 @@ class Robocore {
 
   // Keeping track of some state, queried every minute
   late BigInt rewards;
+  late num priceETH, poolCORE, poolETH;
 
   // Just testing stuff
   test() async {
@@ -29,12 +30,21 @@ class Robocore {
     print(await core.totalLPTokensMinted());
     print(await core.totalETHContributed());
     print(coreFormatter
-        .format(raw2Core(await core.cumulativeRewardsSinceStart())));
+        .format(raw2real(await core.cumulativeRewardsSinceStart())));
   }
 
   /// Run contract queries
   query() async {
     rewards = await core.cumulativeRewardsSinceStart();
+  }
+
+  getPriceInfo() async {
+    //  var price0 = await core.price0CumulativeLast();
+    //  var price1 = await core.price1CumulativeLast();
+    var reserves = await core.getReserves();
+    poolCORE = raw2real(reserves[0]);
+    poolETH = raw2real(reserves[1]);
+    priceETH = poolETH / poolCORE;
   }
 
   start() async {
@@ -64,8 +74,10 @@ class Robocore {
         await e.message.channel.send(content: "👍");
       }
       if (e.message.content == "!price") {
-        var price = await core.price0CumulativeLast();
-        await e.message.channel.send(content: "1 CORE = $price ETH");
+        await getPriceInfo();
+        await e.message.channel.send(
+            content:
+                "1 CORE = ${format(priceETH)} ETH\nPooled CORE: ${format(poolCORE)}, ETH: ${format(poolETH)}");
       }
       if (e.message.content == "!faq") {
         // Create embed with author and footer section.
@@ -90,7 +102,7 @@ class Robocore {
         final embed = EmbedBuilder()
           ..addField(
               name: "Cumulative rewards",
-              content: "${coreFormatter.format(raw2Core(rewards))} CORE")
+              content: "${coreFormatter.format(raw2real(rewards))} CORE")
           ..addAuthor((author) {
             author.name = e.message.author.username;
             author.iconUrl = e.message.author.avatarURL();
