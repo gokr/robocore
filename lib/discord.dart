@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cron/cron.dart';
 import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
@@ -36,7 +38,8 @@ class Robocore {
   }
 
   start() async {
-    bot = Nyxx("NzYyNjQxMjE5OTQyNjEzMDEy.X3sG_A.hxP6YSyrFK4s3zBYuFZRnFq8lOM");
+    var token = await File('bot-token.txt').readAsString();
+    bot = Nyxx(token);
     core = Core.randomKey();
     await core.readContracts();
 
