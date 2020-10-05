@@ -63,6 +63,10 @@ class Robocore {
       if (e.message.content == "!status") {
         await e.message.channel.send(content: "👍");
       }
+      if (e.message.content == "!price") {
+        var price = await core.price0CumulativeLast();
+        await e.message.channel.send(content: "1 CORE = $price ETH");
+      }
       if (e.message.content == "!faq") {
         // Create embed with author and footer section.
         final embed = EmbedBuilder()
