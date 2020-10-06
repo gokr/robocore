@@ -84,14 +84,14 @@ class Robocore {
     // then new poolETH needs to be this (all 10000 CORE now in pool) in order
     // to make sure poolK stays the same.
     var newPoolETH = poolK / 10000;
-    print("poolK: $poolK, poolETH: $poolETH, newPoolETH: $newPoolETH");
+    //print("poolK: $poolK, poolETH: $poolETH, newPoolETH: $newPoolETH");
     // This then gives us a new price - the so called floor price
     floorCOREinETH = newPoolETH / 10000;
     floorCOREinUSD = floorCOREinETH * priceETHinUSD;
-    print("Price: $floorCOREinETH");
+    //print("Price: $floorCOREinETH");
     // The liquidity is simply twice newPoolETH
     floorLiquidity = newPoolETH * 2;
-    print("FloorLiquidity: $floorLiquidity");
+    //print("FloorLiquidity: $floorLiquidity");
     // And then we can also calculate floor of LP
     floorLPinETH = floorLiquidity / supplyLP;
     floorLPinUSD = floorLPinETH * priceETHinUSD;
