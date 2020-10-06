@@ -97,6 +97,7 @@ class Core {
         address);
   }
 
+  /// LGE
   Future<BigInt> totalLPTokensMinted() async {
     final minted = await ethClient.call(
         sender: address,
@@ -106,6 +107,7 @@ class Core {
     return minted.first;
   }
 
+  /// LGE
   Future<BigInt> totalETHContributed() async {
     final eth = await ethClient.call(
         sender: address,
@@ -131,6 +133,15 @@ class Core {
         function: CORE2ETH.function('getReserves'),
         params: []);
     return result;
+  }
+
+  Future<BigInt> totalSupplyCORE2ETH() async {
+    final result = await ethClient.call(
+        sender: address,
+        contract: CORE2ETH,
+        function: CORE2ETH.function('totalSupply'),
+        params: []);
+    return result.first;
   }
 
   Future<List<dynamic>> getReservesETH2USDT() async {

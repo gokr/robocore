@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:cron/cron.dart';
 import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
+import 'package:robocore/command.dart';
 import 'package:robocore/core.dart';
 
 Logger log = Logger("Robocore");
@@ -11,55 +11,106 @@ Logger log = Logger("Robocore");
 /// Discord bot
 class Robocore {
   late Nyxx bot;
-  late ClientUser me;
 
-  // To interact with CORE contracts
+  /// To interact with Ethereum contracts
   late Core core;
 
+  ClientUser get self => bot.self;
+
+  /// Commands
+  List<Command> commands = [];
+
   // Keeping track of some state, queried every minute
-  late BigInt rewards;
+  late num rewardsInCORE, rewardsInUSD;
+
   late num priceETHinUSD,
       priceETHinCORE,
       priceCOREinETH,
       priceCOREinUSD,
       poolCORE,
       poolETH,
+      poolK,
       poolETHinUSD,
-      poolCOREinUSD;
+      poolCOREinUSD,
+      priceLPinUSD,
+      priceLPinETH,
+      floorCOREinUSD,
+      floorCOREinETH,
+      floorLPinUSD,
+      floorLPinETH,
+      floorLiquidity,
+      supplyLP;
 
   // Just testing stuff
   test() async {
     core = Core.randomKey();
     await core.readContracts();
-    // var a = await core.address;
-    // print("Address: ${a.hex}");
-    // var b = await core.getBalance();
-    // print("Balance: ${b.getValueInUnit(EtherUnit.ether)}");
-    print(await core.totalLPTokensMinted());
-    print(await core.totalETHContributed());
-    print(decimal4Formatter
-        .format(raw18(await core.cumulativeRewardsSinceStart())));
+    await updatePriceInfo();
+    print(supplyLP);
   }
 
   /// Run contract queries
   query() async {
-    rewards = await core.cumulativeRewardsSinceStart();
+    await updatePriceInfo();
+    rewardsInCORE = raw18(await core.cumulativeRewardsSinceStart());
+    rewardsInUSD = rewardsInCORE * priceETHinUSD;
   }
 
-  getPriceInfo() async {
-    //  var price0 = await core.price0CumulativeLast();
-    //  var price1 = await core.price1CumulativeLast();
+  /// Call getReserves on both CORE-ETH and ETH-USDT pairs on Uniswap
+  /// and update calculations of prices and pooled tokens.
+  updatePriceInfo() async {
     var reserves = await core.getReservesCORE2ETH();
     poolCORE = raw18(reserves[0]);
     poolETH = raw18(reserves[1]);
+    poolK = poolCORE * poolETH;
     reserves = await core.getReservesETH2USDT();
-    print(reserves);
+    // Base is ETH price in USD
     priceETHinUSD = raw6(reserves[1]) / raw18(reserves[0]);
     priceETHinCORE = poolCORE / poolETH;
+    // Price of CORE
     priceCOREinETH = poolETH / poolCORE;
     priceCOREinUSD = priceCOREinETH * priceETHinUSD;
+    // Pool values
     poolCOREinUSD = poolCORE * priceCOREinUSD;
     poolETHinUSD = poolETH * priceETHinUSD;
+
+    // This is all LPs minted so far
+    supplyLP = raw18(await core.totalSupplyCORE2ETH());
+    // Price of LP is calculated as the full pool valuated in ETH, divided by supply
+    priceLPinETH = ((poolCORE * priceCOREinETH) + poolETH) / supplyLP;
+    priceLPinUSD = priceLPinETH * priceETHinUSD;
+    // Floor calculations
+    // Then k needs to be preserved so if we sell all outsideCORE into the pool
+    // then new poolETH needs to be this (all 10000 CORE now in pool) in order
+    // to make sure poolK stays the same.
+    var newPoolETH = poolK / 10000;
+    print("poolK: $poolK, poolETH: $poolETH, newPoolETH: $newPoolETH");
+    // This then gives us a new price - the so called floor price
+    floorCOREinETH = newPoolETH / 10000;
+    floorCOREinUSD = floorCOREinETH * priceETHinUSD;
+    print("Price: $floorCOREinETH");
+    // The liquidity is simply twice newPoolETH
+    floorLiquidity = newPoolETH * 2;
+    print("FloorLiquidity: $floorLiquidity");
+    // And then we can also calculate floor of LP
+    floorLPinETH = floorLiquidity / supplyLP;
+    floorLPinUSD = floorLPinETH * priceETHinUSD;
+  }
+
+  buildCommands() {
+    commands
+      ..add(MentionCommand("@RoboCORE", "I will ... say something!", [], []))
+      ..add(HelpCommand("help", "Show all features of RoboCORE", [], []))
+      ..add(FAQCommand("faq", "Show links to FAQ etc", [], []))
+      ..add(StatsCommand(
+          "stats",
+          "Show some basic statistics about CORE, refreshed every minute",
+          [],
+          []))
+      ..add(ContractsCommand("contracts", "Show links to to contracts", [], []))
+      ..add(StatusCommand("status", "Show links to FAQ etc", [], []))
+      ..add(PriceCommand("price",
+          "Show current price information, straight from contracts", [], []));
   }
 
   start() async {
@@ -67,6 +118,8 @@ class Robocore {
     bot = Nyxx(token);
     core = Core.randomKey();
     await core.readContracts();
+
+    buildCommands();
 
     // Run cron
     var cron = Cron();
@@ -84,75 +137,21 @@ class Robocore {
     });
 
     bot.onMessageReceived.listen((MessageReceivedEvent e) async {
-      me = bot.self;
-      if (e.message.content == "!status") {
-        await e.message.channel.send(content: "👍");
-      }
-      if (e.message.content == "!price") {
-        await getPriceInfo();
-        // Create embed with author and footer section.
-        final embed = EmbedBuilder()
-          ..addField(
-              name: "Price CORE",
-              content:
-                  "1 CORE = ${dec4(priceCOREinETH)} ETH, ${usd2(priceCOREinUSD)}")
-          ..addField(
-              name: "Price ETH",
-              content:
-                  "1 ETH = ${dec6(priceETHinCORE)} CORE, ${usd2(priceETHinUSD)}")
-          ..addField(name: "Pooled CORE", content: "${dec0(poolCORE)} CORE")
-          ..addField(
-              name: "Pooled ETH",
-              content: "${dec0(poolETH)} ETH, ${usd0(poolETHinUSD)}")
-          ..color = (e.message.author is CacheMember)
-              ? (e.message.author as CacheMember).color
-              : DiscordColor.black;
-        // Sent an embed to channel where message received was sent
-        e.message.channel.send(embed: embed);
-      }
-      if (e.message.content == "!faq") {
-        // Create embed with author and footer section.
-        final embed = EmbedBuilder()
-          ..addField(
-              name: "FAQ", content: "https://help.cvault.finance/faqs/faq")
-          ..addAuthor((author) {
-            author.name = e.message.author.username;
-            author.iconUrl = e.message.author.avatarURL();
-          })
-          ..addFooter((footer) {
-            footer.text = "Keep HODLING";
-          })
-          ..color = (e.message.author is CacheMember)
-              ? (e.message.author as CacheMember).color
-              : DiscordColor.black;
-        // Sent an embed to channel where message received was sent
-        e.message.channel.send(embed: embed);
-      }
-      if (e.message.content == "!stats") {
-        // Create embed with author and footer section.
-        final embed = EmbedBuilder()
-          ..addField(
-              name: "Cumulative rewards",
-              content: "${dec4(raw18(rewards))} CORE")
-          ..addFooter((footer) {
-            footer.text = "Keep HODLING";
-          })
-          ..color = (e.message.author is CacheMember)
-              ? (e.message.author as CacheMember).color
-              : DiscordColor.black;
-        // Sent an embed to channel where message received was sent
-        e.message.channel.send(embed: embed);
-      }
-      if (e.message.mentions.contains(me)) {
-        const replies = [
-          "Who, me? I am good! :smile:",
-          "Well, thank you! :blush:",
-          "You are crazy man, just crazy"
-        ];
-        var reply = replies[Random().nextInt(replies.length)];
-        // Personal messages
-        await e.message.channel.send(content: reply);
+      for (var cmd in commands) {
+        if (await cmd.exec(e, this)) {
+          return;
+        }
       }
     });
+  }
+
+  String buildHelp(ITextChannel channel) {
+    var sb = StringBuffer();
+    for (var cmd in commands) {
+      if (cmd.availableIn(channel.id.toString())) {
+        sb.writeln(" ${cmd.command} - ${cmd.help}");
+      }
+    }
+    return sb.toString();
   }
 }
