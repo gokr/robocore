@@ -108,7 +108,7 @@ class Robocore {
           [],
           []))
       ..add(ContractsCommand("contracts", "Show links to to contracts", [], []))
-      ..add(StatusCommand("status", "Show links to FAQ etc", [], []))
+      ..add(StatusCommand("status", "Show I am alive", [], []))
       ..add(PriceCommand("price",
           "Show current price information, straight from contracts", [], []));
   }
