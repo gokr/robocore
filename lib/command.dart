@@ -7,19 +7,19 @@ import 'package:robocore/robocore.dart';
 const prefix = "!";
 
 abstract class Command {
-  final name;
-  final help;
+  String name, short, help;
   List<String> blacklist = [];
   List<String> whitelist = [];
 
-  Command(this.name, this.help, this.whitelist, this.blacklist);
+  Command(this.name, this.short, this.help, this.whitelist, this.blacklist);
 
   /// Perform the command, returns true if we matched
   Future<bool> exec(MessageReceivedEvent e, Robocore robot);
 
   /// Default implementation of matching a message
   bool valid(MessageReceivedEvent e) {
-    return e.message.content.startsWith(prefix + name);
+    return e.message.content.startsWith(prefix + name) ||
+        e.message.content.startsWith(prefix + short);
   }
 
   bool availableIn(String channel) {
@@ -30,8 +30,8 @@ abstract class Command {
 }
 
 class HelpCommand extends Command {
-  HelpCommand(name, help, List<String> whitelist, List<String> blacklist)
-      : super(name, help, whitelist, blacklist);
+  HelpCommand(name, short, help, List<String> whitelist, List<String> blacklist)
+      : super(name, short, help, whitelist, blacklist);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore robot) async {
@@ -44,14 +44,19 @@ class HelpCommand extends Command {
 }
 
 class PriceCommand extends Command {
-  PriceCommand(name, help, List<String> whitelist, List<String> blacklist)
-      : super(name, help, whitelist, blacklist);
+  PriceCommand(
+      name, short, help, List<String> whitelist, List<String> blacklist)
+      : super(name, short, help, whitelist, blacklist);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
     if (valid(e)) {
       await bot.updatePriceInfo();
       final embed = EmbedBuilder()
+        ..addAuthor((author) {
+          author.name = "Prices fresh directly from contracts";
+          //author.iconUrl = e.message.author.avatarURL();
+        })
         ..addField(
             name: "Price CORE",
             content:
@@ -83,8 +88,8 @@ class PriceCommand extends Command {
 }
 
 class FAQCommand extends Command {
-  FAQCommand(name, help, List<String> whitelist, List<String> blacklist)
-      : super(name, help, whitelist, blacklist);
+  FAQCommand(name, short, help, List<String> whitelist, List<String> blacklist)
+      : super(name, short, help, whitelist, blacklist);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
@@ -109,13 +114,18 @@ class FAQCommand extends Command {
 }
 
 class ContractsCommand extends Command {
-  ContractsCommand(name, help, List<String> whitelist, List<String> blacklist)
-      : super(name, help, whitelist, blacklist);
+  ContractsCommand(
+      name, short, help, List<String> whitelist, List<String> blacklist)
+      : super(name, short, help, whitelist, blacklist);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
     if (valid(e)) {
       final embed = EmbedBuilder()
+        ..addAuthor((author) {
+          author.name = "Links to CORE token and CORE-ETH trading pair";
+          //author.iconUrl = e.message.author.avatarURL();
+        })
         ..addField(
             name: "CORE token on Uniswap",
             content:
@@ -132,9 +142,6 @@ class ContractsCommand extends Command {
             name: "CORE-ETH pair on Etherscan",
             content:
                 "https://etherscan.io/address/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b")
-        ..addFooter((footer) {
-          footer.text = "Keep HODLING";
-        })
         ..color = (e.message.author is CacheMember)
             ? (e.message.author as CacheMember).color
             : DiscordColor.black;
@@ -146,8 +153,9 @@ class ContractsCommand extends Command {
 }
 
 class StatsCommand extends Command {
-  StatsCommand(name, help, List<String> whitelist, List<String> blacklist)
-      : super(name, help, whitelist, blacklist);
+  StatsCommand(
+      name, short, help, List<String> whitelist, List<String> blacklist)
+      : super(name, short, help, whitelist, blacklist);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
@@ -165,7 +173,7 @@ class StatsCommand extends Command {
             content:
                 "${usd0(bot.rewardsInUSD)}, (${dec2(bot.rewardsInCORE)} CORE)")
         ..addFooter((footer) {
-          footer.text = "Keep HODLING";
+          footer.text = "Stay CORE and keep HODLING!";
         })
         ..color = (e.message.author is CacheMember)
             ? (e.message.author as CacheMember).color
@@ -177,23 +185,10 @@ class StatsCommand extends Command {
   }
 }
 
-class StatusCommand extends Command {
-  StatusCommand(name, help, List<String> whitelist, List<String> blacklist)
-      : super(name, help, whitelist, blacklist);
-
-  @override
-  Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
-    if (valid(e)) {
-      await e.message.channel.send(content: ":rocket: 👍");
-      return true;
-    }
-    return false;
-  }
-}
-
 class MentionCommand extends Command {
-  MentionCommand(name, help, List<String> whitelist, List<String> blacklist)
-      : super(name, help, whitelist, blacklist);
+  MentionCommand(
+      name, short, help, List<String> whitelist, List<String> blacklist)
+      : super(name, short, help, whitelist, blacklist);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {

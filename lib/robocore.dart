@@ -5,6 +5,7 @@ import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:robocore/command.dart';
 import 'package:robocore/core.dart';
+import 'package:web3dart/web3dart.dart';
 
 Logger log = Logger("Robocore");
 
@@ -99,21 +100,26 @@ class Robocore {
 
   buildCommands() {
     commands
-      ..add(MentionCommand("@RoboCORE", "I will ... say something!", [], []))
-      ..add(HelpCommand("help", "Show all features of RoboCORE", [], []))
-      ..add(FAQCommand("faq", "Show links to FAQ etc", [], []))
+      ..add(
+          MentionCommand("@RoboCORE", "", "I will ... say something!", [], []))
+      ..add(HelpCommand("help", "h", "Show all features of RoboCORE", [], []))
+      ..add(FAQCommand("faq", "f", "Show links to FAQ etc", [], []))
       ..add(StatsCommand(
           "stats",
+          "s",
           "Show some basic statistics about CORE, refreshed every minute",
           [],
           []))
-      ..add(ContractsCommand("contracts", "Show links to to contracts", [], []))
-      ..add(StatusCommand("status", "Show I am alive", [], []))
-      ..add(PriceCommand("price",
+      ..add(
+          ContractsCommand("contracts", "c", "Show links to contracts", [], []))
+      ..add(PriceCommand("price", "p",
           "Show current price information, straight from contracts", [], []));
   }
 
+  openDatabase() {}
+
   start() async {
+    openDatabase();
     var token = await File('bot-token.txt').readAsString();
     bot = Nyxx(token);
     core = Core.randomKey();
@@ -132,6 +138,18 @@ class Robocore {
       log.info('Done queries.');
     });
 
+    /*
+    final subscription = core.listenToEvent('Transfer', (ev, event) {
+      print("Topics: ${event.topics} data: ${event.data}");
+      final decoded = ev.decodeResults(event.topics, event.data);
+      final from = decoded[0] as EthereumAddress;
+      final to = decoded[1] as EthereumAddress;
+      final value = decoded[2] as BigInt;
+      print('$from sent $value to $to');
+    });
+    */
+
+    // Hook up to Discord messages
     bot.onReady.listen((ReadyEvent e) async {
       log.info("Robocore ready!");
     });
@@ -143,6 +161,8 @@ class Robocore {
         }
       }
     });
+
+    //await subscription.asFuture();
   }
 
   String buildHelp(ITextChannel channel) {

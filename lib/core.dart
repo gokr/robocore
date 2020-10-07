@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -5,9 +6,11 @@ import 'dart:math';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:web3dart/web3dart.dart';
+import 'package:web_socket_channel/io.dart';
 
 // Perhaps we should use something else?
 const apiUrl = "https://mainnet.eth.aragon.network";
+const wsUrl = "wss://mainnet.eth.aragon.network/ws";
 
 final pow18 = pow(10, 18);
 final pow6 = pow(10, 6);
@@ -60,8 +63,10 @@ class Core {
   late DeployedContract ETH2USDT;
 
   Core() {
-    httpClient = new Client();
-    ethClient = new Web3Client(apiUrl, httpClient);
+    httpClient = Client();
+    ethClient = Web3Client(apiUrl, httpClient, socketConnector: () {
+      return IOWebSocketChannel.connect(wsUrl).cast<String>();
+    });
   }
 
   readContracts() async {
@@ -95,6 +100,17 @@ class Core {
     return DeployedContract(
         ContractAbi.fromJson(jsonEncode(json['abi']), json['contractName']),
         address);
+  }
+
+  StreamSubscription<FilterEvent> listenToEvent(
+      String eventName, Function(ContractEvent, FilterEvent) handler) {
+    final event = CORE2ETH.event(eventName);
+    return ethClient
+        .events(FilterOptions.events(contract: CORE2ETH, event: event))
+        .listen((ev) {
+      print("AARGH");
+      handler(event, ev);
+    });
   }
 
   /// LGE
