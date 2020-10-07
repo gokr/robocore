@@ -169,7 +169,7 @@ class Robocore {
     var sb = StringBuffer();
     for (var cmd in commands) {
       if (cmd.availableIn(channel.id.toString())) {
-        sb.writeln(" ${cmd.command} - ${cmd.help}");
+        sb.writeln(cmd.helpLine());
       }
     }
     return sb.toString();

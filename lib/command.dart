@@ -26,7 +26,13 @@ abstract class Command {
     return true;
   }
 
+  String helpLine() {
+    // Start with a "space" to not cause RoboCORE to start reacting!
+    return " $command, $shortCommand - $help";
+  }
+
   String get command => "$prefix$name";
+  String get shortCommand => "$prefix$short";
 }
 
 class HelpCommand extends Command {
@@ -96,6 +102,10 @@ class FAQCommand extends Command {
     if (valid(e)) {
       final embed = EmbedBuilder()
         ..addField(name: "FAQ", content: "https://help.cvault.finance/faqs/faq")
+        ..addField(
+            name: "Vision article",
+            content:
+                "https://medium.com/@0xdec4f/the-idea-project-and-vision-of-core-vault-52f5eddfbfb")
         ..addAuthor((author) {
           author.name = e.message.author.username;
           author.iconUrl = e.message.author.avatarURL();
@@ -212,4 +222,10 @@ class MentionCommand extends Command {
 
   @override
   String get command => " @RoboCORE";
+
+  @override
+  String helpLine() {
+    // Start with a "space" to not cause RoboCORE to start reacting!
+    return " $command - $help";
+  }
 }
