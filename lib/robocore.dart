@@ -7,7 +7,6 @@ import 'package:nyxx/nyxx.dart';
 import 'package:robocore/command.dart';
 import 'package:robocore/core.dart';
 import 'package:robocore/swap.dart';
-import 'package:web3dart/web3dart.dart';
 
 Logger log = Logger("Robocore");
 
@@ -30,6 +29,8 @@ class Robocore {
 
   // Keeping track of some state, queried every minute
   late num rewardsInCORE, rewardsInUSD;
+
+  num lastPriceCOREinUSD = 0;
 
   late num priceETHinUSD,
       priceETHinCORE,
@@ -100,7 +101,30 @@ class Robocore {
     // And then we can also calculate floor of LP
     floorLPinETH = floorLiquidity / supplyLP;
     floorLPinUSD = floorLPinETH * priceETHinUSD;
-    //await updateUsername();
+  }
+
+  EmbedBuilder? priceAlert() {
+    const limit = 1;
+    // Did we move more than limit USD per CORE?
+    if (lastPriceCOREinUSD != 0) {
+      num diff = lastPriceCOREinUSD - priceCOREinUSD;
+      String arrow = diff.isNegative ? "UP" : "DOWN";
+      if (diff.abs() > limit) {
+        // Let's remember this
+        lastPriceCOREinUSD = priceCOREinUSD;
+        final embed = EmbedBuilder()
+          ..addAuthor((author) {
+            author.name = "Price alert! Moved $arrow \$${dec0(diff.abs())}!";
+          })
+          ..addField(name: "Price CORE", content: priceStringCORE())
+          ..addField(name: "Price ETH", content: priceStringETH())
+          ..addField(name: "Price LP", content: priceStringLP());
+        return embed;
+      }
+    } else {
+      lastPriceCOREinUSD = priceCOREinUSD;
+    }
+    return null;
   }
 
   String priceStringCORE([num amount = 1]) {
@@ -158,6 +182,25 @@ class Robocore {
           "Show current floor prices, straight from Ethereum.", [], []));
   }
 
+  checkLoggingAlert(Swap swap) {
+    if (loggingLevel >= 3) {
+      var msg = swap.makeMessage();
+      loggingChannel?.send(content: msg);
+    }
+    if (loggingLevel > 0) {
+      var whaleAlert = swap.whaleAlert();
+      if (whaleAlert != null) {
+        loggingChannel?.send(content: whaleAlert);
+      }
+    }
+    if (loggingLevel > 1) {
+      var alert = priceAlert();
+      if (alert != null) {
+        loggingChannel?.send(embed: alert);
+      }
+    }
+  }
+
   openDatabase() {}
 
   start() async {
@@ -188,16 +231,8 @@ class Robocore {
       print("Topics: ${event.topics} data: ${event.data}");
       var swap = Swap.from(ev, event);
       swap.save();
-      if (loggingLevel >= 3) {
-        var msg = swap.makeMessage();
-        loggingChannel?.send(content: msg);
-      }
-      if (loggingLevel > 0) {
-        var whaleAlert = swap.whaleAlert();
-        if (whaleAlert != null) {
-          loggingChannel?.send(content: whaleAlert);
-        }
-      }
+      updatePriceInfo();
+      checkLoggingAlert(swap);
     });
 
     // Hook up to Discord messages
