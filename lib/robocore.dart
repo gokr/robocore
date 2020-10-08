@@ -104,7 +104,7 @@ class Robocore {
   }
 
   EmbedBuilder? priceAlert() {
-    const limit = 1;
+    const limit = 100;
     // Did we move more than limit USD per CORE?
     if (lastPriceCOREinUSD != 0) {
       num diff = lastPriceCOREinUSD - priceCOREinUSD;
