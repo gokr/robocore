@@ -215,7 +215,8 @@ class LogCommand extends Command {
         if (bot.loggingLevel == 0) {
           bot.loggingChannel = null;
         } else {
-          if (bot.loggingChannel != null) {
+          if (bot.loggingChannel != null &&
+              bot.loggingChannel?.id != e.message.channel.id) {
             await e.message.channel.send(
                 content:
                     "Already logging in another channel, can only log in one at a time.");
