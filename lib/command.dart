@@ -196,6 +196,12 @@ class LogCommand extends Command {
       var parts = splitMessage(e);
       // Default to level 3
       if (parts.length == 1) {
+        if (bot.loggingChannel != null) {
+          await e.message.channel.send(
+              content:
+                  "Already logging in another channel, can only log in one at a time.");
+          return true;
+        }
         bot.loggingChannel = e.message.channel;
         bot.loggingLevel = 3;
       } else {
@@ -203,12 +209,18 @@ class LogCommand extends Command {
           bot.loggingLevel = int.parse(parts[1]);
         } catch (ex) {
           await e.message.channel
-              .send(content: "You need to specify a logging level 0-5.");
+              .send(content: "You need to specify a logging level 0-3.");
           return true;
         }
         if (bot.loggingLevel == 0) {
           bot.loggingChannel = null;
         } else {
+          if (bot.loggingChannel != null) {
+            await e.message.channel.send(
+                content:
+                    "Already logging in another channel, can only log in one at a time.");
+            return true;
+          }
           bot.loggingChannel = e.message.channel;
         }
       }

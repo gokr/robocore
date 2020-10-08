@@ -169,7 +169,7 @@ class Robocore {
       ..add(LogCommand(
           "log",
           "l",
-          "Log txns in this channel. \"!l 0\" sets logging level to 0. Level 0=off, 1=whales, 3=swaps",
+          "Log txns in this channel. \"!l 2\" turns logging level to 2. Level 0=off, 1=whale alerts, 2=price alerts 3=all swaps",
           [],
           []))
       ..add(PriceCommand(
