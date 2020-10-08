@@ -128,7 +128,7 @@ class Robocore {
       ..add(
           MentionCommand("@RoboCORE", "", "I will ... say something!", [], []))
       ..add(HelpCommand("help", "h", "Show all commands of RoboCORE", [], []))
-      ..add(FAQCommand("faq", "f", "Show links to FAQ etc", [], []))
+      ..add(FAQCommand("faq", "", "Show links to FAQ etc", [], []))
       ..add(StatsCommand(
           "stats",
           "s",

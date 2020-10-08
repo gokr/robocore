@@ -19,7 +19,7 @@ abstract class Command {
   /// Default implementation of matching a message
   bool valid(MessageReceivedEvent e) {
     return e.message.content.startsWith(prefix + name) ||
-        e.message.content.startsWith(prefix + short);
+        (short != "" && e.message.content.startsWith(prefix + short));
   }
 
   bool availableIn(String channel) {
@@ -32,7 +32,9 @@ abstract class Command {
 
   String helpLine() {
     // Start with a "space" to not cause RoboCORE to start reacting!
-    return " $command, $shortCommand - $help";
+    return (short == "")
+        ? " $command - $help"
+        : " $command, $shortCommand - $help";
   }
 
   String get command => "$prefix$name";
@@ -163,15 +165,14 @@ class FAQCommand extends Command {
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
     if (valid(e)) {
       final embed = EmbedBuilder()
+        ..addAuthor((author) {
+          author.name = "Various links to good info";
+        })
         ..addField(name: "FAQ", content: "https://help.cvault.finance/faqs/faq")
         ..addField(
             name: "Vision article",
             content:
                 "https://medium.com/@0xdec4f/the-idea-project-and-vision-of-core-vault-52f5eddfbfb")
-        ..addAuthor((author) {
-          author.name = e.message.author.username;
-          author.iconUrl = e.message.author.avatarURL();
-        })
         ..addFooter((footer) {
           footer.text = "Keep HODLING";
         })
