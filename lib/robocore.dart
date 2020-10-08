@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:robocore/command.dart';
 import 'package:robocore/core.dart';
+import 'package:robocore/swap.dart';
 import 'package:web3dart/web3dart.dart';
 
 Logger log = Logger("Robocore");
@@ -14,6 +15,8 @@ Logger log = Logger("Robocore");
 class Robocore {
   late Nyxx bot;
   bool ready = false;
+  ITextChannel? loggingChannel;
+  int loggingLevel = 0;
 
   /// To interact with Ethereum contracts
   late Core core;
@@ -113,14 +116,16 @@ class Robocore {
   }
 
   updateUsername() async {
-    /*if (ready) {
+    if (ready) {
       try {
+        print("Getting guild");
         var guild = await bot.getGuild(Snowflake("759889689409749052"));
+        print("Got guild! $guild");
         guild.changeSelfNick("RoboCORE ${usd0(priceCOREinUSD)}");
       } catch (e) {
         print(e);
       }
-    }*/
+    }
   }
 
   buildCommands() {
@@ -137,6 +142,12 @@ class Robocore {
           []))
       ..add(
           ContractsCommand("contracts", "c", "Show links to contracts", [], []))
+      ..add(LogCommand(
+          "log",
+          "l",
+          "Log txns in this channel. \"!l 0\" sets logging level to 0. Level 0=off, 1=whales, 3=swaps",
+          [],
+          []))
       ..add(PriceCommand(
           "price",
           "p",
@@ -172,13 +183,21 @@ class Robocore {
       log.info('Done queries.');
     });
 
-    subscription = core.listenToEvent('Transfer', (ev, event) {
+    // We listen to all Swaps on COREETH
+    subscription = core.listenToEvent(core.CORE2ETH, 'Swap', (ev, event) {
       print("Topics: ${event.topics} data: ${event.data}");
-      final decoded = ev.decodeResults(event.topics, event.data);
-      final from = decoded[0] as EthereumAddress;
-      final to = decoded[1] as EthereumAddress;
-      final value = decoded[2] as BigInt;
-      print('$from sent $value to $to');
+      var swap = Swap.from(ev, event);
+      swap.save();
+      if (loggingLevel >= 3) {
+        var msg = swap.makeMessage();
+        loggingChannel?.send(content: msg);
+      }
+      if (loggingLevel > 0) {
+        var whaleAlert = swap.whaleAlert();
+        if (whaleAlert != null) {
+          loggingChannel?.send(content: whaleAlert);
+        }
+      }
     });
 
     // Hook up to Discord messages

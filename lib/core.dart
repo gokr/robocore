@@ -8,8 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:web_socket_channel/io.dart';
 
-final pow18 = pow(10, 18);
-final pow6 = pow(10, 6);
+final pow18 = BigInt.from(pow(10, 18));
+final pow6 = BigInt.from(pow(10, 6));
 
 NumberFormat decimal6Formatter = NumberFormat("##0.00000#");
 NumberFormat decimal4Formatter = NumberFormat("##0.000#");
@@ -27,8 +27,8 @@ String usd0(num x) => dollar0Formatter.format(x);
 String usd2(num x) => dollar2Formatter.format(x);
 
 /// From raw
-num raw18(BigInt x) => x.toDouble() / pow18;
-num raw6(BigInt x) => x.toDouble() / pow6;
+num raw18(BigInt x) => (x / pow18).toDouble();
+num raw6(BigInt x) => (x / pow6).toDouble();
 
 class Core {
   // Me
@@ -99,13 +99,14 @@ class Core {
         address);
   }
 
-  StreamSubscription<FilterEvent> listenToEvent(
+  /// Utility method to listen to a specific ContractEvent from a
+  /// given DeployedContract.
+  StreamSubscription<FilterEvent> listenToEvent(DeployedContract contract,
       String eventName, Function(ContractEvent, FilterEvent) handler) {
-    final event = CORE2ETH.event(eventName);
+    final event = contract.event(eventName);
     return ethClient
-        .events(FilterOptions.events(contract: CORE2ETH, event: event))
+        .events(FilterOptions.events(contract: contract, event: event))
         .listen((ev) {
-      print("AARGH");
       handler(event, ev);
     });
   }

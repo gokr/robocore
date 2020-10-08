@@ -186,6 +186,40 @@ class FAQCommand extends Command {
   }
 }
 
+class LogCommand extends Command {
+  LogCommand(name, short, help, List<String> whitelist, List<String> blacklist)
+      : super(name, short, help, whitelist, blacklist);
+
+  @override
+  Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
+    if (valid(e)) {
+      var parts = splitMessage(e);
+      // Default to level 3
+      if (parts.length == 1) {
+        bot.loggingChannel = e.message.channel;
+        bot.loggingLevel = 3;
+      } else {
+        try {
+          bot.loggingLevel = int.parse(parts[1]);
+        } catch (ex) {
+          await e.message.channel
+              .send(content: "You need to specify a logging level 0-5.");
+          return true;
+        }
+        if (bot.loggingLevel == 0) {
+          bot.loggingChannel = null;
+        } else {
+          bot.loggingChannel = e.message.channel;
+        }
+      }
+      await e.message.channel
+          .send(content: "Logging level ${bot.loggingLevel}");
+      return true;
+    }
+    return false;
+  }
+}
+
 class ContractsCommand extends Command {
   ContractsCommand(
       name, short, help, List<String> whitelist, List<String> blacklist)
