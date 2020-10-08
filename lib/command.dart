@@ -304,11 +304,12 @@ class MentionCommand extends Command {
         "Who, me? I am good! :smile:",
         "Well, thank you! :blush:",
         "You are crazy man, just crazy :rofl:",
-        "Who, me? I am good! :smile:",
         "Frankly, my dear, I don't give a damn! :frog:",
         "Just keep swimming :fish:",
         "My name is CORE. Robo CORE. :robot:",
-        "Run you fools. Run! :scream:"
+        "Run you fools. Run! :scream:",
+        "Even the smallest bot can change the course of the future.",
+        "It's always darkest just before it goes pitch black"
       ];
       var reply = replies[Random().nextInt(replies.length)];
       await e.message.channel.send(content: reply);
