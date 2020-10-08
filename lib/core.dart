@@ -8,10 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:web_socket_channel/io.dart';
 
-// Perhaps we should use something else?
-const apiUrl = "https://mainnet.eth.aragon.network";
-const wsUrl = "wss://mainnet.eth.aragon.network/ws";
-
 final pow18 = pow(10, 18);
 final pow6 = pow(10, 6);
 
@@ -62,7 +58,7 @@ class Core {
       EthereumAddress.fromHex('0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852');
   late DeployedContract ETH2USDT;
 
-  Core() {
+  Core(String apiUrl, String wsUrl) {
     httpClient = Client();
     ethClient = Web3Client(apiUrl, httpClient, socketConnector: () {
       return IOWebSocketChannel.connect(wsUrl).cast<String>();
@@ -74,12 +70,13 @@ class Core {
     await _readContracts();
   }
 
-  factory Core.randomKey() {
-    return Core()..credentials = EthPrivateKey.createRandom(Random.secure());
+  factory Core.randomKey(String apiUrl, wsUrl) {
+    return Core(apiUrl, wsUrl)
+      ..credentials = EthPrivateKey.createRandom(Random.secure());
   }
 
-  factory Core.privateKey(String privateKey) {
-    return Core()..credentials = EthPrivateKey.fromHex(privateKey);
+  factory Core.privateKey(String privateKey, apiUrl, wsUrl) {
+    return Core(apiUrl, wsUrl)..credentials = EthPrivateKey.fromHex(privateKey);
   }
 
   Future<EthereumAddress> _extractAddress() async {

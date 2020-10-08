@@ -26,6 +26,10 @@ abstract class Command {
     return true;
   }
 
+  List<String> splitMessage(MessageReceivedEvent e) {
+    return e.message.content.split(RegExp('\\s+'));
+  }
+
   String helpLine() {
     // Start with a "space" to not cause RoboCORE to start reacting!
     return " $command, $shortCommand - $help";
@@ -58,23 +62,81 @@ class PriceCommand extends Command {
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
     if (valid(e)) {
       await bot.updatePriceInfo();
+      var parts = splitMessage(e);
+      String? coin, amountString;
+      num amount = 1;
+      // Only !p or !price
+      if (parts.length == 1) {
+        final embed = EmbedBuilder()
+          ..addAuthor((author) {
+            author.name = "Prices fresh directly from contracts";
+            //author.iconUrl = e.message.author.avatarURL();
+          })
+          ..addField(name: "Price CORE", content: bot.priceStringCORE())
+          ..addField(name: "Price ETH", content: bot.priceStringETH())
+          ..addField(name: "Price LP", content: bot.priceStringLP())
+          ..color = (e.message.author is CacheMember)
+              ? (e.message.author as CacheMember).color
+              : DiscordColor.black;
+        await e.message.channel.send(embed: embed);
+        return true;
+      }
+      // Also coin given
+      if (parts.length == 2) {
+        coin = parts[1];
+      } else {
+        coin = parts[2];
+        amountString = parts[1];
+      }
+      // Check valid coins
+      if (!["core", "eth", "lp"].contains(coin)) {
+        await e.message.channel
+            .send(content: "Coin can be core, eth or lp, not \"$coin\"");
+        return true;
+      }
+      // Parse amount as num
+      if (amountString != null) {
+        try {
+          amount = num.parse(amountString);
+        } catch (ex) {
+          await e.message.channel.send(
+              content:
+                  "Amount not a number: ${parts[2]}. Use for example \"!p 10 core\"");
+          return true;
+        }
+      }
+      // Time to answer
+      switch (coin) {
+        case "core":
+          await e.message.channel.send(content: bot.priceStringCORE(amount));
+          break;
+        case "eth":
+          await e.message.channel.send(content: bot.priceStringETH(amount));
+          break;
+        case "lp":
+          await e.message.channel.send(content: bot.priceStringLP(amount));
+          break;
+      }
+      return true;
+    }
+    return false;
+  }
+}
+
+class FloorCommand extends Command {
+  FloorCommand(
+      name, short, help, List<String> whitelist, List<String> blacklist)
+      : super(name, short, help, whitelist, blacklist);
+
+  @override
+  Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
+    if (valid(e)) {
+      await bot.updatePriceInfo();
       final embed = EmbedBuilder()
         ..addAuthor((author) {
-          author.name = "Prices fresh directly from contracts";
+          author.name = "Floor prices calculated from contracts";
           //author.iconUrl = e.message.author.avatarURL();
         })
-        ..addField(
-            name: "Price CORE",
-            content:
-                "1 CORE = ${usd2(bot.priceCOREinUSD)} (${dec4(bot.priceCOREinETH)} ETH)")
-        ..addField(
-            name: "Price ETH",
-            content:
-                "1 ETH = ${usd2(bot.priceETHinUSD)} (${dec6(bot.priceETHinCORE)} CORE)")
-        ..addField(
-            name: "Price LP",
-            content:
-                "1 LP = ${usd2(bot.priceLPinUSD)} (${dec4(bot.priceLPinETH)} ETH)")
         ..addField(
             name: "Floor CORE",
             content:

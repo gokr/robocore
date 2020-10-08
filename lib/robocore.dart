@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cron/cron.dart';
@@ -12,9 +13,12 @@ Logger log = Logger("Robocore");
 /// Discord bot
 class Robocore {
   late Nyxx bot;
+  bool ready = false;
 
   /// To interact with Ethereum contracts
   late Core core;
+
+  late StreamSubscription subscription;
 
   ClientUser get self => bot.self;
 
@@ -44,7 +48,6 @@ class Robocore {
 
   // Just testing stuff
   test() async {
-    core = Core.randomKey();
     await core.readContracts();
     await updatePriceInfo();
     print(supplyLP);
@@ -80,29 +83,51 @@ class Robocore {
     // Price of LP is calculated as the full pool valuated in ETH, divided by supply
     priceLPinETH = ((poolCORE * priceCOREinETH) + poolETH) / supplyLP;
     priceLPinUSD = priceLPinETH * priceETHinUSD;
+
     // Floor calculations
     // Then k needs to be preserved so if we sell all outsideCORE into the pool
     // then new poolETH needs to be this (all 10000 CORE now in pool) in order
     // to make sure poolK stays the same.
     var newPoolETH = poolK / 10000;
-    //print("poolK: $poolK, poolETH: $poolETH, newPoolETH: $newPoolETH");
     // This then gives us a new price - the so called floor price
     floorCOREinETH = newPoolETH / 10000;
     floorCOREinUSD = floorCOREinETH * priceETHinUSD;
-    //print("Price: $floorCOREinETH");
     // The liquidity is simply twice newPoolETH
     floorLiquidity = newPoolETH * 2;
-    //print("FloorLiquidity: $floorLiquidity");
     // And then we can also calculate floor of LP
     floorLPinETH = floorLiquidity / supplyLP;
     floorLPinUSD = floorLPinETH * priceETHinUSD;
+    //await updateUsername();
+  }
+
+  String priceStringCORE([num amount = 1]) {
+    return "$amount CORE = ${usd2(priceCOREinUSD * amount)} (${dec4(priceCOREinETH * amount)} ETH)";
+  }
+
+  String priceStringLP([num amount = 1]) {
+    return "$amount LP = ${usd2(priceLPinUSD * amount)} (${dec4(priceLPinETH * amount)} ETH)";
+  }
+
+  String priceStringETH([num amount = 1]) {
+    return "$amount ETH = ${usd2(priceETHinUSD * amount)} (${dec4(priceETHinCORE * amount)} ETH)";
+  }
+
+  updateUsername() async {
+    /*if (ready) {
+      try {
+        var guild = await bot.getGuild(Snowflake("759889689409749052"));
+        guild.changeSelfNick("RoboCORE ${usd0(priceCOREinUSD)}");
+      } catch (e) {
+        print(e);
+      }
+    }*/
   }
 
   buildCommands() {
     commands
       ..add(
           MentionCommand("@RoboCORE", "", "I will ... say something!", [], []))
-      ..add(HelpCommand("help", "h", "Show all features of RoboCORE", [], []))
+      ..add(HelpCommand("help", "h", "Show all commands of RoboCORE", [], []))
       ..add(FAQCommand("faq", "f", "Show links to FAQ etc", [], []))
       ..add(StatsCommand(
           "stats",
@@ -112,8 +137,14 @@ class Robocore {
           []))
       ..add(
           ContractsCommand("contracts", "c", "Show links to contracts", [], []))
-      ..add(PriceCommand("price", "p",
-          "Show current price information, straight from contracts", [], []));
+      ..add(PriceCommand(
+          "price",
+          "p",
+          "Show prices, straight from Ethereum. \"!p core\" shows only CORE price (or LP, ETH), and you can also use amount like \"!p 10 core\".",
+          [],
+          []))
+      ..add(FloorCommand("floor", "f",
+          "Show current floor prices, straight from Ethereum.", [], []));
   }
 
   openDatabase() {}
@@ -121,8 +152,11 @@ class Robocore {
   start() async {
     openDatabase();
     var token = await File('bot-token.txt').readAsString();
+    String wsUrl = await File('bot-wsurl.txt').readAsString();
+    String apiUrl = await File('bot-apiurl.txt').readAsString();
+
     bot = Nyxx(token);
-    core = Core.randomKey();
+    core = Core.randomKey(apiUrl, wsUrl);
     await core.readContracts();
 
     buildCommands();
@@ -138,8 +172,7 @@ class Robocore {
       log.info('Done queries.');
     });
 
-    /*
-    final subscription = core.listenToEvent('Transfer', (ev, event) {
+    subscription = core.listenToEvent('Transfer', (ev, event) {
       print("Topics: ${event.topics} data: ${event.data}");
       final decoded = ev.decodeResults(event.topics, event.data);
       final from = decoded[0] as EthereumAddress;
@@ -147,11 +180,11 @@ class Robocore {
       final value = decoded[2] as BigInt;
       print('$from sent $value to $to');
     });
-    */
 
     // Hook up to Discord messages
     bot.onReady.listen((ReadyEvent e) async {
       log.info("Robocore ready!");
+      ready = true;
     });
 
     bot.onMessageReceived.listen((MessageReceivedEvent e) async {
@@ -161,8 +194,6 @@ class Robocore {
         }
       }
     });
-
-    //await subscription.asFuture();
   }
 
   String buildHelp(ITextChannel channel) {
