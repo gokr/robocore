@@ -17,7 +17,7 @@ class EventLogger {
 }
 
 class WhaleLogger extends EventLogger {
-  num limit = 0.1;
+  num limit = 100;
 
   WhaleLogger(String name, ITextChannel channel) : super(name, channel);
 
@@ -27,7 +27,7 @@ class WhaleLogger extends EventLogger {
       if (swap.sell) {
         final embed = EmbedBuilder()
           ..title = "WHALE ALERT!"
-          ..imageUrl = "http://rey.krampe.se/whale${random}.jpg"
+          ..thumbnailUrl = "http://rey.krampe.se/whale${random}.jpg"
           ..addField(
               name:
                   ":whale: Sold ${dec0(raw18(swap.amount0In))} CORE for **${dec0(raw18(swap.amount1Out))} ETH**!",
@@ -37,7 +37,7 @@ class WhaleLogger extends EventLogger {
       } else {
         final embed = EmbedBuilder()
           ..title = "WHALE ALERT!"
-          ..imageUrl = "http://rey.krampe.se/whale${random}.jpg"
+          ..thumbnailUrl = "http://rey.krampe.se/whale${random}.jpg"
           ..addField(
               name:
                   ":whale: Bought ${dec0(raw18(swap.amount0Out))} CORE for **${dec0(raw18(swap.amount1In))} ETH**!",
@@ -50,7 +50,7 @@ class WhaleLogger extends EventLogger {
 }
 
 class PriceLogger extends EventLogger {
-  num delta = 0.1;
+  num delta = 100;
   num lastPriceCOREinUSD = 0;
 
   PriceLogger(String name, ITextChannel channel) : super(name, channel);
