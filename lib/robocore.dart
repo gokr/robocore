@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:robocore/command.dart';
 import 'package:robocore/core.dart';
+import 'package:robocore/event_logger.dart';
 import 'package:robocore/swap.dart';
 
 Logger log = Logger("Robocore");
@@ -14,8 +15,9 @@ Logger log = Logger("Robocore");
 class Robocore {
   late Nyxx bot;
   bool ready = false;
-  ITextChannel? loggingChannel;
-  int loggingLevel = 0;
+
+  // All loggers
+  List<EventLogger> loggers = [];
 
   /// To interact with Ethereum contracts
   late Core core;
@@ -55,6 +57,25 @@ class Robocore {
     await core.readContracts();
     await updatePriceInfo();
     print(supplyLP);
+  }
+
+  addLogger(EventLogger logger) {
+    loggers.removeWhere((element) =>
+        element.channel == logger.channel && element.name == logger.name);
+    loggers.add(logger);
+  }
+
+  removeLogger(String name, ITextChannel ch) {
+    loggers.removeWhere(
+        (element) => element.channel == ch && element.name == name);
+  }
+
+  removeLoggers(ITextChannel ch) {
+    loggers.removeWhere((element) => element.channel == ch);
+  }
+
+  loggersFor(ITextChannel ch) {
+    return loggers.where((element) => element.channel == ch).toList();
   }
 
   /// Run contract queries
@@ -103,30 +124,6 @@ class Robocore {
     floorLPinUSD = floorLPinETH * priceETHinUSD;
   }
 
-  EmbedBuilder? priceAlert() {
-    const limit = 100;
-    // Did we move more than limit USD per CORE?
-    if (lastPriceCOREinUSD != 0) {
-      num diff = lastPriceCOREinUSD - priceCOREinUSD;
-      String arrow = diff.isNegative ? "UP" : "DOWN";
-      if (diff.abs() > limit) {
-        // Let's remember this
-        lastPriceCOREinUSD = priceCOREinUSD;
-        final embed = EmbedBuilder()
-          ..addAuthor((author) {
-            author.name = "Price alert! Moved $arrow \$${dec0(diff.abs())}!";
-          })
-          ..addField(name: "Price CORE", content: priceStringCORE())
-          ..addField(name: "Price ETH", content: priceStringETH())
-          ..addField(name: "Price LP", content: priceStringLP());
-        return embed;
-      }
-    } else {
-      lastPriceCOREinUSD = priceCOREinUSD;
-    }
-    return null;
-  }
-
   String priceStringCORE([num amount = 1]) {
     return "$amount CORE = ${usd2(priceCOREinUSD * amount)} (${dec4(priceCOREinETH * amount)} ETH)";
   }
@@ -136,7 +133,7 @@ class Robocore {
   }
 
   String priceStringETH([num amount = 1]) {
-    return "$amount ETH = ${usd2(priceETHinUSD * amount)} (${dec4(priceETHinCORE * amount)} ETH)";
+    return "$amount ETH = ${usd2(priceETHinUSD * amount)} (${dec4(priceETHinCORE * amount)} CORE)";
   }
 
   updateUsername() async {
@@ -154,50 +151,26 @@ class Robocore {
 
   buildCommands() {
     commands
-      ..add(
-          MentionCommand("@RoboCORE", "", "I will ... say something!", [], []))
-      ..add(HelpCommand("help", "h", "Show all commands of RoboCORE", [], []))
-      ..add(FAQCommand("faq", "", "Show links to FAQ etc", [], []))
-      ..add(StatsCommand(
-          "stats",
-          "s",
-          "Show some basic statistics about CORE, refreshed every minute",
-          [],
-          []))
-      ..add(
-          ContractsCommand("contracts", "c", "Show links to contracts", [], []))
-      ..add(LogCommand(
-          "log",
-          "l",
-          "Log txns in this channel. \"!l 2\" turns logging level to 2. Level 0=off, 1=whale alerts, 2=price alerts 3=all swaps",
-          [],
-          []))
-      ..add(PriceCommand(
-          "price",
-          "p",
-          "Show prices, straight from Ethereum. \"!p core\" shows only CORE price (or LP, ETH), and you can also use amount like \"!p 10 core\".",
-          [],
-          []))
-      ..add(FloorCommand("floor", "f",
-          "Show current floor prices, straight from Ethereum.", [], []));
+      ..add(MentionCommand("@RoboCORE", "", "@", "I will ... say something!"))
+      ..add(HelpCommand(
+          "help", "h", "help", "`help|h`\nShow all commands of RoboCORE."))
+      ..add(FAQCommand("faq", "", "faq", "`faq`\nShow links to FAQ etc."))
+      ..add(StatsCommand("stats", "s", "stats",
+          "`stats|s`\nShow some basic statistics about CORE, refreshed every minute."))
+      ..add(ContractsCommand("contracts", "c", "contracts",
+          "`contracts|c`\nShow links to contracts."))
+      ..add(LogCommand("log", "l", "log",
+          "`l|log [add|remove] [all|price|whale|swap]`\nControl logging of events in this channel. Note that this is per channel. Only \"log\" will show active loggers."))
+      ..add(PriceCommand("price", "p", "price",
+          "`price|p [[<amount>] eth|core|lp]`\nShow prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use amount like \"!p 10 core\"."))
+      ..add(FloorCommand("floor", "f", "floor",
+          "`floor|f`\nShow current floor prices, straight from Ethereum."));
   }
 
-  checkLoggingAlert(Swap swap) {
-    if (loggingLevel >= 3) {
-      var msg = swap.makeMessage();
-      loggingChannel?.send(content: msg);
-    }
-    if (loggingLevel > 0) {
-      var whaleAlert = swap.whaleAlert();
-      if (whaleAlert != null) {
-        loggingChannel?.send(content: whaleAlert);
-      }
-    }
-    if (loggingLevel > 1) {
-      var alert = priceAlert();
-      if (alert != null) {
-        loggingChannel?.send(embed: alert);
-      }
+  /// Go through all loggers and log
+  performLogging(Swap swap) {
+    for (var logger in loggers) {
+      logger.log(this, swap);
     }
   }
 
@@ -228,11 +201,11 @@ class Robocore {
 
     // We listen to all Swaps on COREETH
     subscription = core.listenToEvent(core.CORE2ETH, 'Swap', (ev, event) {
-      print("Topics: ${event.topics} data: ${event.data}");
+      //print("Topics: ${event.topics} data: ${event.data}");
       var swap = Swap.from(ev, event);
       swap.save();
       updatePriceInfo();
-      checkLoggingAlert(swap);
+      performLogging(swap);
     });
 
     // Hook up to Discord messages
@@ -250,13 +223,18 @@ class Robocore {
     });
   }
 
-  String buildHelp(ITextChannel channel) {
-    var sb = StringBuffer();
+  EmbedBuilder buildHelp(ITextChannel channel) {
+    final embed = EmbedBuilder()
+      ..addAuthor((author) {
+        author.name = "RoboCORE";
+        author.iconUrl =
+            "https://purepng.com/public/uploads/large/purepng.com-robotrobotprogrammableautomatonelectronicscyborg-1701528371874ax93z.png";
+      });
     for (var cmd in commands) {
       if (cmd.availableIn(channel.id.toString())) {
-        sb.writeln(cmd.helpLine());
+        embed.addField(name: cmd.syntax, content: cmd.help);
       }
     }
-    return sb.toString();
+    return embed;
   }
 }

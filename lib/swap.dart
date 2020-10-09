@@ -38,15 +38,4 @@ class Swap {
       return "Bought ${dec4(raw18(amount0Out))} CORE for ${dec4(raw18(amount1In))} ETH ->   to <https://etherscan.io/address/$to>, txn: <https://etherscan.io/tx/$tx>";
     }
   }
-
-  String? whaleAlert() {
-    if (raw18(amount) > 99) {
-      if (sell) {
-        return ":alarm_clock: :whale: Sold ${dec0(raw18(amount0In))} CORE for ${dec0(raw18(amount1Out))} ETH!";
-      } else {
-        return ":alarm_clock: :whale: Bought ${dec0(raw18(amount0Out))} CORE for ${dec0(raw18(amount1In))} ETH!";
-      }
-    }
-    return null;
-  }
 }

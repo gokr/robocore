@@ -2,16 +2,17 @@ import 'dart:math';
 
 import 'package:nyxx/nyxx.dart';
 import 'package:robocore/core.dart';
+import 'package:robocore/event_logger.dart';
 import 'package:robocore/robocore.dart';
 
 const prefix = "!";
 
 abstract class Command {
-  String name, short, help;
+  String name, short, syntax, help;
   List<String> blacklist = [];
   List<String> whitelist = [];
 
-  Command(this.name, this.short, this.help, this.whitelist, this.blacklist);
+  Command(this.name, this.short, this.syntax, this.help);
 
   /// Perform the command, returns true if we matched
   Future<bool> exec(MessageReceivedEvent e, Robocore robot);
@@ -30,25 +31,17 @@ abstract class Command {
     return e.message.content.split(RegExp('\\s+'));
   }
 
-  String helpLine() {
-    // Start with a "space" to not cause RoboCORE to start reacting!
-    return (short == "")
-        ? " $command - $help"
-        : " $command, $shortCommand - $help";
-  }
-
   String get command => "$prefix$name";
   String get shortCommand => "$prefix$short";
 }
 
 class HelpCommand extends Command {
-  HelpCommand(name, short, help, List<String> whitelist, List<String> blacklist)
-      : super(name, short, help, whitelist, blacklist);
+  HelpCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore robot) async {
     if (valid(e)) {
-      await e.message.channel.send(content: robot.buildHelp(e.message.channel));
+      await e.message.channel.send(embed: robot.buildHelp(e.message.channel));
       return true;
     }
     return false;
@@ -56,9 +49,7 @@ class HelpCommand extends Command {
 }
 
 class PriceCommand extends Command {
-  PriceCommand(
-      name, short, help, List<String> whitelist, List<String> blacklist)
-      : super(name, short, help, whitelist, blacklist);
+  PriceCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
@@ -126,9 +117,7 @@ class PriceCommand extends Command {
 }
 
 class FloorCommand extends Command {
-  FloorCommand(
-      name, short, help, List<String> whitelist, List<String> blacklist)
-      : super(name, short, help, whitelist, blacklist);
+  FloorCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
@@ -158,8 +147,7 @@ class FloorCommand extends Command {
 }
 
 class FAQCommand extends Command {
-  FAQCommand(name, short, help, List<String> whitelist, List<String> blacklist)
-      : super(name, short, help, whitelist, blacklist);
+  FAQCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
@@ -187,46 +175,72 @@ class FAQCommand extends Command {
 }
 
 class LogCommand extends Command {
-  LogCommand(name, short, help, List<String> whitelist, List<String> blacklist)
-      : super(name, short, help, whitelist, blacklist);
+  LogCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
     if (valid(e)) {
+      var ch = e.message.channel;
       var parts = splitMessage(e);
-      // Default to level 3
+      var loggers =
+          bot.loggers.where((logger) => logger.channel == e.message.channel);
+      // log = shows loggers
+      // log remove all = removes all
+      // log add|remove xxx = adds or removes logger
+
+      // "log"
       if (parts.length == 1) {
-        if (bot.loggingChannel != null) {
-          await e.message.channel.send(
-              content:
-                  "Already logging in another channel, can only log in one at a time.");
+        String active = loggers.join(" ");
+        await ch.send(content: "Active loggers: $active");
+        return true;
+      }
+      if (parts.length == 2) {
+        await ch.send(content: "Use add|remove [whale|swap|price|all]");
+        return true;
+      }
+      if (parts.length >= 3) {
+        if (!["add", "remove"].contains(parts[1])) {
+          await ch.send(content: "Use add|remove [whale|swap|price|all]");
           return true;
         }
-        bot.loggingChannel = e.message.channel;
-        bot.loggingLevel = 3;
-      } else {
-        try {
-          bot.loggingLevel = int.parse(parts[1]);
-        } catch (ex) {
-          await e.message.channel
-              .send(content: "You need to specify a logging level 0-3.");
-          return true;
-        }
-        if (bot.loggingLevel == 0) {
-          bot.loggingChannel = null;
-        } else {
-          if (bot.loggingChannel != null &&
-              bot.loggingChannel?.id != e.message.channel.id) {
-            await e.message.channel.send(
-                content:
-                    "Already logging in another channel, can only log in one at a time.");
-            return true;
+        bool add = parts[1] == "add";
+        var names = parts.sublist(2);
+        for (var name in names) {
+          switch (name) {
+            case "whale":
+              if (add) {
+                bot.addLogger(WhaleLogger("whale", ch));
+              } else {
+                bot.removeLogger("whale", ch);
+              }
+              break;
+            case "price":
+              if (add) {
+                bot.addLogger(PriceLogger("price", ch));
+              } else {
+                bot.removeLogger("price", ch);
+              }
+              break;
+            case "swap":
+              if (add) {
+                bot.addLogger(SwapLogger("swap", ch));
+              } else {
+                bot.removeLogger("swap", ch);
+              }
+              break;
+            case "all":
+              bot.removeLoggers(ch);
+              if (add) {
+                bot.addLogger(PriceLogger("price", ch));
+                bot.addLogger(SwapLogger("swap", ch));
+                bot.addLogger(WhaleLogger("whale", ch));
+              }
+              break;
           }
-          bot.loggingChannel = e.message.channel;
         }
       }
-      await e.message.channel
-          .send(content: "Logging level ${bot.loggingLevel}");
+      String active = bot.loggersFor(ch).join(" ");
+      await ch.send(content: "Active loggers: $active");
       return true;
     }
     return false;
@@ -234,9 +248,8 @@ class LogCommand extends Command {
 }
 
 class ContractsCommand extends Command {
-  ContractsCommand(
-      name, short, help, List<String> whitelist, List<String> blacklist)
-      : super(name, short, help, whitelist, blacklist);
+  ContractsCommand(name, short, syntax, help)
+      : super(name, short, syntax, help);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
@@ -273,9 +286,7 @@ class ContractsCommand extends Command {
 }
 
 class StatsCommand extends Command {
-  StatsCommand(
-      name, short, help, List<String> whitelist, List<String> blacklist)
-      : super(name, short, help, whitelist, blacklist);
+  StatsCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
@@ -306,9 +317,7 @@ class StatsCommand extends Command {
 }
 
 class MentionCommand extends Command {
-  MentionCommand(
-      name, short, help, List<String> whitelist, List<String> blacklist)
-      : super(name, short, help, whitelist, blacklist);
+  MentionCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
   Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
@@ -333,10 +342,4 @@ class MentionCommand extends Command {
 
   @override
   String get command => " @RoboCORE";
-
-  @override
-  String helpLine() {
-    // Start with a "space" to not cause RoboCORE to start reacting!
-    return " $command - $help";
-  }
 }
