@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:nyxx/nyxx.dart';
 import 'package:robocore/core.dart';
 import 'package:robocore/robocore.dart';
@@ -21,11 +23,11 @@ class WhaleLogger extends EventLogger {
 
   log(Robocore bot, Swap swap) async {
     if (raw18(swap.amount) > limit) {
+      int random = Random().nextInt(5) + 1; // 1-5
       if (swap.sell) {
         final embed = EmbedBuilder()
           ..title = "WHALE ALERT!"
-          ..imageUrl =
-              "https://assets.margaretriver.com/image/grid-large/82517/1/uMgE9CNZUZ59x2wndWs5z7AfoRjpW8kJkQKHWWwC.jpeg"
+          ..imageUrl = "http://rey.krampe.se/whale${random}.jpg"
           ..addField(
               name:
                   ":whale: Sold ${dec0(raw18(swap.amount0In))} CORE for **${dec0(raw18(swap.amount1Out))} ETH**!",
@@ -35,8 +37,7 @@ class WhaleLogger extends EventLogger {
       } else {
         final embed = EmbedBuilder()
           ..title = "WHALE ALERT!"
-          ..imageUrl =
-              "https://assets.margaretriver.com/image/grid-large/82517/1/uMgE9CNZUZ59x2wndWs5z7AfoRjpW8kJkQKHWWwC.jpeg"
+          ..imageUrl = "http://rey.krampe.se/whale${random}.jpg"
           ..addField(
               name:
                   ":whale: Bought ${dec0(raw18(swap.amount0Out))} CORE for **${dec0(raw18(swap.amount1In))} ETH**!",

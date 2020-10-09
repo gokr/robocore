@@ -138,20 +138,22 @@ class Robocore {
 
   updateUsername() async {
     if (ready) {
-      try {
+      await bot.self.edit(username: "RoboCORE", avatar: File("www/robo.png"));
+      /*try {
         print("Getting guild");
         var guild = await bot.getGuild(Snowflake("759889689409749052"));
         print("Got guild! $guild");
         guild.changeSelfNick("RoboCORE ${usd0(priceCOREinUSD)}");
       } catch (e) {
         print(e);
-      }
+      }*/
     }
   }
 
   buildCommands() {
     commands
-      ..add(MentionCommand("@RoboCORE", "", "@", "I will ... say something!"))
+      ..add(MentionCommand(
+          "@RoboCORE", "", "@RoboCORE", "I will ... say something!"))
       ..add(HelpCommand(
           "help", "h", "help", "`help|h`\nShow all commands of RoboCORE."))
       ..add(FAQCommand("faq", "", "faq", "`faq`\nShow links to FAQ etc."))
@@ -212,6 +214,7 @@ class Robocore {
     bot.onReady.listen((ReadyEvent e) async {
       log.info("Robocore ready!");
       ready = true;
+      await updateUsername();
     });
 
     bot.onMessageReceived.listen((MessageReceivedEvent e) async {
@@ -226,9 +229,9 @@ class Robocore {
   EmbedBuilder buildHelp(ITextChannel channel) {
     final embed = EmbedBuilder()
       ..addAuthor((author) {
-        author.name = "RoboCORE";
-        author.iconUrl =
-            "https://purepng.com/public/uploads/large/purepng.com-robotrobotprogrammableautomatonelectronicscyborg-1701528371874ax93z.png";
+        author
+          ..name = "RoboCORE"
+          ..iconUrl = bot.self.avatarURL();
       });
     for (var cmd in commands) {
       if (cmd.availableIn(channel.id.toString())) {
