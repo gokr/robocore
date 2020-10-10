@@ -68,6 +68,7 @@ class PriceCommand extends Command {
           ..addField(name: "Price CORE", content: bot.priceStringCORE())
           ..addField(name: "Price ETH", content: bot.priceStringETH())
           ..addField(name: "Price LP", content: bot.priceStringLP())
+          ..timestamp = DateTime.now().toUtc()
           ..color = (e.message.author is CacheMember)
               ? (e.message.author as CacheMember).color
               : DiscordColor.black;
@@ -136,6 +137,7 @@ class FloorCommand extends Command {
             name: "Floor LP",
             content:
                 "1 LP = ${usd2(bot.floorLPinUSD)} (${dec4(bot.floorLPinETH)} ETH)")
+        ..timestamp = DateTime.now().toUtc()
         ..color = (e.message.author is CacheMember)
             ? (e.message.author as CacheMember).color
             : DiscordColor.black;
@@ -306,6 +308,7 @@ class StatsCommand extends Command {
         ..addFooter((footer) {
           footer.text = "Stay CORE and keep HODLING!";
         })
+        ..timestamp = DateTime.now().toUtc()
         ..color = (e.message.author is CacheMember)
             ? (e.message.author as CacheMember).color
             : DiscordColor.black;

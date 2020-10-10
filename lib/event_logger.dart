@@ -32,7 +32,8 @@ class WhaleLogger extends EventLogger {
               name:
                   ":whale: Sold ${dec0(raw18(swap.amount0In))} CORE for **${dec0(raw18(swap.amount1Out))} ETH**!",
               content:
-                  ":chart_with_downwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})");
+                  ":chart_with_downwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})")
+          ..timestamp = DateTime.now().toUtc();
         channel.send(embed: embed);
       } else {
         final embed = EmbedBuilder()
@@ -42,7 +43,8 @@ class WhaleLogger extends EventLogger {
               name:
                   ":whale: Bought ${dec0(raw18(swap.amount0Out))} CORE for **${dec0(raw18(swap.amount1In))} ETH**!",
               content:
-                  ":chart_with_upwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})");
+                  ":chart_with_upwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})")
+          ..timestamp = DateTime.now().toUtc();
         channel.send(embed: embed);
       }
     }
@@ -69,7 +71,8 @@ class PriceLogger extends EventLogger {
           })
           ..addField(name: "Price CORE", content: bot.priceStringCORE())
           ..addField(name: "Price ETH", content: bot.priceStringETH())
-          ..addField(name: "Price LP", content: bot.priceStringLP());
+          ..addField(name: "Price LP", content: bot.priceStringLP())
+          ..timestamp = DateTime.now().toUtc();
         channel.send(embed: embed);
       }
     } else {
@@ -89,7 +92,8 @@ class SwapLogger extends EventLogger {
             name:
                 "Sold ${dec4(raw18(swap.amount0In))} CORE for ${dec4(raw18(swap.amount1Out))} ETH",
             content:
-                ":chart_with_downwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})");
+                ":chart_with_downwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})")
+        ..timestamp = DateTime.now().toUtc();
       channel.send(embed: embed);
     } else {
       // Swapped ETH->CORE
@@ -98,7 +102,8 @@ class SwapLogger extends EventLogger {
             name:
                 "Bought ${dec2(raw18(swap.amount0Out))} CORE for ${dec2(raw18(swap.amount1In))} ETH",
             content:
-                ":chart_with_upwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})");
+                ":chart_with_upwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})")
+        ..timestamp = DateTime.now().toUtc();
       channel.send(embed: embed);
     }
   }
