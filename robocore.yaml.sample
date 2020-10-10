@@ -1,0 +1,11 @@
+# ALL,FINEST,FINER,FINE,CONFIG,INFO,WARNING,SEVERE,SHOUT,OFF
+loglevel: info
+
+# The WS URL for Ethereum. Works fine with Infura.io
+wsurl: wss://yaddayadda.com/blabla
+
+# The API URL for Ethereum. Works fine with Infura.io
+apiurl: https://yaddayadda.com/blabla
+
+# The Discord bot token for Nyxx
+nyxx: LotsOfFunnyCharacters-NzYzMDasdsadQ2MjU1NDc23hjj3k53h4ghjsfsf4

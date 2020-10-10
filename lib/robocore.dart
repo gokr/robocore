@@ -13,6 +13,7 @@ Logger log = Logger("Robocore");
 
 /// Discord bot
 class Robocore {
+  late Map config;
   late Nyxx bot;
   bool ready = false;
 
@@ -51,6 +52,8 @@ class Robocore {
       floorLPinETH,
       floorLiquidity,
       supplyLP;
+
+  Robocore(this.config);
 
   // Just testing stuff
   test() async {
@@ -180,12 +183,9 @@ class Robocore {
 
   start() async {
     openDatabase();
-    var token = await File('bot-token.txt').readAsString();
-    String wsUrl = await File('bot-wsurl.txt').readAsString();
-    String apiUrl = await File('bot-apiurl.txt').readAsString();
 
-    bot = Nyxx(token);
-    core = Core.randomKey(apiUrl, wsUrl);
+    bot = Nyxx(config['nyxx']);
+    core = Core.randomKey(config['apiurl'], config['wsurl']);
     await core.readContracts();
 
     buildCommands();

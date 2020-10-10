@@ -1,20 +1,30 @@
 name: robocore
 description: A discord bot for CORE
-version: 0.1.0
+version: 0.2.0
 homepage: https://github.com/gokr/robocore.git
 author: Göran Krampe <goran.krampe@gmail.com>
 
 environment:
-  sdk: '>=2.9.0 <3.0.0'
+  sdk: '>=2.9.3 <3.0.0'
 
 executables:  
   robocore: robocore
 
 dependencies:
+  path:
   http: ^0.12.0
   logging: ^0.11.3+2
   cron: ^0.2.3
+
+  # Discord library
   nyxx: ^1.0.2
+  # Telegram library
+  teledart: ^0.0.50
+  
+  # Ethereum library
   web3dart: ^1.2.3
+  # Formatting numbers etc 
   intl: ^0.16.1
   test: ^1.14.3
+  # For easy config file
+  yaml: ^2.2.1

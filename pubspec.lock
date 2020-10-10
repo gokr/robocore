@@ -169,6 +169,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.6.2"
+  json_annotation:
+    dependency: transitive
+    description:
+      name: json_annotation
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.1.0"
   json_rpc_2:
     dependency: transitive
     description:
@@ -247,7 +254,7 @@ packages:
     source: hosted
     version: "1.0.10"
   path:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path
       url: "https://pub.dartlang.org"
@@ -294,7 +301,7 @@ packages:
       name: sass
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.26.11"
+    version: "1.27.0"
   shelf:
     dependency: transitive
     description:
@@ -388,6 +395,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.5"
+  teledart:
+    dependency: "direct main"
+    description:
+      name: teledart
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.50"
   term_glyph:
     dependency: transitive
     description:
@@ -487,11 +501,11 @@ packages:
     source: hosted
     version: "0.7.3"
   yaml:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: yaml
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.2.1"
 sdks:
-  dart: ">=2.9.0 <3.0.0"
+  dart: ">=2.9.3 <3.0.0"
