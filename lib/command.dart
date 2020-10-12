@@ -11,8 +11,8 @@ const telegramPrefix = "/";
 
 abstract class Command {
   String name, short, syntax, help;
-  List<int> blacklist = [];
-  List<int> whitelist = [];
+  List<String> blacklist = [];
+  List<String> whitelist = [];
 
   Command(this.name, this.short, this.syntax, this.help);
 
@@ -27,9 +27,9 @@ abstract class Command {
   // Either whitelisted or blacklisted (can't be both)
   bool listChecked(MessageReceivedEvent e) {
     if (whitelist.isNotEmpty) {
-      return whitelist.contains(e.message.channel.id);
+      return whitelist.contains(e.message.channel.id.toString());
     } else {
-      return !blacklist.contains(e.message.channel.id);
+      return !blacklist.contains(e.message.channel.id.toString());
     }
   }
 

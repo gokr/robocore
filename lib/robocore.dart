@@ -181,9 +181,9 @@ class Robocore {
       ..add(
           LogCommand("log", "l", "log", "`l|log [add|remove] [all|price|whale|swap]`\nControl logging of events in this channel. Note that this is per channel. Only \"log\" will show active loggers.")
             ..whitelist = [
-              759890072392302592,
-              764120413507813417,
-              763138788297408552
+              "<#759890072392302592>",
+              "<#764120413507813417>",
+              "<#763138788297408552>"
             ]) // price-discussion, robocore, robocore-development
       ..add(PriceCommand("price", "p", "price",
           "`price|p [[<amount>] eth|core|lp]`\nShow prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use amount like \"!p 10 core\"."))
@@ -201,11 +201,6 @@ class Robocore {
   start() async {
     await openDatabase(config);
     log.info("Postgres opened: ${db.databaseName}");
-
-    //await Swap.dropTable();
-    //print("dropped");
-    //await Swap.createTable();
-    //print("created");
 
     // Create our two bots
     discord = Nyxx(config['nyxx']);
