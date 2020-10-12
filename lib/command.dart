@@ -11,8 +11,8 @@ const telegramPrefix = "/";
 
 abstract class Command {
   String name, short, syntax, help;
-  List<String> blacklist = [];
-  List<String> whitelist = [];
+  List<int> blacklist = [];
+  List<int> whitelist = [];
 
   Command(this.name, this.short, this.syntax, this.help);
 
@@ -27,9 +27,9 @@ abstract class Command {
   // Either whitelisted or blacklisted (can't be both)
   bool listChecked(MessageReceivedEvent e) {
     if (whitelist.isNotEmpty) {
-      return whitelist.contains(e.message.channel.id.toString());
+      return whitelist.contains(e.message.channel.id);
     } else {
-      return !blacklist.contains(e.message.channel.id.toString());
+      return !blacklist.contains(e.message.channel.id);
     }
   }
 
@@ -50,7 +50,7 @@ abstract class Command {
 
   _logDiscordCommand(MessageReceivedEvent e) {
     log.info(
-        "Command: ${e.message.author}: ${e.message.content} ${e.message.channel})");
+        "Command: ${e.message.author}: ${e.message.content} channel: ${e.message.channel.id})");
   }
 
   bool availableIn(String channel) {
