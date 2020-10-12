@@ -24,14 +24,13 @@ abstract class Command {
     return false;
   }
 
-  // Either whitelisted or blacklisted (can't be both)
+  // Either whitelisted or blacklisted (can't be both). DMs are fine.
   bool listChecked(MessageReceivedEvent e) {
+    if (e.message.channel.type == ChannelType.dm) return true;
     if (whitelist.isNotEmpty) {
-      print(e.message.channel.id);
-      print(e.message.channel.id == 764120413507813417);
-      return whitelist.contains(e.message.channel.id);
+      return whitelist.contains(e.message.channel.id.id);
     } else {
-      return !blacklist.contains(e.message.channel.id);
+      return !blacklist.contains(e.message.channel.id.id);
     }
   }
 
@@ -367,7 +366,7 @@ class StatsCommand extends Command {
       final embed = EmbedBuilder()
         ..addField(
             name: "Pooled",
-            content: "${dec0(bot.poolCORE)} CORE ${dec0(bot.poolETH)} ETH")
+            content: "${dec0(bot.poolCORE)}, CORE ${dec0(bot.poolETH)} ETH")
         ..addField(
             name: "Liquidity",
             content: "${usd0(bot.poolETHinUSD + bot.poolCOREinUSD)}")
