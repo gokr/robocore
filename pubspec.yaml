@@ -28,3 +28,5 @@ dependencies:
   test: ^1.14.3
   # For easy config file
   yaml: ^2.2.1
+
+  postgres: ^2.2.0

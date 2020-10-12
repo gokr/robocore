@@ -9,3 +9,11 @@ apiurl: https://yaddayadda.com/blabla
 
 # The Discord bot token for Nyxx
 nyxx: LotsOfFunnyCharacters-NzYzMDasdsadQ2MjU1NDc23hjj3k53h4ghjsfsf4
+
+# The PostgreSQL connection
+postgresql:
+  username: robocore
+  password: robocore
+  host: localhost
+  port: 5432
+  databaseName: robocore

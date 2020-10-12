@@ -1,0 +1,2 @@
+#dart --enable-experiment=non-nullable bin/robocore.dart
+dart --enable-experiment=non-nullable --no-null-safety bin/roboserver.dart
