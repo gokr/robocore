@@ -365,7 +365,7 @@ class StatsCommand extends Command {
       final embed = EmbedBuilder()
         ..addField(
             name: "Pooled",
-            content: "${dec0(bot.poolCORE)} CORE, ${dec0(bot.poolETH)} ETH")
+            content: "${dec0(bot.poolCORE)} CORE ${dec0(bot.poolETH)} ETH")
         ..addField(
             name: "Liquidity",
             content: "${usd0(bot.poolETHinUSD + bot.poolCOREinUSD)}")
@@ -373,7 +373,7 @@ class StatsCommand extends Command {
         ..addField(
             name: "Cumulative rewards",
             content:
-                "${usd0(bot.rewardsInUSD)}, (${dec2(bot.rewardsInCORE)} CORE)")
+                "${usd0(bot.rewardsInUSD)} (${dec2(bot.rewardsInCORE)} CORE)")
         ..addFooter((footer) {
           footer.text = "Stay CORE and keep HODLING!";
         })
