@@ -25,10 +25,17 @@ Then we can install PostgreSQL:
 
         sudo apt install postgresql postgresql-client
 
-Run `setup.sh` to create a database and a user.
+# Database
 
-# As a service
-Use a systemd service file like this:
+Run:
+
+        sudo su postgres
+        psql -c "create database robocore;"
+        psql -c "create user robocore;alter user robocore with password 'robocore';grant all on database robocore to robocore;"
+        exit
+
+# As services
+Use a systemd service file like this for `robocore`, and one for `roboserver`:
 
     [Unit]
     Description=RoboCORE
