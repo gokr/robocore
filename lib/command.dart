@@ -11,8 +11,8 @@ const telegramPrefix = "/";
 
 abstract class Command {
   String name, short, syntax, help;
-  List<String> blacklist = [];
-  List<String> whitelist = [];
+  List<int> blacklist = [];
+  List<int> whitelist = [];
 
   Command(this.name, this.short, this.syntax, this.help);
 
@@ -24,10 +24,21 @@ abstract class Command {
     return false;
   }
 
+  // Either whitelisted or blacklisted (can't be both)
+  bool listChecked(MessageReceivedEvent e) {
+    if (whitelist.isNotEmpty) {
+      return whitelist.contains(e.message.channel.id);
+    } else {
+      return !blacklist.contains(e.message.channel.id);
+    }
+  }
+
   /// Default implementation of matching a message
   bool _validDiscord(MessageReceivedEvent e) {
-    return e.message.content.startsWith(discordPrefix + name) ||
-        (short != "" && e.message.content.startsWith(discordPrefix + short));
+    return listChecked(e) &&
+        (e.message.content.startsWith(discordPrefix + name) ||
+            (short != "" &&
+                e.message.content.startsWith(discordPrefix + short)));
   }
 
   /// Default implementation of matching a message
@@ -35,6 +46,11 @@ abstract class Command {
     print("I got: ${message.text}");
     return message.text.startsWith(telegramPrefix + name) ||
         (short != "" && message.text.startsWith(discordPrefix + short));
+  }
+
+  _logDiscordCommand(MessageReceivedEvent e) {
+    log.info(
+        "Command: ${e.message.author}: ${e.message.content} ${e.message.channel})");
   }
 
   bool availableIn(String channel) {
@@ -55,6 +71,7 @@ class HelpCommand extends Command {
   @override
   Future<bool> execDiscord(MessageReceivedEvent e, Robocore robot) async {
     if (_validDiscord(e)) {
+      _logDiscordCommand(e);
       await e.message.channel.send(embed: robot.buildHelp(e.message.channel));
       return true;
     }
@@ -77,6 +94,7 @@ class PriceCommand extends Command {
   @override
   Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
     if (_validDiscord(e)) {
+      _logDiscordCommand(e);
       await bot.updatePriceInfo();
       var parts = splitMessage(e);
       String? coin, amountString;
@@ -151,6 +169,7 @@ class FloorCommand extends Command {
   @override
   Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
     if (_validDiscord(e)) {
+      _logDiscordCommand(e);
       await bot.updatePriceInfo();
       final embed = EmbedBuilder()
         ..addAuthor((author) {
@@ -199,6 +218,7 @@ class FAQCommand extends Command {
   @override
   Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
     if (_validDiscord(e)) {
+      _logDiscordCommand(e);
       final embed = EmbedBuilder()
         ..addAuthor((author) {
           author.name = "Various links to good info";
@@ -227,6 +247,7 @@ class LogCommand extends Command {
   @override
   Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
     if (_validDiscord(e)) {
+      _logDiscordCommand(e);
       var ch = e.message.channel;
       var parts = splitMessage(e);
       var loggers =
@@ -301,6 +322,7 @@ class ContractsCommand extends Command {
   @override
   Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
     if (_validDiscord(e)) {
+      _logDiscordCommand(e);
       final embed = EmbedBuilder()
         ..addAuthor((author) {
           author.name = "Links to CORE token and CORE-ETH trading pair";
@@ -339,6 +361,7 @@ class StatsCommand extends Command {
   Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
     await bot.updatePriceInfo();
     if (_validDiscord(e)) {
+      _logDiscordCommand(e);
       final embed = EmbedBuilder()
         ..addField(
             name: "Pooled",
