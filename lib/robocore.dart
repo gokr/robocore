@@ -121,9 +121,15 @@ class Robocore {
     // Floor calculations
     // Then k needs to be preserved so if we sell all outsideCORE into the pool
     // then new poolETH needs to be this (all 10000 CORE now in pool) in order
-    // to make sure poolK stays the same.
-    var newPoolETH = poolK / 10000;
-    // This then gives us a new price - the so called floor price
+    // to make sure poolK stays the same. However, to be precise we take special
+    // care of the 0.3 % Uniswap fee since that goes to pool, increasing liquidity,
+    // and should not be included in the k-balancing formula.
+
+    // This was without taking Uniswap fee into account:
+    //var newPoolETH = poolK / 10000;
+    // 0.3% (the Uniswap fee) of the outsideCORE is not included in balancing k.
+    var newPoolETH = poolK / (poolCORE + (10000 - poolCORE) * 0.997);
+    // This then gives us a new price - the so called floor price!
     floorCOREinETH = newPoolETH / 10000;
     floorCOREinUSD = floorCOREinETH * priceETHinUSD;
     // The liquidity is simply twice newPoolETH
