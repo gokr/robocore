@@ -85,7 +85,7 @@ class Robocore {
   query() async {
     await updatePriceInfo();
     rewardsInCORE = raw18(await core.cumulativeRewardsSinceStart());
-    rewardsInUSD = rewardsInCORE * priceETHinUSD;
+    rewardsInUSD = rewardsInCORE * priceCOREinUSD;
   }
 
   /// Call getReserves on both CORE-ETH and ETH-USDT pairs on Uniswap
