@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:cron/cron.dart';
 import 'package:logging/logging.dart';
@@ -7,15 +6,22 @@ import 'package:nyxx/nyxx.dart';
 import 'package:robocore/command.dart';
 import 'package:robocore/core.dart';
 import 'package:robocore/event_logger.dart';
-import 'package:robocore/swap.dart';
+import 'package:robocore/model/swap.dart';
+import 'package:teledart/model.dart';
+import 'package:teledart/teledart.dart';
+import 'package:teledart/telegram.dart';
+
+import 'database.dart';
 
 Logger log = Logger("Robocore");
 
 /// Discord bot
 class Robocore {
   late Map config;
-  late Nyxx bot;
-  bool ready = false;
+  late Nyxx discord;
+  bool discordReady = false;
+  late TeleDart teledart;
+  bool teledartReady = false;
 
   // All loggers
   List<EventLogger> loggers = [];
@@ -25,7 +31,7 @@ class Robocore {
 
   late StreamSubscription subscription;
 
-  ClientUser get self => bot.self;
+  ClientUser get self => discord.self;
 
   /// Commands
   List<Command> commands = [];
@@ -140,17 +146,19 @@ class Robocore {
   }
 
   updateUsername() async {
-    if (ready) {
-      await bot.self.edit(username: "RoboCORE", avatar: File("www/robo.png"));
-      /*try {
+    /*if (ready) {
+      await discord.self
+          .edit(username: "RoboCORE", avatar: File("www/robo.png"));
+      try {
         print("Getting guild");
         var guild = await bot.getGuild(Snowflake("759889689409749052"));
         print("Got guild! $guild");
         guild.changeSelfNick("RoboCORE ${usd0(priceCOREinUSD)}");
       } catch (e) {
         print(e);
-      }*/
+      }
     }
+  */
   }
 
   buildCommands() {
@@ -179,12 +187,20 @@ class Robocore {
     }
   }
 
-  openDatabase() {}
-
   start() async {
-    openDatabase();
+    await openDatabase(config);
+    log.info("Postgres opened: ${db.databaseName}");
 
-    bot = Nyxx(config['nyxx']);
+    //await Swap.dropTable();
+    //print("dropped");
+    //await Swap.createTable();
+    //print("created");
+
+    // Create our two bots
+    discord = Nyxx(config['nyxx']);
+    teledart = TeleDart(Telegram(config['teledart']), Event());
+
+    // Create our interface with Ethereum
     core = Core.randomKey(config['apiurl'], config['wsurl']);
     await core.readContracts();
 
@@ -205,21 +221,36 @@ class Robocore {
     subscription = core.listenToEvent(core.CORE2ETH, 'Swap', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
       var swap = Swap.from(ev, event);
-      swap.save();
       updatePriceInfo();
       performLogging(swap);
     });
 
     // Hook up to Discord messages
-    bot.onReady.listen((ReadyEvent e) async {
-      log.info("Robocore ready!");
-      ready = true;
+    discord.onReady.listen((ReadyEvent e) async {
+      log.info("Robocore in Discord is ready!");
+      discordReady = true;
       await updateUsername();
     });
 
-    bot.onMessageReceived.listen((MessageReceivedEvent e) async {
+    discord.onMessageReceived.listen((MessageReceivedEvent event) async {
       for (var cmd in commands) {
-        if (await cmd.exec(e, this)) {
+        if (await cmd.execDiscord(event, this)) {
+          return;
+        }
+      }
+    });
+
+    // Hook up to Telegram messages
+    teledart.start().then((me) {
+      log.info('RoboCORE in Telegram is ready!');
+      teledartReady = true;
+    });
+
+    teledart
+        .onMessage(entityType: 'bot_command')
+        .listen((TeleDartMessage message) async {
+      for (var cmd in commands) {
+        if (await cmd.execTelegram(message, this)) {
           return;
         }
       }
@@ -231,7 +262,7 @@ class Robocore {
       ..addAuthor((author) {
         author
           ..name = "RoboCORE"
-          ..iconUrl = bot.self.avatarURL();
+          ..iconUrl = discord.self.avatarURL();
       });
     for (var cmd in commands) {
       if (cmd.availableIn(channel.id.toString())) {

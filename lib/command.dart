@@ -4,8 +4,10 @@ import 'package:nyxx/nyxx.dart';
 import 'package:robocore/core.dart';
 import 'package:robocore/event_logger.dart';
 import 'package:robocore/robocore.dart';
+import 'package:teledart/model.dart';
 
-const prefix = "!";
+const discordPrefix = "!";
+const telegramPrefix = "/";
 
 abstract class Command {
   String name, short, syntax, help;
@@ -14,13 +16,25 @@ abstract class Command {
 
   Command(this.name, this.short, this.syntax, this.help);
 
-  /// Perform the command, returns true if we matched
-  Future<bool> exec(MessageReceivedEvent e, Robocore robot);
+  /// Handle the command, returns true if handled
+  Future<bool> execDiscord(MessageReceivedEvent event, Robocore robot);
+
+  /// Handle the command, returns true if handled
+  Future<bool> execTelegram(TeleDartMessage message, Robocore robot) async {
+    return false;
+  }
 
   /// Default implementation of matching a message
-  bool valid(MessageReceivedEvent e) {
-    return e.message.content.startsWith(prefix + name) ||
-        (short != "" && e.message.content.startsWith(prefix + short));
+  bool _validDiscord(MessageReceivedEvent e) {
+    return e.message.content.startsWith(discordPrefix + name) ||
+        (short != "" && e.message.content.startsWith(discordPrefix + short));
+  }
+
+  /// Default implementation of matching a message
+  bool _validTelegram(TeleDartMessage message) {
+    print("I got: ${message.text}");
+    return message.text.startsWith(telegramPrefix + name) ||
+        (short != "" && message.text.startsWith(discordPrefix + short));
   }
 
   bool availableIn(String channel) {
@@ -31,17 +45,26 @@ abstract class Command {
     return e.message.content.split(RegExp('\\s+'));
   }
 
-  String get command => "$prefix$name";
-  String get shortCommand => "$prefix$short";
+  String get command => "$discordPrefix$name";
+  String get shortCommand => "$discordPrefix$short";
 }
 
 class HelpCommand extends Command {
   HelpCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(MessageReceivedEvent e, Robocore robot) async {
-    if (valid(e)) {
+  Future<bool> execDiscord(MessageReceivedEvent e, Robocore robot) async {
+    if (_validDiscord(e)) {
       await e.message.channel.send(embed: robot.buildHelp(e.message.channel));
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  Future<bool> execTelegram(TeleDartMessage message, Robocore robot) async {
+    if (_validTelegram(message)) {
+      await message.reply("not yet fixed for Telegram");
       return true;
     }
     return false;
@@ -52,8 +75,8 @@ class PriceCommand extends Command {
   PriceCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
-    if (valid(e)) {
+  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
+    if (_validDiscord(e)) {
       await bot.updatePriceInfo();
       var parts = splitMessage(e);
       String? coin, amountString;
@@ -115,14 +138,19 @@ class PriceCommand extends Command {
     }
     return false;
   }
+
+  @override
+  Future<bool> execTelegram(TeleDartMessage message, Robocore robot) async {
+    return false;
+  }
 }
 
 class FloorCommand extends Command {
   FloorCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
-    if (valid(e)) {
+  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
+    if (_validDiscord(e)) {
       await bot.updatePriceInfo();
       final embed = EmbedBuilder()
         ..addAuthor((author) {
@@ -146,14 +174,31 @@ class FloorCommand extends Command {
     }
     return false;
   }
+
+  @override
+  Future<bool> execTelegram(TeleDartMessage message, Robocore bot) async {
+    if (_validTelegram(message)) {
+      await bot.updatePriceInfo();
+      await message.reply("""
+Floor prices calculated from contracts
+
+<b>Floor CORE</b>
+1 CORE = ${usd2(bot.floorCOREinUSD)} (${dec4(bot.floorCOREinETH)} ETH)
+<b>Floor LP</b>
+1 LP = ${usd2(bot.floorLPinUSD)} (${dec4(bot.floorLPinETH)} ETH)
+""", parse_mode: 'HTML');
+      return true;
+    }
+    return false;
+  }
 }
 
 class FAQCommand extends Command {
   FAQCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
-    if (valid(e)) {
+  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
+    if (_validDiscord(e)) {
       final embed = EmbedBuilder()
         ..addAuthor((author) {
           author.name = "Various links to good info";
@@ -180,8 +225,8 @@ class LogCommand extends Command {
   LogCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
-    if (valid(e)) {
+  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
+    if (_validDiscord(e)) {
       var ch = e.message.channel;
       var parts = splitMessage(e);
       var loggers =
@@ -254,8 +299,8 @@ class ContractsCommand extends Command {
       : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
-    if (valid(e)) {
+  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
+    if (_validDiscord(e)) {
       final embed = EmbedBuilder()
         ..addAuthor((author) {
           author.name = "Links to CORE token and CORE-ETH trading pair";
@@ -291,9 +336,9 @@ class StatsCommand extends Command {
   StatsCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
+  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
     await bot.updatePriceInfo();
-    if (valid(e)) {
+    if (_validDiscord(e)) {
       final embed = EmbedBuilder()
         ..addField(
             name: "Pooled",
@@ -301,6 +346,7 @@ class StatsCommand extends Command {
         ..addField(
             name: "Liquidity",
             content: "${usd0(bot.poolETHinUSD + bot.poolCOREinUSD)}")
+        ..addField(name: "Total issued LP", content: "${dec0(bot.supplyLP)}")
         ..addField(
             name: "Cumulative rewards",
             content:
@@ -323,7 +369,7 @@ class MentionCommand extends Command {
   MentionCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(MessageReceivedEvent e, Robocore bot) async {
+  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
     if (e.message.mentions.contains(bot.self)) {
       const replies = [
         "Who, me? I am good! :smile:",
