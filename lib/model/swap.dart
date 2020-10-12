@@ -42,14 +42,13 @@ class Swap {
 
   static Future<PostgreSQLResult> createTable() async {
     return await db.query(
-        "create table _swap (id integer, created timestamp, sender text, _to text, tx text, sell boolean, amount0In numeric,amount0Out numeric,amount1In numeric,amount1Out numeric);");
+        "create table _swap (swap_id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(swap_id), pair integer, created timestamp, sender text, _to text, tx text, sell boolean, amount0In numeric, amount0Out numeric, amount1In numeric, amount1Out numeric, amount numeric);");
   }
 
   Future<void> save() async {
     await db.query(
-        "INSERT INTO _swap (id,created,sender,_to,tx,sell,amount0In,amount0Out,amount1In,amount1Out) VALUES (@id,@created,@sender,@to,@tx,@sell,@amount0In,@amount0Out,@amount1In,@amount1Out)",
+        "INSERT INTO _swap (created, sender, _to, tx, sell, amount0In, amount0Out, amount1In, amount1Out, amount) VALUES (@created, @sender, @to, @tx, @sell, @amount0In, @amount0Out, @amount1In, @amount1Out, @amount)",
         substitutionValues: {
-          "id": 1,
           "created": created.toIso8601String(),
           "sender": sender.hex,
           "to": to.hex,
@@ -59,6 +58,7 @@ class Swap {
           "amount0Out": amount0Out.toString(),
           "amount1In": amount1In.toString(),
           "amount1Out": amount1Out.toString(),
+          "amount": amount.toString(),
         });
   }
 

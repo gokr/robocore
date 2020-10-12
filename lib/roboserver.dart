@@ -96,8 +96,12 @@ class Roboserver {
 
     //await Swap.dropTable();
     //print("dropped");
-    //await Swap.createTable();
-    //print("created");
+    try {
+      await Swap.createTable();
+      log.info("Created Swap table");
+    } catch (e) {
+      print(e);
+    }
 
     // Create our interface with Ethereum
     core = Core.randomKey(config['apiurl'], config['wsurl']);
