@@ -178,8 +178,13 @@ class Robocore {
           "`stats|s`\nShow some basic statistics about CORE, refreshed every minute."))
       ..add(ContractsCommand("contracts", "c", "contracts",
           "`contracts|c`\nShow links to contracts."))
-      ..add(LogCommand("log", "l", "log",
-          "`l|log [add|remove] [all|price|whale|swap]`\nControl logging of events in this channel. Note that this is per channel. Only \"log\" will show active loggers."))
+      ..add(
+          LogCommand("log", "l", "log", "`l|log [add|remove] [all|price|whale|swap]`\nControl logging of events in this channel. Note that this is per channel. Only \"log\" will show active loggers.")
+            ..whitelist = [
+              759890072392302592,
+              764120413507813417,
+              763138788297408552
+            ]) // price-discussion, robocore, robocore-development
       ..add(PriceCommand("price", "p", "price",
           "`price|p [[<amount>] eth|core|lp]`\nShow prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use amount like \"!p 10 core\"."))
       ..add(FloorCommand("floor", "f", "floor",
