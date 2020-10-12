@@ -27,6 +27,8 @@ abstract class Command {
   // Either whitelisted or blacklisted (can't be both)
   bool listChecked(MessageReceivedEvent e) {
     if (whitelist.isNotEmpty) {
+      print(e.message.channel.id);
+      print(e.message.channel.id == 764120413507813417);
       return whitelist.contains(e.message.channel.id);
     } else {
       return !blacklist.contains(e.message.channel.id);
