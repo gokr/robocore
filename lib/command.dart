@@ -1,13 +1,26 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:nyxx/nyxx.dart';
 import 'package:robocore/core.dart';
 import 'package:robocore/event_logger.dart';
+import 'package:robocore/poster.dart';
 import 'package:robocore/robocore.dart';
-import 'package:teledart/model.dart';
 
 const discordPrefix = "!";
 const telegramPrefix = "/";
+
+// Hacky, but ok
+String trimQuotes(String s) {
+  var trimmed = s;
+  if (s.startsWith("'")) {
+    trimmed = s.substring(1);
+  }
+  if (trimmed.endsWith("'")) {
+    return trimmed.substring(0, trimmed.length - 1);
+  }
+  return trimmed;
+}
 
 abstract class Command {
   String name, short, syntax, help;
@@ -17,49 +30,29 @@ abstract class Command {
   Command(this.name, this.short, this.syntax, this.help);
 
   /// Handle the command, returns true if handled
-  Future<bool> execDiscord(MessageReceivedEvent event, Robocore robot);
+  Future<bool> exec(RoboWrapper bot);
 
-  /// Handle the command, returns true if handled
-  Future<bool> execTelegram(TeleDartMessage message, Robocore robot) async {
-    return false;
+  /// Handle the command, returns a String if handled, otherwise null
+  Future<String?> inlineTelegram(String cmd, Robocore robot) async {
+    return null;
   }
 
   // Either whitelisted or blacklisted (can't be both). DMs are fine.
   bool listChecked(MessageReceivedEvent e) {
     if (e.message.channel.type == ChannelType.dm) return true;
+    return listCheckedChannel(e.message.channel);
+  }
+
+  bool listCheckedChannel(ITextChannel channel) {
     if (whitelist.isNotEmpty) {
-      return whitelist.contains(e.message.channel.id.id);
+      return whitelist.contains(channel.id.id);
     } else {
-      return !blacklist.contains(e.message.channel.id.id);
+      return !blacklist.contains(channel.id.id);
     }
   }
 
-  /// Default implementation of matching a message
-  bool _validDiscord(MessageReceivedEvent e) {
-    return listChecked(e) &&
-        (e.message.content.startsWith(discordPrefix + name) ||
-            (short != "" &&
-                e.message.content.startsWith(discordPrefix + short)));
-  }
-
-  /// Default implementation of matching a message
-  bool _validTelegram(TeleDartMessage message) {
-    print("I got: ${message.text}");
-    return message.text.startsWith(telegramPrefix + name) ||
-        (short != "" && message.text.startsWith(discordPrefix + short));
-  }
-
-  _logDiscordCommand(MessageReceivedEvent e) {
-    log.info(
-        "Command: ${e.message.author}: ${e.message.content} channel: ${e.message.channel.id})");
-  }
-
-  bool availableIn(String channel) {
-    return true;
-  }
-
-  List<String> splitMessage(MessageReceivedEvent e) {
-    return e.message.content.split(RegExp('\\s+'));
+  bool availableIn(ITextChannel channel) {
+    return listCheckedChannel(channel);
   }
 
   String get command => "$discordPrefix$name";
@@ -70,10 +63,109 @@ class HelpCommand extends Command {
   HelpCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
+  Future<bool> exec(RoboWrapper bot) async {
+    await bot.reply(bot.buildHelp());
+    return true;
+  }
+}
+
+class PosterCommand extends Command {
+  PosterCommand(name, short, syntax, help) : super(name, short, syntax, help);
+
+  @override
+  Future<bool> exec(RoboWrapper bot) async {
+    if (bot is RoboDiscord) {
+      var chId = bot.e.message.channel.id.id;
+      var posters = bot.bot.posters.where((p) => p.channelId == chId);
+      var parts = bot.parts;
+      // poster = shows posters
+      // poster remove xxx = removes a named poster
+      // poster add xxx '{"channel": "end": "2020-10-29T12:12:12", "recreate": 20, "update": 1,
+      // "title": "LGE 2 is coming!", "image": "aURL", "thumbnail": "aURL", "fields": [{"label": "Countdown", "content": "{{timer}}"}]}'
+      if (parts.length == 1) {
+        String active = posters.join(" ");
+        await bot.reply("Active posters: $active");
+        return true;
+      }
+      if (parts.length == 2) {
+        await bot.reply("Use add|remove");
+        return true;
+      }
+      if (parts.length < 3) {
+        await bot.reply("Too few arguments");
+        return true;
+      }
+
+      if (!["add", "remove"].contains(parts[1])) {
+        await bot.reply("Use add|remove");
+        return true;
+      }
+      bool add = parts[1] == "add";
+      var name = parts[2];
+      if (!add) {
+        bot.bot.removePoster(name, chId);
+        await bot.reply("Removed poster $name");
+        return true;
+      }
+
+      // Create a Poster
+
+      try {
+        var json = jsonDecode(trimQuotes(parts[3]));
+        var poster = Poster.fromJson(name, json);
+        bot.bot.addPoster(poster);
+      } catch (e) {
+        await bot.reply("Failed: $e");
+        return true;
+      }
+    } else {
+      await bot.reply("Working on it!");
+    }
+    return false;
+  }
+}
+
+/*
+class StickyCommand extends Command {
+  StickyCommand(name, short, syntax, help) : super(name, short, syntax, help);
+
+  @override
   Future<bool> execDiscord(MessageReceivedEvent e, Robocore robot) async {
     if (_validDiscord(e)) {
       _logDiscordCommand(e);
-      await e.message.channel.send(embed: robot.buildHelp(e.message.channel));
+      var parts = splitMessage(e);
+      String? name, sticky;
+      // Only !sticky
+      if (parts.length == 1) {
+        await e.message.channel.send(
+            content: "Use for example !sticky mysticky \"Yaddayadd, blabla\"");
+        return true;
+      }
+      // Also name given
+      if (parts.length == 2) {
+        await e.message.channel.send(
+            content: "Use for example !sticky mysticky \"Yaddayadd, blabla\"");
+        return true;
+      } else {
+        name = parts[2];
+        sticky = parts[3];
+        // Remove "" around sticky
+        if (sticky.startsWith("\"")) {
+          sticky = sticky.substring(1, sticky.length - 1);
+        }
+      }
+      // Create or update sticky with name
+      var snowflake = robot.stickies[name];
+      if (snowflake != null) {
+        var sticky = await e.message.channel.getMessage(snowflake);
+      } else {
+        // Create it
+        Message()
+        await e.message.channel.send(
+            content: "No sticky called $name found");
+        return true;
+      }
+      sticky.
       return true;
     }
     return false;
@@ -88,91 +180,94 @@ class HelpCommand extends Command {
     return false;
   }
 }
-
+*/
 class PriceCommand extends Command {
   PriceCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
-    if (_validDiscord(e)) {
-      _logDiscordCommand(e);
-      await bot.updatePriceInfo();
-      var parts = splitMessage(e);
-      String? coin, amountString;
-      num amount = 1;
-      // Only !p or !price
-      if (parts.length == 1) {
-        final embed = EmbedBuilder()
+  Future<bool> exec(RoboWrapper bot) async {
+    await bot.bot.updatePriceInfo();
+    var parts = bot.parts;
+    String? coin, amountString;
+    num amount = 1;
+    // Only !p or !price
+    if (parts.length == 1) {
+      dynamic answer;
+      if (bot is RoboDiscord) {
+        answer = EmbedBuilder()
           ..addAuthor((author) {
             author.name = "Prices fresh directly from contracts";
             //author.iconUrl = e.message.author.avatarURL();
           })
-          ..addField(name: "Price CORE", content: bot.priceStringCORE())
-          ..addField(name: "Price ETH", content: bot.priceStringETH())
-          ..addField(name: "Price LP", content: bot.priceStringLP())
+          ..addField(name: "Price CORE", content: bot.bot.priceStringCORE())
+          ..addField(name: "Price ETH", content: bot.bot.priceStringETH())
+          ..addField(name: "Price LP", content: bot.bot.priceStringLP())
           ..timestamp = DateTime.now().toUtc()
-          ..color = (e.message.author is CacheMember)
-              ? (e.message.author as CacheMember).color
-              : DiscordColor.black;
-        await e.message.channel.send(embed: embed);
-        return true;
-      }
-      // Also coin given
-      if (parts.length == 2) {
-        coin = parts[1];
+          ..color = bot.color();
       } else {
-        coin = parts[2];
-        amountString = parts[1];
+        answer = """
+<b>Price CORE:</b> ${bot.bot.priceStringCORE()}
+<b>Price ETH:</b> ${bot.bot.priceStringETH()}
+<b>Price LP:</b> ${bot.bot.priceStringLP()}
+""";
       }
-      // Check valid coins
-      if (!["core", "eth", "lp"].contains(coin)) {
-        await e.message.channel
-            .send(content: "Coin can be core, eth or lp, not \"$coin\"");
-        return true;
-      }
-      // Parse amount as num
-      if (amountString != null) {
-        try {
-          amount = num.parse(amountString);
-        } catch (ex) {
-          await e.message.channel.send(
-              content:
-                  "Amount not a number: ${parts[2]}. Use for example \"!p 10 core\"");
-          return true;
-        }
-      }
-      // Time to answer
-      switch (coin) {
-        case "core":
-          await e.message.channel.send(content: bot.priceStringCORE(amount));
-          break;
-        case "eth":
-          await e.message.channel.send(content: bot.priceStringETH(amount));
-          break;
-        case "lp":
-          await e.message.channel.send(content: bot.priceStringLP(amount));
-          break;
-      }
+      await bot.reply(answer);
       return true;
     }
-    return false;
+    // Also coin given
+    if (parts.length == 2) {
+      coin = parts[1];
+    } else {
+      coin = parts[2];
+      amountString = parts[1];
+    }
+    // Check valid coins
+    if (!["core", "eth", "lp"].contains(coin)) {
+      await bot.reply("Coin can be core, eth or lp, not \"$coin\"");
+      return true;
+    }
+    // Parse amount as num
+    if (amountString != null) {
+      try {
+        amount = num.parse(amountString);
+      } catch (ex) {
+        await bot.reply(
+            "Amount not a number: ${parts[2]}. Use for example \"!p 10 core\"");
+        return true;
+      }
+    }
+    // Time to answer
+    switch (coin) {
+      case "core":
+        await bot.reply(bot.bot.priceStringCORE(amount));
+        break;
+      case "eth":
+        await bot.reply(bot.bot.priceStringETH(amount));
+        break;
+      case "lp":
+        await bot.reply(bot.bot.priceStringLP(amount));
+        break;
+    }
+    return true;
   }
 
-  @override
-  Future<bool> execTelegram(TeleDartMessage message, Robocore robot) async {
-    return false;
-  }
+  /// Handle the command, returns true if handled
+  /*Future<String?> inlineTelegram(String cmd, Robocore robot) async {
+    if (_validTelegramCommand(cmd)) {
+      return robot.priceStringCORE(1);
+    }
+  }*/
 }
 
 class FloorCommand extends Command {
   FloorCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
-    if (_validDiscord(e)) {
-      _logDiscordCommand(e);
-      await bot.updatePriceInfo();
-      final embed = EmbedBuilder()
+  Future<bool> exec(RoboWrapper bot) async {
+    dynamic answer;
+    await bot.bot.updatePriceInfo();
+    if (bot is RoboDiscord) {
+      answer = EmbedBuilder()
         ..addAuthor((author) {
           author.name = "Floor prices calculated from contracts";
           //author.iconUrl = e.message.author.avatarURL();
@@ -180,47 +275,42 @@ class FloorCommand extends Command {
         ..addField(
             name: "Floor CORE",
             content:
-                "1 CORE = ${usd2(bot.floorCOREinUSD)} (${dec4(bot.floorCOREinETH)} ETH)")
+                "1 CORE = ${usd2(bot.bot.floorCOREinUSD)} (${dec4(bot.bot.floorCOREinETH)} ETH)")
         ..addField(
             name: "Floor LP",
             content:
-                "1 LP = ${usd2(bot.floorLPinUSD)} (${dec4(bot.floorLPinETH)} ETH)")
+                "1 LP = ${usd2(bot.bot.floorLPinUSD)} (${dec4(bot.bot.floorLPinETH)} ETH)")
         ..timestamp = DateTime.now().toUtc()
-        ..color = (e.message.author is CacheMember)
-            ? (e.message.author as CacheMember).color
-            : DiscordColor.black;
-      await e.message.channel.send(embed: embed);
-      return true;
-    }
-    return false;
-  }
-
-  @override
-  Future<bool> execTelegram(TeleDartMessage message, Robocore bot) async {
-    if (_validTelegram(message)) {
-      await bot.updatePriceInfo();
-      await message.reply("""
-Floor prices calculated from contracts
-
+        ..color = bot.color();
+    } else {
+      answer = """
 <b>Floor CORE</b>
-1 CORE = ${usd2(bot.floorCOREinUSD)} (${dec4(bot.floorCOREinETH)} ETH)
+1 CORE = ${usd2(bot.bot.floorCOREinUSD)} (${dec4(bot.bot.floorCOREinETH)} ETH)
 <b>Floor LP</b>
-1 LP = ${usd2(bot.floorLPinUSD)} (${dec4(bot.floorLPinETH)} ETH)
-""", parse_mode: 'HTML');
-      return true;
+1 LP = ${usd2(bot.bot.floorLPinUSD)} (${dec4(bot.bot.floorLPinETH)} ETH)
+""";
     }
-    return false;
+    await bot.reply(answer);
+    return true;
   }
+
+  /// Handle the command, returns true if handled
+  /*
+  Future<String?> inlineTelegram(String cmd, Robocore robot) async {
+    if (_validTelegramCommand(cmd)) {
+      return robot.floorStringCORE(1);
+    }
+  }*/
 }
 
 class FAQCommand extends Command {
   FAQCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
-    if (_validDiscord(e)) {
-      _logDiscordCommand(e);
-      final embed = EmbedBuilder()
+  Future<bool> exec(RoboWrapper bot) async {
+    dynamic answer;
+    if (bot is RoboDiscord) {
+      answer = EmbedBuilder()
         ..addAuthor((author) {
           author.name = "Various links to good info";
         })
@@ -232,13 +322,27 @@ class FAQCommand extends Command {
         ..addFooter((footer) {
           footer.text = "Keep HODLING";
         })
-        ..color = (e.message.author is CacheMember)
-            ? (e.message.author as CacheMember).color
-            : DiscordColor.black;
-      await e.message.channel.send(embed: embed);
-      return true;
+        ..color = bot.color();
+    } else {
+      answer = """
+<b>FAQ</b>
+https://help.cvault.finance/faqs/faq
+<b>Vision article</b>
+https://medium.com/@0xdec4f/the-idea-project-and-vision-of-core-vault-52f5eddfbfb
+""";
     }
-    return false;
+    bot.reply(answer);
+    return true;
+  }
+}
+
+class StartCommand extends Command {
+  StartCommand(name, short, syntax, help) : super(name, short, syntax, help);
+
+  @override
+  Future<bool> exec(RoboWrapper bot) async {
+    bot.reply("Well, hi there ${bot.sender()}! What can I do for you?");
+    return true;
   }
 }
 
@@ -246,13 +350,12 @@ class LogCommand extends Command {
   LogCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
-    if (_validDiscord(e)) {
-      _logDiscordCommand(e);
-      var ch = e.message.channel;
-      var parts = splitMessage(e);
-      var loggers =
-          bot.loggers.where((logger) => logger.channel == e.message.channel);
+  Future<bool> exec(RoboWrapper w) async {
+    if (w is RoboDiscord) {
+      var bot = w.bot;
+      var ch = w.e.message.channel;
+      var parts = w.parts;
+      var loggers = w.bot.loggers.where((logger) => logger.channel == ch);
       // log = shows loggers
       // log remove all = removes all
       // log add|remove xxx = adds or removes logger
@@ -260,16 +363,16 @@ class LogCommand extends Command {
       // "log"
       if (parts.length == 1) {
         String active = loggers.join(" ");
-        await ch.send(content: "Active loggers: $active");
+        await w.reply("Active loggers: $active");
         return true;
       }
       if (parts.length == 2) {
-        await ch.send(content: "Use add|remove [whale|swap|price|all]");
+        await w.reply("Use add|remove [whale|swap|price|all]");
         return true;
       }
       if (parts.length >= 3) {
         if (!["add", "remove"].contains(parts[1])) {
-          await ch.send(content: "Use add|remove [whale|swap|price|all]");
+          await w.reply("Use add|remove [whale|swap|price|all]");
           return true;
         }
         bool add = parts[1] == "add";
@@ -309,10 +412,12 @@ class LogCommand extends Command {
         }
       }
       String active = bot.loggersFor(ch).join(" ");
-      await ch.send(content: "Active loggers: $active");
+      await w.reply("Active loggers: $active");
+      return true;
+    } else {
+      w.reply("Working on it!");
       return true;
     }
-    return false;
   }
 }
 
@@ -321,10 +426,10 @@ class ContractsCommand extends Command {
       : super(name, short, syntax, help);
 
   @override
-  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
-    if (_validDiscord(e)) {
-      _logDiscordCommand(e);
-      final embed = EmbedBuilder()
+  Future<bool> exec(RoboWrapper bot) async {
+    dynamic answer;
+    if (bot is RoboDiscord) {
+      answer = EmbedBuilder()
         ..addAuthor((author) {
           author.name = "Links to CORE token and CORE-ETH trading pair";
           //author.iconUrl = e.message.author.avatarURL();
@@ -345,13 +450,18 @@ class ContractsCommand extends Command {
             name: "CORE-ETH pair on Etherscan",
             content:
                 "https://etherscan.io/address/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b")
-        ..color = (e.message.author is CacheMember)
-            ? (e.message.author as CacheMember).color
-            : DiscordColor.black;
-      await e.message.channel.send(embed: embed);
-      return true;
+        ..color = bot.color();
+    } else {
+      answer = """
+Links to CORE token and CORE-ETH trading pair
+<a href="https://uniswap.info/token/0x62359ed7505efc61ff1d56fef82158ccaffa23d7">CORE token on Uniswap</a>
+<a href="https://etherscan.io/address/0x62359ed7505efc61ff1d56fef82158ccaffa23d7">CORE token on Etherscan</a>
+<a href="https://uniswap.info/pair/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b">CORE-ETH pair on Uniswap</a>
+<a href="https://etherscan.io/address/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b">CORE-ETH pair on Etherscan</a>
+""";
     }
-    return false;
+    await bot.reply(answer);
+    return true;
   }
 }
 
@@ -359,14 +469,15 @@ class StatsCommand extends Command {
   StatsCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
+  Future<bool> exec(RoboWrapper w) async {
+    dynamic answer;
+    var bot = w.bot;
     await bot.updatePriceInfo();
-    if (_validDiscord(e)) {
-      _logDiscordCommand(e);
-      final embed = EmbedBuilder()
+    if (w is RoboDiscord) {
+      answer = EmbedBuilder()
         ..addField(
             name: "Pooled",
-            content: "${dec0(bot.poolCORE)}, CORE ${dec0(bot.poolETH)} ETH")
+            content: "${dec0(bot.poolCORE)} CORE, ${dec0(bot.poolETH)} ETH")
         ..addField(
             name: "Liquidity",
             content: "${usd0(bot.poolETHinUSD + bot.poolCOREinUSD)}")
@@ -379,13 +490,23 @@ class StatsCommand extends Command {
           footer.text = "Stay CORE and keep HODLING!";
         })
         ..timestamp = DateTime.now().toUtc()
-        ..color = (e.message.author is CacheMember)
-            ? (e.message.author as CacheMember).color
-            : DiscordColor.black;
-      await e.message.channel.send(embed: embed);
-      return true;
+        ..color = w.color();
+    } else {
+      answer = """
+<b>Pooled</b>
+${dec0(bot.poolCORE)} CORE, ${dec0(bot.poolETH)} ETH
+<b>Liquidity</b>
+${usd0(bot.poolETHinUSD + bot.poolCOREinUSD)}
+<b>Total issued LP</b>
+${dec0(bot.supplyLP)}
+<b>Cumulative rewards</b>
+${usd0(bot.rewardsInUSD)} (${dec2(bot.rewardsInCORE)} CORE)
+
+Stay CORE and keep HODLING!
+""";
     }
-    return false;
+    await w.reply(answer);
+    return true;
   }
 }
 
@@ -393,8 +514,8 @@ class MentionCommand extends Command {
   MentionCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> execDiscord(MessageReceivedEvent e, Robocore bot) async {
-    if (e.message.mentions.contains(bot.self)) {
+  Future<bool> exec(RoboWrapper bot) async {
+    if (bot is RoboDiscord && bot.isMention()) {
       const replies = [
         "Who, me? I am good! :smile:",
         "Well, thank you! :blush:",
@@ -407,7 +528,7 @@ class MentionCommand extends Command {
         "It's always darkest just before it goes pitch black"
       ];
       var reply = replies[Random().nextInt(replies.length)];
-      await e.message.channel.send(content: reply);
+      await bot.reply(reply);
       return true;
     }
     return false;

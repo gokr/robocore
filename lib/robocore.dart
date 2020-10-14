@@ -7,6 +7,7 @@ import 'package:robocore/command.dart';
 import 'package:robocore/core.dart';
 import 'package:robocore/event_logger.dart';
 import 'package:robocore/model/swap.dart';
+import 'package:robocore/poster.dart';
 import 'package:teledart/model.dart';
 import 'package:teledart/teledart.dart';
 import 'package:teledart/telegram.dart';
@@ -15,7 +16,135 @@ import 'database.dart';
 
 Logger log = Logger("Robocore");
 
-/// Discord bot
+abstract class RoboWrapper {
+  Robocore bot;
+  late String text;
+  late List<String> parts;
+
+  RoboWrapper(this.bot);
+
+  runCommands() async {
+    logMessage();
+    for (var cmd in bot.commands) {
+      if (validCommand(cmd)) {
+        if (await cmd.exec(this)) {
+          return;
+        }
+      }
+    }
+  }
+
+  logMessage();
+
+  bool validCommand(Command cmd);
+
+  /// Split a message into distinct words and 'A sentence' or '<some JSON>'
+  List<String> splitMessage(String str) {
+    return exp.allMatches(str).map((m) => m.group(0) ?? "").toList();
+  }
+
+  /// Used to split messages so that parts can be in single quotes (like JSON)
+  static final exp = RegExp("[^\\s']+|'[^']*'");
+
+  reply(dynamic answer, {bool disablePreview = true}) async {}
+
+  dynamic buildHelp();
+
+  dynamic sender();
+}
+
+class RoboDiscord extends RoboWrapper {
+  MessageReceivedEvent e;
+
+  RoboDiscord(Robocore bot, this.e) : super(bot) {
+    text = e.message.content;
+    parts = splitMessage(text);
+  }
+
+  logMessage() {
+    log.info(
+        "Command: ${e.message.author}: ${e.message.content} channel: ${e.message.channel.id}");
+  }
+
+  bool validCommand(Command cmd) {
+    var text = e.message.content;
+    return cmd.listChecked(e) &&
+        (text.startsWith(discordPrefix + cmd.name) ||
+            (cmd.short != "" && (text == discordPrefix + cmd.short) ||
+                text.startsWith(discordPrefix + cmd.short + " ")));
+  }
+
+  sender() => e.message.author;
+
+  reply(dynamic answer, {bool disablePreview = true}) async {
+    if (answer is EmbedBuilder) {
+      await e.message.channel.send(embed: answer);
+    } else {
+      await e.message.channel.send(content: answer);
+    }
+  }
+
+  EmbedBuilder buildHelp() {
+    final embed = EmbedBuilder()
+      ..addAuthor((author) {
+        author
+          ..name = "RoboCORE"
+          ..iconUrl = bot.discord.self.avatarURL();
+      });
+    for (var cmd in bot.commands) {
+      embed.addField(name: cmd.syntax, content: cmd.help);
+    }
+    return embed;
+  }
+
+  DiscordColor color() {
+    return (e.message.author is CacheMember)
+        ? (e.message.author as CacheMember).color
+        : DiscordColor.black;
+  }
+
+  bool isMention() => e.message.mentions.contains(bot.self);
+}
+
+class RoboTelegram extends RoboWrapper {
+  TeleDartMessage e;
+
+  RoboTelegram(Robocore bot, this.e) : super(bot) {
+    text = e.text;
+    parts = splitMessage(text);
+  }
+
+  logMessage() {
+    log.info("Command: ${e.from.username}: ${e.text}"); // TODO: channel?
+  }
+
+  bool validCommand(Command cmd) {
+    var text = e.text;
+    return text.startsWith(telegramPrefix + cmd.name) ||
+        (cmd.short != "" && (text == telegramPrefix + cmd.short) ||
+            text.startsWith(telegramPrefix + cmd.short + " "));
+  }
+
+  sender() => e.from;
+
+  reply(dynamic answer, {bool disablePreview = true}) async {
+    await e.reply(answer,
+        parse_mode: 'HTML', disable_web_page_preview: disablePreview);
+  }
+
+  String buildHelp() {
+    StringBuffer buf = StringBuffer();
+    for (var cmd in bot.commands) {
+      buf.writeln("<b>${cmd.name}</b>");
+      buf.writeln("Syntax: <code>${cmd.syntax}</code>");
+      buf.writeln("${cmd.help}");
+      buf.writeln("");
+    }
+    return buf.toString();
+  }
+}
+
+/// The bot
 class Robocore {
   late Map config;
   late Nyxx discord;
@@ -25,6 +154,12 @@ class Robocore {
 
   // All loggers
   List<EventLogger> loggers = [];
+
+  // All posters
+  List<Poster> posters = [];
+
+  /// All stickies
+  //Map<String, Snowflake> stickies = {};
 
   /// To interact with Ethereum contracts
   late Core core;
@@ -68,6 +203,16 @@ class Robocore {
     print(supplyLP);
   }
 
+  addPoster(Poster p) {
+    removePoster(p.name, p.channelId);
+    posters.add(p);
+  }
+
+  removePoster(String name, int chId) {
+    posters.removeWhere(
+        (element) => element.channelId == chId && element.name == name);
+  }
+
   addLogger(EventLogger logger) {
     loggers.removeWhere((element) =>
         element.channel == logger.channel && element.name == logger.name);
@@ -88,10 +233,19 @@ class Robocore {
   }
 
   /// Run contract queries
-  query() async {
+  background() async {
     await updatePriceInfo();
     rewardsInCORE = raw18(await core.cumulativeRewardsSinceStart());
     rewardsInUSD = rewardsInCORE * priceCOREinUSD;
+
+    // Update posters, we copy since it may remove itself from the List in tick
+    for (var p in List.from(posters)) {
+      p.tick(this);
+    }
+  }
+
+  Future<ITextChannel> getChannel(int id) async {
+    return await discord.getChannel<ITextChannel>(Snowflake(id.toString()));
   }
 
   /// Call getReserves on both CORE-ETH and ETH-USDT pairs on Uniswap
@@ -143,6 +297,10 @@ class Robocore {
     return "$amount CORE = ${usd2(priceCOREinUSD * amount)} (${dec4(priceCOREinETH * amount)} ETH)";
   }
 
+  String floorStringCORE([num amount = 1]) {
+    return "$amount CORE = ${usd2(floorCOREinUSD * amount)} (${dec4(floorCOREinETH * amount)} ETH)";
+  }
+
   String priceStringLP([num amount = 1]) {
     return "$amount LP = ${usd2(priceLPinUSD * amount)} (${dec4(priceLPinETH * amount)} ETH)";
   }
@@ -171,24 +329,26 @@ class Robocore {
     commands
       ..add(MentionCommand(
           "@RoboCORE", "", "@RoboCORE", "I will ... say something!"))
-      ..add(HelpCommand(
-          "help", "h", "help", "`help|h`\nShow all commands of RoboCORE."))
-      ..add(FAQCommand("faq", "", "faq", "`faq`\nShow links to FAQ etc."))
-      ..add(StatsCommand("stats", "s", "stats",
-          "`stats|s`\nShow some basic statistics about CORE, refreshed every minute."))
-      ..add(ContractsCommand("contracts", "c", "contracts",
-          "`contracts|c`\nShow links to contracts."))
       ..add(
-          LogCommand("log", "l", "log", "`l|log [add|remove] [all|price|whale|swap]`\nControl logging of events in this channel. Note that this is per channel. Only \"log\" will show active loggers.")
-            ..whitelist = [
-              759890072392302592,
-              764120413507813417,
-              763138788297408552
-            ]) // price-discussion, robocore, robocore-development
-      ..add(PriceCommand("price", "p", "price",
-          "`price|p [[<amount>] eth|core|lp]`\nShow prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use amount like \"!p 10 core\"."))
-      ..add(FloorCommand("floor", "f", "floor",
-          "`floor|f`\nShow current floor prices, straight from Ethereum."));
+          HelpCommand("help", "h", "help|h", "Show all commands of RoboCORE."))
+      ..add(FAQCommand("faq", "", "faq", "Show links to FAQ etc."))
+      ..add(StartCommand("start", "", "start",
+          "Just say hi and get things going! Standard procedure in Telegram, not used in Discord really."))
+      ..add(StatsCommand(
+          "stats", "s", "stats|s", "Show some basic statistics, refreshed every minute."))
+      ..add(ContractsCommand(
+          "contracts", "c", "contracts|c", "Show links to relevant contracts."))
+      ..add(LogCommand("log", "l", "log|l [add|remove] [all|price|whale|swap]",
+          "Control logging of events in current channel, only log will show active loggers. Only works in private conversations with RoboCORE, or in select channels on Discord.")
+        ..whitelist = [
+          759890072392302592,
+          764120413507813417,
+          763138788297408552
+        ]) // price-discussion, robocore, robocore-development
+      ..add(PriceCommand(
+          "price", "p", "price|p [[\"amount\"] eth|core|lp]", "Show prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use an amount like \"!p 10 core\"."))
+      ..add(FloorCommand("floor", "f", "floor|f", "Show current floor prices."))
+      ..add(PosterCommand("poster", "", "poster [add|remove] \"name\" {...json...}", "Manage dynamic posters. On Telegram implemented as a live updated sticky, on Discord as a live updated regularly reposted message."));
   }
 
   /// Go through all loggers and log
@@ -214,13 +374,13 @@ class Robocore {
 
     // Run cron
     var cron = Cron();
-    // One initial query
-    await query();
-    log.info("Scheduling CORE queries");
+    // One initial background
+    await background();
+    log.info("Scheduling 1 minute daemon");
     cron.schedule(new Schedule.parse("*/1 * * * *"), () async {
-      log.info('Running queries ...');
-      await query();
-      log.info('Done queries.');
+      log.info('Running background ...');
+      await background();
+      log.info('Done.');
     });
 
     // We listen to all Swaps on COREETH
@@ -239,11 +399,8 @@ class Robocore {
     });
 
     discord.onMessageReceived.listen((MessageReceivedEvent event) async {
-      for (var cmd in commands) {
-        if (await cmd.execDiscord(event, this)) {
-          return;
-        }
-      }
+      var wrapper = RoboDiscord(this, event);
+      wrapper.runCommands();
     });
 
     // Hook up to Telegram messages
@@ -255,26 +412,36 @@ class Robocore {
     teledart
         .onMessage(entityType: 'bot_command')
         .listen((TeleDartMessage message) async {
+      var wrapper = RoboTelegram(this, message);
+      wrapper.runCommands();
+    });
+
+    /* NOT YET!
+    teledart.onInlineQuery().listen((inlineQuery) async {
+      var query = inlineQuery.query;
+      print("Query: $query");
       for (var cmd in commands) {
-        if (await cmd.execTelegram(message, this)) {
-          return;
+        var result = await cmd.inlineTelegram(query, this);
+        if (result != null) {
+          inlineQuery.answer([
+            InlineQueryResultArticle()
+              ..id = cmd.command
+              ..title = result
+              ..input_message_content = (InputTextMessageContent()
+                ..message_text = result
+                ..parse_mode = 'HTML')
+          ]);
         }
       }
+      inlineQuery.answer([
+        InlineQueryResultArticle()
+          ..id = 'noidea'
+          ..title = 'No idea!'
+          ..input_message_content = (InputTextMessageContent()
+            ..message_text = 'Sorry, did not understand that!'
+            ..parse_mode = 'HTML')
+      ]);
     });
-  }
-
-  EmbedBuilder buildHelp(ITextChannel channel) {
-    final embed = EmbedBuilder()
-      ..addAuthor((author) {
-        author
-          ..name = "RoboCORE"
-          ..iconUrl = discord.self.avatarURL();
-      });
-    for (var cmd in commands) {
-      if (cmd.availableIn(channel.id.toString())) {
-        embed.addField(name: cmd.syntax, content: cmd.help);
-      }
-    }
-    return embed;
+    */
   }
 }
