@@ -27,11 +27,10 @@ abstract class RoboWrapper {
     logMessage();
     for (var cmd in bot.commands) {
       if (validCommand(cmd)) {
-        if (await cmd.exec(this)) {
-          return;
-        }
+        return await cmd.exec(this);
       }
     }
+    reply("I am afraid I can't do that Dave, I mean... ${sender()}");
   }
 
   logMessage();
@@ -74,7 +73,7 @@ class RoboDiscord extends RoboWrapper {
                 text.startsWith(discordPrefix + cmd.short + " ")));
   }
 
-  sender() => e.message.author;
+  sender() => e.message.author.username;
 
   reply(dynamic answer, {bool disablePreview = true}) async {
     if (answer is EmbedBuilder) {
@@ -125,7 +124,7 @@ class RoboTelegram extends RoboWrapper {
             text.startsWith(telegramPrefix + cmd.short + " "));
   }
 
-  sender() => e.from;
+  sender() => e.from.username;
 
   reply(dynamic answer, {bool disablePreview = true}) async {
     await e.reply(answer,

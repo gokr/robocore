@@ -29,8 +29,8 @@ abstract class Command {
 
   Command(this.name, this.short, this.syntax, this.help);
 
-  /// Handle the command, returns true if handled
-  Future<bool> exec(RoboWrapper bot);
+  /// Handle the command
+  exec(RoboWrapper bot);
 
   /// Handle the command, returns a String if handled, otherwise null
   Future<String?> inlineTelegram(String cmd, Robocore robot) async {
@@ -63,9 +63,8 @@ class HelpCommand extends Command {
   HelpCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(RoboWrapper bot) async {
-    await bot.reply(bot.buildHelp());
-    return true;
+  exec(RoboWrapper bot) async {
+    return await bot.reply(bot.buildHelp());
   }
 }
 
@@ -73,7 +72,7 @@ class PosterCommand extends Command {
   PosterCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(RoboWrapper bot) async {
+  exec(RoboWrapper bot) async {
     if (bot is RoboDiscord) {
       var chId = bot.e.message.channel.id.id;
       var posters = bot.bot.posters.where((p) => p.channelId == chId);
@@ -84,44 +83,35 @@ class PosterCommand extends Command {
       // "title": "LGE 2 is coming!", "image": "aURL", "thumbnail": "aURL", "fields": [{"label": "Countdown", "content": "{{timer}}"}]}'
       if (parts.length == 1) {
         String active = posters.join(" ");
-        await bot.reply("Active posters: $active");
-        return true;
+        return await bot.reply("Active posters: $active");
       }
       if (parts.length == 2) {
-        await bot.reply("Use add|remove");
-        return true;
+        return await bot.reply("Use add|remove");
       }
       if (parts.length < 3) {
-        await bot.reply("Too few arguments");
-        return true;
+        return await bot.reply("Too few arguments");
       }
-
       if (!["add", "remove"].contains(parts[1])) {
-        await bot.reply("Use add|remove");
-        return true;
+        return await bot.reply("Use add|remove");
       }
       bool add = parts[1] == "add";
       var name = parts[2];
       if (!add) {
         bot.bot.removePoster(name, chId);
-        await bot.reply("Removed poster $name");
-        return true;
+        return await bot.reply("Removed poster $name");
       }
 
       // Create a Poster
-
       try {
         var json = jsonDecode(trimQuotes(parts[3]));
         var poster = Poster.fromJson(name, json);
         bot.bot.addPoster(poster);
       } catch (e) {
-        await bot.reply("Failed: $e");
-        return true;
+        return await bot.reply("Failed: $e");
       }
     } else {
       await bot.reply("Working on it!");
     }
-    return false;
   }
 }
 
@@ -185,7 +175,7 @@ class PriceCommand extends Command {
   PriceCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(RoboWrapper bot) async {
+  exec(RoboWrapper bot) async {
     await bot.bot.updatePriceInfo();
     var parts = bot.parts;
     String? coin, amountString;
@@ -211,8 +201,7 @@ class PriceCommand extends Command {
 <b>Price LP:</b> ${bot.bot.priceStringLP()}
 """;
       }
-      await bot.reply(answer);
-      return true;
+      return await bot.reply(answer);
     }
     // Also coin given
     if (parts.length == 2) {
@@ -223,17 +212,15 @@ class PriceCommand extends Command {
     }
     // Check valid coins
     if (!["core", "eth", "lp"].contains(coin)) {
-      await bot.reply("Coin can be core, eth or lp, not \"$coin\"");
-      return true;
+      return await bot.reply("Coin can be core, eth or lp, not \"$coin\"");
     }
     // Parse amount as num
     if (amountString != null) {
       try {
         amount = num.parse(amountString);
       } catch (ex) {
-        await bot.reply(
-            "Amount not a number: ${parts[2]}. Use for example \"!p 10 core\"");
-        return true;
+        return await bot.reply(
+            "Amount \"${parts[2]}\" is not a number, use for example \"!p 10 core\"");
       }
     }
     // Time to answer
@@ -248,7 +235,7 @@ class PriceCommand extends Command {
         await bot.reply(bot.bot.priceStringLP(amount));
         break;
     }
-    return true;
+    return;
   }
 
   /// Handle the command, returns true if handled
@@ -263,7 +250,7 @@ class FloorCommand extends Command {
   FloorCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(RoboWrapper bot) async {
+  exec(RoboWrapper bot) async {
     dynamic answer;
     await bot.bot.updatePriceInfo();
     if (bot is RoboDiscord) {
@@ -290,8 +277,7 @@ class FloorCommand extends Command {
 1 LP = ${usd2(bot.bot.floorLPinUSD)} (${dec4(bot.bot.floorLPinETH)} ETH)
 """;
     }
-    await bot.reply(answer);
-    return true;
+    return await bot.reply(answer);
   }
 
   /// Handle the command, returns true if handled
@@ -307,7 +293,7 @@ class FAQCommand extends Command {
   FAQCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(RoboWrapper bot) async {
+  exec(RoboWrapper bot) async {
     dynamic answer;
     if (bot is RoboDiscord) {
       answer = EmbedBuilder()
@@ -331,8 +317,7 @@ https://help.cvault.finance/faqs/faq
 https://medium.com/@0xdec4f/the-idea-project-and-vision-of-core-vault-52f5eddfbfb
 """;
     }
-    bot.reply(answer);
-    return true;
+    return bot.reply(answer);
   }
 }
 
@@ -340,9 +325,8 @@ class StartCommand extends Command {
   StartCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(RoboWrapper bot) async {
-    bot.reply("Well, hi there ${bot.sender()}! What can I do for you?");
-    return true;
+  exec(RoboWrapper bot) async {
+    return bot.reply("Well, hi there ${bot.sender()}! What can I do for you?");
   }
 }
 
@@ -350,7 +334,7 @@ class LogCommand extends Command {
   LogCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(RoboWrapper w) async {
+  exec(RoboWrapper w) async {
     if (w is RoboDiscord) {
       var bot = w.bot;
       var ch = w.e.message.channel;
@@ -359,21 +343,16 @@ class LogCommand extends Command {
       // log = shows loggers
       // log remove all = removes all
       // log add|remove xxx = adds or removes logger
-
-      // "log"
       if (parts.length == 1) {
         String active = loggers.join(" ");
-        await w.reply("Active loggers: $active");
-        return true;
+        return await w.reply("Active loggers: $active");
       }
       if (parts.length == 2) {
-        await w.reply("Use add|remove [whale|swap|price|all]");
-        return true;
+        return await w.reply("Use add|remove [whale|swap|price|all]");
       }
       if (parts.length >= 3) {
         if (!["add", "remove"].contains(parts[1])) {
-          await w.reply("Use add|remove [whale|swap|price|all]");
-          return true;
+          return await w.reply("Use add|remove [whale|swap|price|all]");
         }
         bool add = parts[1] == "add";
         var names = parts.sublist(2);
@@ -412,11 +391,9 @@ class LogCommand extends Command {
         }
       }
       String active = bot.loggersFor(ch).join(" ");
-      await w.reply("Active loggers: $active");
-      return true;
+      return await w.reply("Active loggers: $active");
     } else {
-      w.reply("Working on it!");
-      return true;
+      return w.reply("Working on it!");
     }
   }
 }
@@ -426,7 +403,7 @@ class ContractsCommand extends Command {
       : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(RoboWrapper bot) async {
+  exec(RoboWrapper bot) async {
     dynamic answer;
     if (bot is RoboDiscord) {
       answer = EmbedBuilder()
@@ -460,8 +437,7 @@ Links to CORE token and CORE-ETH trading pair
 <a href="https://etherscan.io/address/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b">CORE-ETH pair on Etherscan</a>
 """;
     }
-    await bot.reply(answer);
-    return true;
+    return await bot.reply(answer);
   }
 }
 
@@ -469,7 +445,7 @@ class StatsCommand extends Command {
   StatsCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(RoboWrapper w) async {
+  exec(RoboWrapper w) async {
     dynamic answer;
     var bot = w.bot;
     await bot.updatePriceInfo();
@@ -505,8 +481,7 @@ ${usd0(bot.rewardsInUSD)} (${dec2(bot.rewardsInCORE)} CORE)
 Stay CORE and keep HODLING!
 """;
     }
-    await w.reply(answer);
-    return true;
+    return await w.reply(answer);
   }
 }
 
@@ -514,7 +489,7 @@ class MentionCommand extends Command {
   MentionCommand(name, short, syntax, help) : super(name, short, syntax, help);
 
   @override
-  Future<bool> exec(RoboWrapper bot) async {
+  exec(RoboWrapper bot) async {
     if (bot is RoboDiscord && bot.isMention()) {
       const replies = [
         "Who, me? I am good! :smile:",
@@ -528,10 +503,8 @@ class MentionCommand extends Command {
         "It's always darkest just before it goes pitch black"
       ];
       var reply = replies[Random().nextInt(replies.length)];
-      await bot.reply(reply);
-      return true;
+      return await bot.reply(reply);
     }
-    return false;
   }
 
   @override
