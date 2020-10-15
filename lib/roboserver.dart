@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cron/cron.dart';
 import 'package:logging/logging.dart';
@@ -101,7 +102,8 @@ class Roboserver {
       await Poster.createTable();
       log.info("Created tables");
     } catch (e) {
-      print(e);
+      log.warning(e);
+      exit(1);
     }
 
     // Create our interface with Ethereum
