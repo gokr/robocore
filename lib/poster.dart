@@ -24,20 +24,23 @@ class Field {
 
 class Poster {
   late String name;
-  late Map<String, dynamic> reveal;
   late int channelId;
 
+  // Mandatory
   late String title;
-  String? thumbnailUrl;
-  String? imageUrl;
+
+  // Optional
+  String? thumbnailUrl, imageUrl;
 
   /// Time it ends
-  late DateTime end;
-  late DateTime revealEnd;
+  late DateTime start, end, revealEnd;
 
   /// Minutes
   late int updateInterval;
   late int recreateInterval;
+
+  // Alternate content for revealing
+  late Map<String, dynamic>? reveal;
 
   /// Last recreate and update
   DateTime recreated = DateTime(2000);
@@ -48,6 +51,7 @@ class Poster {
   Snowflake messageId = Snowflake(0);
 
   Poster.fromJson(this.name, dynamic json) {
+    start = DateTime.parse(json['start']);
     end = DateTime.parse(json['end']);
     revealEnd = DateTime.parse(json['revealEnd']);
     recreateInterval = json['recreate'];
@@ -58,6 +62,7 @@ class Poster {
 
   toJson() {
     Map<String, dynamic> json = {};
+    json['start'] = start.toIso8601String();
     json['end'] = end.toIso8601String();
     json['revealEnd'] = revealEnd.toIso8601String();
     json['recreate'] = recreateInterval;
@@ -203,31 +208,34 @@ class Poster {
   String toString() => name;
 
   tick(Robocore bot) {
-    print("tick");
     try {
       var now = DateTime.now();
-      // Time to delete?
-      if (revealEnd.isBefore(now)) {
-        print("Delete");
-        deleteMessage(bot);
-        delete();
-        return;
-      }
-      // Time to end and reveal?
-      if (end.isBefore(now)) {
-        print("Reveal");
-        _readContent(reveal);
-        return update(bot);
-      }
-      // Time to recreate?
-      if (recreated.add(Duration(minutes: recreateInterval)).isBefore(now)) {
-        print("Recreate");
-        return recreate(bot);
-      }
-      // Time to update?
-      if (updated.add(Duration(minutes: updateInterval)).isBefore(now)) {
-        print("Update");
-        return update(bot);
+      // Are we live yet?
+      if (start.isBefore(now)) {
+        // Time to delete?
+        if (revealEnd.isBefore(now)) {
+          log.info("Deleting poster $name");
+          deleteMessage(bot);
+          delete();
+          return;
+        }
+        // Time to create or recreate?
+        if (recreated.add(Duration(minutes: recreateInterval)).isBefore(now)) {
+          log.info("Creating or recreating poster $name");
+          return recreate(bot);
+        }
+        // Time to reveal? If so update also
+        if (end.isBefore(now) && reveal != null) {
+          log.info("Revealing poster $name");
+          _readContent(reveal as Map);
+          reveal = null; // null out so reveal is only once
+          return update(bot);
+        }
+        // Time to update?
+        if (updated.add(Duration(minutes: updateInterval)).isBefore(now)) {
+          log.info("Updating poster $name");
+          return update(bot);
+        }
       }
     } catch (e) {
       log.warning("Failed tick of poster: $e");
