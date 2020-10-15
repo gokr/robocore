@@ -18,11 +18,29 @@ Logger log = Logger("Robocore");
 
 abstract class RoboWrapper {
   Robocore bot;
-  late String text;
-  late List<String> parts;
 
   RoboWrapper(this.bot);
 
+  Future<dynamic> getChannelOrChat(int id) async {}
+
+  Future<int?> send(int channelOrChatId, dynamic content) async {}
+
+  Future<dynamic> getMessage(int channelOrChatId, int id) async {}
+
+  Future<dynamic> editMessage(int channel, int id, dynamic content) async {}
+
+  deleteMessage(int channelOrChatId, int id) async {}
+
+  /// Split a message into distinct words and 'A sentence' or '<some JSON>'
+  List<String> splitMessage(String str) {
+    return exp.allMatches(str).map((m) => m.group(0) ?? "").toList();
+  }
+
+  /// Used to split messages so that parts can be in single quotes (like JSON)
+  static final exp = RegExp("[^\\s']+|'[^']*'");
+}
+
+mixin RoboMessage on RoboWrapper {
   runCommands() async {
     logMessage();
     for (var cmd in bot.commands) {
@@ -50,16 +68,14 @@ abstract class RoboWrapper {
     return text.startsWith(prefix);
   }
 
+  bool isMention();
+
   // Either ! or /
   String get prefix;
 
-  /// Split a message into distinct words and 'A sentence' or '<some JSON>'
-  List<String> splitMessage(String str) {
-    return exp.allMatches(str).map((m) => m.group(0) ?? "").toList();
-  }
+  String get text;
 
-  /// Used to split messages so that parts can be in single quotes (like JSON)
-  static final exp = RegExp("[^\\s']+|'[^']*'");
+  List<String> get parts;
 
   reply(dynamic answer,
       {bool disablePreview = true, bool markdown = false}) async {}
@@ -71,10 +87,89 @@ abstract class RoboWrapper {
 }
 
 class RoboDiscord extends RoboWrapper {
-  MessageReceivedEvent e;
+  RoboDiscord(Robocore bot) : super(bot);
 
-  RoboDiscord(Robocore bot, this.e) : super(bot) {
-    text = e.message.content.toLowerCase();
+  Future<dynamic> getChannelOrChat(int id) async {
+    return await bot.getDiscordChannel(id);
+  }
+
+  Future<dynamic> getMessage(int channel, id) async {
+    var channel = await bot.getDiscordChannel(id);
+    return channel.getMessage(Snowflake(id));
+  }
+
+  Future<dynamic> deleteMessage(int channel, id) async {
+    var channel = await bot.getDiscordChannel(id);
+    var message = await channel.getMessage(Snowflake(id));
+    message?.delete();
+  }
+
+  Future<dynamic> editMessage(int channel, int id, dynamic content) async {
+    var message = await getMessage(channel, id);
+    if (content is EmbedBuilder) {
+      await message.edit(embed: content);
+    } else {
+      await message.edit(content: content);
+    }
+  }
+
+  Future<int> send(int channelId, dynamic content) async {
+    var channel = await bot.getDiscordChannel(channelId);
+    dynamic message;
+    if (content is EmbedBuilder) {
+      message = await channel.send(embed: content);
+    } else {
+      message = await channel.send(content: content);
+    }
+    return message.id;
+  }
+
+  Future<dynamic> _send(ITextChannel channel, dynamic content) async {
+    if (content is EmbedBuilder) {
+      return await channel.send(embed: content);
+    } else {
+      return await channel.send(content: content);
+    }
+  }
+}
+
+class RoboTelegram extends RoboWrapper {
+  RoboTelegram(Robocore bot) : super(bot);
+
+  Future<dynamic> getChannelOrChat(int id) async {
+    return await bot.getTelegramChat(id);
+  }
+
+  Future<dynamic> deleteMessage(int chat, id) async {
+    return bot.teledart.telegram.deleteMessage(chat, id);
+  }
+
+  Future<dynamic> editMessage(int chatId, int id, dynamic content,
+      {bool disablePreview = true, bool markdown = false}) async {
+    return bot.teledart.telegram.editMessageText(content,
+        chat_id: chatId,
+        message_id: id,
+        parse_mode: (markdown ? 'MarkdownV2' : 'HTML'),
+        disable_web_page_preview: disablePreview);
+  }
+
+  Future<int?> send(int chatId, dynamic content,
+      {bool disablePreview = true, bool markdown = false}) async {
+    var message = await bot.teledart.telegram.sendMessage(chatId, content,
+        parse_mode: (markdown ? 'MarkdownV2' : 'HTML'),
+        disable_web_page_preview: disablePreview);
+    return message.message_id;
+  }
+}
+
+class RoboDiscordMessage extends RoboDiscord with RoboMessage {
+  MessageReceivedEvent e;
+  late String text, textLowerCase;
+  late List<String> parts;
+
+  RoboDiscordMessage(Robocore bot, this.e) : super(bot) {
+    text = e.message.content;
+    textLowerCase = text.toLowerCase();
     parts = splitMessage(text);
   }
 
@@ -98,11 +193,7 @@ class RoboDiscord extends RoboWrapper {
 
   reply(dynamic answer,
       {bool disablePreview = true, bool markdown = false}) async {
-    if (answer is EmbedBuilder) {
-      await e.message.channel.send(embed: answer);
-    } else {
-      await e.message.channel.send(content: answer);
-    }
+    return _send(e.message.channel, answer);
   }
 
   EmbedBuilder buildHelp() {
@@ -127,11 +218,14 @@ class RoboDiscord extends RoboWrapper {
   bool isMention() => e.message.mentions.contains(bot.self);
 }
 
-class RoboTelegram extends RoboWrapper {
+class RoboTelegramMessage extends RoboTelegram with RoboMessage {
   TeleDartMessage e;
+  late String text, textLowerCase;
+  late List<String> parts;
 
-  RoboTelegram(Robocore bot, this.e) : super(bot) {
-    text = e.text.toLowerCase();
+  RoboTelegramMessage(Robocore bot, this.e) : super(bot) {
+    text = e.text;
+    textLowerCase = text.toLowerCase();
     parts = splitMessage(text);
   }
 
@@ -166,6 +260,11 @@ class RoboTelegram extends RoboWrapper {
       buf.writeln("");
     }
     return buf.toString();
+  }
+
+  @override
+  bool isMention() {
+    return text.contains("@robocore_bot");
   }
 }
 
@@ -250,15 +349,21 @@ class Robocore {
     rewardsInCORE = raw18(await core.cumulativeRewardsSinceStart());
     rewardsInUSD = rewardsInCORE * priceCOREinUSD;
 
-    // Update posters, we copy since it may remove itself from the List in tick
-    var ps = await Poster.getAll();
-    for (var p in ps) {
-      p.tick(this);
+    // Update posters
+    var posters = await Poster.getAll();
+    for (var p in posters) {
+      // Call for both Discord and Telegram
+      p.tick(RoboDiscord(this));
+      p.tick(RoboTelegram(this));
     }
   }
 
-  Future<ITextChannel> getChannel(int id) async {
+  Future<ITextChannel> getDiscordChannel(int id) async {
     return await discord.getChannel<ITextChannel>(Snowflake(id.toString()));
+  }
+
+  Future<Chat> getTelegramChat(int id) async {
+    return await teledart.telegram.getChat(id);
   }
 
   /// Call getReserves on both CORE-ETH and ETH-USDT pairs on Uniswap
@@ -411,7 +516,7 @@ class Robocore {
     });
 
     discord.onMessageReceived.listen((MessageReceivedEvent event) async {
-      var wrapper = RoboDiscord(this, event);
+      var wrapper = RoboDiscordMessage(this, event);
       wrapper.runCommands();
     });
 
@@ -424,7 +529,7 @@ class Robocore {
     teledart
         .onMessage(entityType: 'bot_command')
         .listen((TeleDartMessage message) async {
-      var wrapper = RoboTelegram(this, message);
+      var wrapper = RoboTelegramMessage(this, message);
       wrapper.runCommands();
     });
 

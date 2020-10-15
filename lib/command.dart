@@ -35,7 +35,7 @@ abstract class Command {
   Command(this.name, this.short, this.syntax, this.help);
 
   /// Handle the command
-  exec(RoboWrapper bot);
+  exec(RoboMessage bot);
 
   /// Handle the command, returns a String if handled, otherwise null
   Future<String?> inlineTelegram(String cmd, Robocore robot) async {
@@ -66,7 +66,7 @@ abstract class Command {
   }
 
   // Double dispatch
-  bool isValid(RoboWrapper bot) {
+  bool isValid(RoboMessage bot) {
     return bot.validCommand(this);
   }
 
@@ -79,7 +79,7 @@ class HelpCommand extends Command {
       : super("help", "h", "help|h", "Show all commands of RoboCORE.");
 
   @override
-  exec(RoboWrapper bot) async {
+  exec(RoboMessage bot) async {
     return await bot.reply(bot.buildHelp());
   }
 }
@@ -87,62 +87,59 @@ class HelpCommand extends Command {
 class PosterCommand extends Command {
   PosterCommand()
       : super("poster", "", "poster [add|remove] \"name\" {...json...}",
-            """Manage dynamic posters. On Telegram implemented as a live updated sticky, on Discord as a live updated regularly reposted message.
+            """Manage dynamic posters. On Telegram implemented as a live updated pinned message, on Discord as a live updated regularly reposted message.
             This command is only available to specific admin users.""");
 
   @override
-  exec(RoboWrapper bot) async {
-    if (bot is RoboDiscord) {
-      // All posters
-      var posters = await Poster.getAll();
-      var parts = bot.parts;
-      // poster list = Shows all posters
-      // poster remove xxx = removes a named poster
-      /* !poster add zzz '{"channelId": 762629759393726464, "start": "2020-10-15T02:20:12","end": "2020-10-15T02:35:12",
+  exec(RoboMessage bot) async {
+    // All posters
+    var posters = await Poster.getAll();
+    var parts = bot.parts;
+    // poster list = Shows all posters
+    // poster remove xxx = removes a named poster
+    /* !poster add zzz '{"channelId": 762629759393726464, "start": "2020-10-15T02:20:12","end": "2020-10-15T02:35:12",
       "revealEnd": "2020-10-15T02:37:12", "recreate": 2, "update": 1, "content":
       {"reveal": {"imageUrl": "http://rey.krampe.se/whale2.jpg", "fields": [{"label":
       "What", "content": "Party is starting!!"},{"label":"Where","content":"<a href=\"http://goran.krampe.se\">here</a>"}]},
       "imageUrl":"http://rey.krampe.se/whale1.jpg", "title": "Whale hunting",
       "fields": [{"label": "What", "content": "Party!!"},{"label": "When", "content": "... happening {{countdown}}"}]}}' */
-      if (parts.length == 1) {
-        if (posters.isEmpty) {
-          return await bot.reply("No active posters");
-        }
-        String allPosters = posters.join(" ");
-        return await bot.reply("Active posters: $allPosters");
+    if (parts.length == 1) {
+      if (posters.isEmpty) {
+        return await bot.reply("No active posters");
       }
-      if (parts.length == 2) {
-        return await bot.reply("Use add|remove");
+      String allPosters = posters.join(" ");
+      return await bot.reply("Active posters: $allPosters");
+    }
+    if (parts.length == 2) {
+      return await bot.reply("Use add|remove ...");
+    }
+    if (parts.length < 3) {
+      return await bot.reply("Too few arguments");
+    }
+    if (!["add", "remove"].contains(parts[1])) {
+      return await bot.reply("Use add|remove");
+    }
+    bool add = parts[1] == "add";
+    var name = parts[2];
+    // Remove?
+    if (!add) {
+      var poster = await Poster.find(name);
+      if (poster != null) {
+        poster.deleteMessage(bot);
+        poster.delete();
+        return await bot.reply("Removed poster $name");
+      } else {
+        return await bot.reply("Could not find poster $name");
       }
-      if (parts.length < 3) {
-        return await bot.reply("Too few arguments");
-      }
-      if (!["add", "remove"].contains(parts[1])) {
-        return await bot.reply("Use add|remove");
-      }
-      bool add = parts[1] == "add";
-      var name = parts[2];
-      if (!add) {
-        var poster = await Poster.find(name);
-        if (poster != null) {
-          poster.deleteMessage(bot.bot);
-          poster.delete();
-          return await bot.reply("Removed poster $name");
-        } else {
-          return await bot.reply("Could not find poster $name");
-        }
-      }
+    }
 
-      // Create a Poster
-      try {
-        var json = jsonDecode(trimQuotes(parts[3]));
-        var poster = Poster.fromJson(name, json);
-        await poster.insert();
-      } catch (e) {
-        return await bot.reply("Failed: $e");
-      }
-    } else {
-      await bot.reply("Not yet working on Telegram!");
+    // Create a Poster
+    try {
+      var json = jsonDecode(trimQuotes(parts[3]));
+      var poster = Poster.fromJson(name, json);
+      await poster.insert();
+    } catch (e) {
+      return await bot.reply("Failed: $e");
     }
   }
 }
@@ -209,7 +206,7 @@ class PriceCommand extends Command {
             "Show prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use an amount like \"!p 10 core\".");
 
   @override
-  exec(RoboWrapper bot) async {
+  exec(RoboMessage bot) async {
     await bot.bot.updatePriceInfo();
     var parts = bot.parts;
     String? coin, amountString;
@@ -217,7 +214,7 @@ class PriceCommand extends Command {
     // Only !p or !price
     if (parts.length == 1) {
       dynamic answer;
-      if (bot is RoboDiscord) {
+      if (bot is RoboDiscordMessage) {
         answer = EmbedBuilder()
           ..addAuthor((author) {
             author.name = "Prices fresh directly from contracts";
@@ -284,10 +281,10 @@ class FloorCommand extends Command {
   FloorCommand() : super("floor", "f", "floor|f", "Show current floor prices.");
 
   @override
-  exec(RoboWrapper bot) async {
+  exec(RoboMessage bot) async {
     dynamic answer;
     await bot.bot.updatePriceInfo();
-    if (bot is RoboDiscord) {
+    if (bot is RoboDiscordMessage) {
       answer = EmbedBuilder()
         ..addAuthor((author) {
           author.name = "Floor prices calculated from contracts";
@@ -327,9 +324,9 @@ class FAQCommand extends Command {
   FAQCommand() : super("faq", "", "faq", "Show links to FAQ etc.");
 
   @override
-  exec(RoboWrapper bot) async {
+  exec(RoboMessage bot) async {
     dynamic answer;
-    if (bot is RoboDiscord) {
+    if (bot is RoboDiscordMessage) {
       answer = EmbedBuilder()
         ..addAuthor((author) {
           author.name = "Various links to good info";
@@ -367,7 +364,7 @@ class StartCommand extends Command {
             "Just say hi and get things going! Standard procedure in Telegram, not used in Discord really.");
 
   @override
-  exec(RoboWrapper bot) async {
+  exec(RoboMessage bot) async {
     return bot.reply("Well, hi there ${bot.sender()}! What can I do for you?");
   }
 }
@@ -378,8 +375,8 @@ class LogCommand extends Command {
             "Control logging of events in current channel, only log will show active loggers. Only works in private conversations with RoboCORE, or in select channels on Discord.");
 
   @override
-  exec(RoboWrapper w) async {
-    if (w is RoboDiscord) {
+  exec(RoboMessage w) async {
+    if (w is RoboDiscordMessage) {
       var bot = w.bot;
       var ch = w.e.message.channel;
       var parts = w.parts;
@@ -448,9 +445,9 @@ class ContractsCommand extends Command {
             "Show links to relevant contracts.");
 
   @override
-  exec(RoboWrapper bot) async {
+  exec(RoboMessage bot) async {
     dynamic answer;
-    if (bot is RoboDiscord) {
+    if (bot is RoboDiscordMessage) {
       answer = EmbedBuilder()
         ..addAuthor((author) {
           author.name = "Links to CORE token and CORE-ETH trading pair";
@@ -492,11 +489,11 @@ class StatsCommand extends Command {
             "Show some basic statistics, refreshed every minute.");
 
   @override
-  exec(RoboWrapper w) async {
+  exec(RoboMessage w) async {
     dynamic answer;
     var bot = w.bot;
     await bot.updatePriceInfo();
-    if (w is RoboDiscord) {
+    if (w is RoboDiscordMessage) {
       answer = EmbedBuilder()
         ..addField(
             name: "Pooled",
@@ -537,8 +534,8 @@ class MentionCommand extends Command {
       : super("@RoboCORE", "", "@RoboCORE", "I will ... say something!");
 
   // Double dispatch
-  bool isValid(RoboWrapper bot) {
-    return bot is RoboDiscord && bot.isMention();
+  bool isValid(RoboMessage bot) {
+    return bot is RoboDiscordMessage && bot.isMention();
   }
 
   static const replies = [
@@ -556,17 +553,18 @@ class MentionCommand extends Command {
     "pump": ["Yeah! ⛽️ it up!"],
     "moon": ["Why not Mars!?"],
     "stupid": ["Who are you calling stupid?"],
+    "love": ["I love you too! :heart:"],
     "lambo": ["Anything over my old Golf", "A  DeTomaso Pantera is way cooler"]
   };
 
   @override
-  exec(RoboWrapper bot) async {
-    if (bot is RoboDiscord) {
+  exec(RoboMessage bot) async {
+    if (bot is RoboDiscordMessage) {
       // Fallback
       var reply = randomOf(replies);
       // Try be a tad smarter
       wittys.forEach((k, v) {
-        if (bot.text.contains(k)) {
+        if (bot.textLowerCase.contains(k)) {
           reply = randomOf(v);
         }
       });

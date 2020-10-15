@@ -24,7 +24,12 @@ class Field {
 
 class Poster {
   late String name;
-  late int channelId;
+
+  /// The numeric id of the Discord channel or Telegram chat
+  late int channelOrChatId;
+
+  /// The numeric id of the Poster message
+  int messageId = 0;
 
   // Mandatory
   late String title;
@@ -48,7 +53,7 @@ class Poster {
 
   List<Field> fields = [];
 
-  Snowflake messageId = Snowflake(0);
+  Snowflake get messageSnowflake => Snowflake(messageId);
 
   Poster.fromJson(this.name, dynamic json) {
     start = DateTime.parse(json['start']);
@@ -56,7 +61,7 @@ class Poster {
     revealEnd = DateTime.parse(json['revealEnd']);
     recreateInterval = json['recreate'];
     updateInterval = json['update'];
-    channelId = json['channelId'];
+    channelOrChatId = json['channelId'];
     _readContent(json['content']);
   }
 
@@ -67,7 +72,7 @@ class Poster {
     json['revealEnd'] = revealEnd.toIso8601String();
     json['recreate'] = recreateInterval;
     json['update'] = updateInterval;
-    json['channelId'] = channelId;
+    json['channelId'] = channelOrChatId;
     json['content'] = _writeContent();
     return json;
   }
@@ -146,68 +151,61 @@ class Poster {
   }
 
   /// Create (and delete any existing) embed
-  recreate(Robocore bot) async {
+  recreate(RoboWrapper bot) async {
     deleteMessage(bot);
-    var embed = build(bot);
-    var channel = await bot.getChannel(channelId);
-    // Send embed and store message id
-    messageId = (await channel.send(embed: embed)).id;
+    var content = build(bot);
+    // Send content and store message id
+    messageId = await bot.send(channelOrChatId, content) as int;
     recreated = DateTime.now();
   }
 
   // Delete message
-  deleteMessage(Robocore bot) async {
+  deleteMessage(RoboWrapper bot) async {
     if (messageId != 0)
       try {
-        var channel = await bot.getChannel(channelId);
-        var oldMessage = await channel.getMessage(messageId);
-        if (oldMessage != null) {
-          // Delete it
-          await oldMessage.delete();
-        }
+        await bot.deleteMessage(channelOrChatId, messageId);
       } catch (e) {
         log.warning("Failed deleting poster message: $messageId");
       }
   }
 
   /// Update content of existing embed
-  update(Robocore bot) async {
+  update(RoboWrapper bot) async {
     // If message exists
     // Find embed
     if (messageId != 0)
       try {
-        var channel = await bot.getChannel(channelId);
-        var oldMessage = await channel.getMessage(messageId);
-        if (oldMessage == null) {
-          log.warning("Oops, missing poster!");
-          return;
-        }
-        var embed = build(bot);
+        var content = build(bot);
         // Edit it
-        oldMessage.edit(embed: embed);
+        await bot.editMessage(channelOrChatId, messageId, content);
         updated = DateTime.now();
       } catch (e) {
         log.warning("Failed updating poster message: $messageId");
       }
   }
 
-  EmbedBuilder build(Robocore bot) {
-    // Create embed
-    var embed = EmbedBuilder();
-    embed.title = title;
-    if (thumbnailUrl != null) embed.thumbnailUrl = thumbnailUrl;
-    if (imageUrl != null) embed.imageUrl = imageUrl;
-    for (var f in fields) {
-      var content = merge(f.content, bot);
-      embed.addField(name: f.label, content: content);
+  dynamic build(RoboWrapper bot) {
+    dynamic result;
+    if (bot is RoboDiscordMessage) {
+      // Create embed
+      result = EmbedBuilder();
+      result.title = title;
+      if (thumbnailUrl != null) result.thumbnailUrl = thumbnailUrl;
+      if (imageUrl != null) result.imageUrl = imageUrl;
+      for (var f in fields) {
+        var content = merge(f.content, bot);
+        result.addField(name: f.label, content: content);
+      }
+    } else {
+      result = "";
     }
     //embed.timestamp = DateTime.now().toUtc();
-    return embed;
+    return result;
   }
 
   String toString() => name;
 
-  tick(Robocore bot) {
+  tick(RoboWrapper bot) {
     try {
       var now = DateTime.now();
       // Are we live yet?
@@ -242,7 +240,7 @@ class Poster {
     }
   }
 
-  String merge(String template, Robocore bot) {
+  String merge(String template, RoboWrapper bot) {
     var temp = Template(template,
         name: 'test', lenient: false, htmlEscapeValues: false);
     var now = DateTime.now();
@@ -274,7 +272,7 @@ class Poster {
       'hours': hoursLeft,
       'minutes': minutesLeft,
       'now': now.toIso8601String(),
-      'price': bot.priceStringCORE()
+      'price': bot.bot.priceStringCORE()
     });
   }
 }
