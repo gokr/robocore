@@ -22,6 +22,10 @@ String trimQuotes(String s) {
   return trimmed;
 }
 
+String randomOf(List<String> list) {
+  return list[Random().nextInt(list.length)];
+}
+
 abstract class Command {
   String name, short, syntax, help;
   List<int> blacklist = [];
@@ -97,6 +101,9 @@ class PosterCommand extends Command {
       // poster add xxx '{"channel": "end": "2020-10-29T12:12:12", "recreate": 20, "update": 1,
       // "title": "LGE 2 is coming!", "image": "aURL", "thumbnail": "aURL", "fields": [{"label": "Countdown", "content": "{{timer}}"}]}'
       if (parts.length == 1) {
+        if (posters.isEmpty) {
+          return await bot.reply("No active posters");
+        }
         String allPosters = posters.join(" ");
         return await bot.reply("Active posters: $allPosters");
       }
@@ -322,19 +329,23 @@ class FAQCommand extends Command {
         ..addAuthor((author) {
           author.name = "Various links to good info";
         })
-        ..addField(name: "FAQ", content: "https://help.cvault.finance/faqs/faq")
+        ..addField(name: "Help", content: "https://help.cvault.finance")
         ..addField(
-            name: "Vision article",
+            name: "Links",
             content:
-                "https://medium.com/@0xdec4f/the-idea-project-and-vision-of-core-vault-52f5eddfbfb")
+                "[Twitter](https://twitter.com/CORE_Vault) [Medium](https://medium.com/core-vault) [Telegram](https://t.me/COREVault) [Github](https://github.com/cVault-finance)")
+        ..addField(
+            name: "Articles",
+            content:
+                "[Vision](https://medium.com/@0xdec4f/the-idea-project-and-vision-of-core-vault-52f5eddfbfb)")
         ..addFooter((footer) {
           footer.text = "Keep HODLING";
         })
         ..color = bot.color();
     } else {
       answer = """
-<b>FAQ</b>
-https://help.cvault.finance/faqs/faq
+<b>Help</b>
+https://help.cvault.finance
 <b>Vision article</b>
 https://medium.com/@0xdec4f/the-idea-project-and-vision-of-core-vault-52f5eddfbfb
 """;
@@ -526,7 +537,7 @@ class MentionCommand extends Command {
   @override
   exec(RoboWrapper bot) async {
     if (bot is RoboDiscord) {
-      const replies = [
+      var reply = randomOf([
         "Who, me? I am good! :smile:",
         "Well, thank you! :blush:",
         "You are crazy man, just crazy :rofl:",
@@ -536,8 +547,7 @@ class MentionCommand extends Command {
         "Run you fools. Run! :scream:",
         "Even the smallest bot can change the course of the future.",
         "It's always darkest just before it goes pitch black"
-      ];
-      var reply = replies[Random().nextInt(replies.length)];
+      ]);
       return await bot.reply(reply);
     }
   }

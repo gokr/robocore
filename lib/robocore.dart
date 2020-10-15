@@ -30,8 +30,16 @@ abstract class RoboWrapper {
         return await cmd.exec(this);
       }
     }
-    if (isCommand())
-      reply("I am afraid I can't do that Dave, I mean... ${sender()}");
+    if (isCommand()) reply(randomDNU());
+  }
+
+  String randomDNU() {
+    return randomOf([
+      "I am afraid I can't do that Dave, I mean... ${sender()}",
+      "I have absolutely no clue what you are blabbering about",
+      "Are you sure I am meant to understand that?",
+      "I am no damn AI, what did you mean?",
+    ]);
   }
 
   logMessage();
@@ -42,6 +50,7 @@ abstract class RoboWrapper {
     return text.startsWith(prefix);
   }
 
+  // Either ! or /
   String get prefix;
 
   /// Split a message into distinct words and 'A sentence' or '<some JSON>'
@@ -56,7 +65,8 @@ abstract class RoboWrapper {
 
   dynamic buildHelp();
 
-  dynamic sender();
+  // Username of sender
+  String sender();
 }
 
 class RoboDiscord extends RoboWrapper {
@@ -134,9 +144,9 @@ class RoboTelegram extends RoboWrapper {
             text.startsWith(telegramPrefix + cmd.short + " "));
   }
 
-  String get prefix => discordPrefix;
+  String get prefix => telegramPrefix;
 
-  sender() => e.from.username;
+  sender() => e.from.username ?? "(you have no username!)";
 
   reply(dynamic answer, {bool disablePreview = true}) async {
     await e.reply(answer,
