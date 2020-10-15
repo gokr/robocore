@@ -98,8 +98,12 @@ class PosterCommand extends Command {
       var parts = bot.parts;
       // poster list = Shows all posters
       // poster remove xxx = removes a named poster
-      // poster add xxx '{"channel": "end": "2020-10-29T12:12:12", "recreate": 20, "update": 1,
-      // "title": "LGE 2 is coming!", "image": "aURL", "thumbnail": "aURL", "fields": [{"label": "Countdown", "content": "{{timer}}"}]}'
+      /* !poster add zzz '{"channelId": 762629759393726464, "start": "2020-10-15T02:20:12","end": "2020-10-15T02:35:12",
+      "revealEnd": "2020-10-15T02:37:12", "recreate": 2, "update": 1, "content":
+      {"reveal": {"imageUrl": "http://rey.krampe.se/whale2.jpg", "fields": [{"label":
+      "What", "content": "Party is starting!!"},{"label":"Where","content":"<a href=\"http://goran.krampe.se\">here</a>"}]},
+      "imageUrl":"http://rey.krampe.se/whale1.jpg", "title": "Whale hunting",
+      "fields": [{"label": "What", "content": "Party!!"},{"label": "When", "content": "... happening {{countdown}}"}]}}' */
       if (parts.length == 1) {
         if (posters.isEmpty) {
           return await bot.reply("No active posters");
@@ -121,6 +125,7 @@ class PosterCommand extends Command {
       if (!add) {
         var poster = await Poster.find(name);
         if (poster != null) {
+          poster.deleteMessage(bot.bot);
           poster.delete();
           return await bot.reply("Removed poster $name");
         } else {
