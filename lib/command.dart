@@ -344,13 +344,15 @@ class FAQCommand extends Command {
         ..color = bot.color();
     } else {
       answer = """
-<b>Help</b>
+*Help*
 https://help.cvault.finance
-<b>Vision article</b>
-https://medium.com/@0xdec4f/the-idea-project-and-vision-of-core-vault-52f5eddfbfb
+*Links*
+[Twitter](https://twitter.com/CORE_Vault) [Medium](https://medium.com/core-vault) [Telegram](https://t.me/COREVault) [Github](https://github.com/cVault-finance)
+*Articles*
+[Vision](https://medium.com/@0xdec4f/the-idea-project-and-vision-of-core-vault-52f5eddfbfb)
 """;
     }
-    return bot.reply(answer);
+    return bot.reply(answer, markdown: true);
   }
 }
 

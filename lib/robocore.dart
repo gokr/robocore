@@ -61,7 +61,8 @@ abstract class RoboWrapper {
   /// Used to split messages so that parts can be in single quotes (like JSON)
   static final exp = RegExp("[^\\s']+|'[^']*'");
 
-  reply(dynamic answer, {bool disablePreview = true}) async {}
+  reply(dynamic answer,
+      {bool disablePreview = true, bool markdown = false}) async {}
 
   dynamic buildHelp();
 
@@ -95,7 +96,8 @@ class RoboDiscord extends RoboWrapper {
 
   sender() => e.message.author.username;
 
-  reply(dynamic answer, {bool disablePreview = true}) async {
+  reply(dynamic answer,
+      {bool disablePreview = true, bool markdown = false}) async {
     if (answer is EmbedBuilder) {
       await e.message.channel.send(embed: answer);
     } else {
@@ -148,9 +150,11 @@ class RoboTelegram extends RoboWrapper {
 
   sender() => e.from.username ?? "(you have no username!)";
 
-  reply(dynamic answer, {bool disablePreview = true}) async {
+  reply(dynamic answer,
+      {bool disablePreview = true, bool markdown = false}) async {
     await e.reply(answer,
-        parse_mode: 'HTML', disable_web_page_preview: disablePreview);
+        parse_mode: (markdown ? 'MarkdownV2' : 'HTML'),
+        disable_web_page_preview: disablePreview);
   }
 
   String buildHelp() {
