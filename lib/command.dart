@@ -541,21 +541,36 @@ class MentionCommand extends Command {
     return bot is RoboDiscord && bot.isMention();
   }
 
+  static const replies = [
+    "Who, me? I am good! :smile:",
+    "Well, thank you! :blush:",
+    "You are crazy man, just crazy :rofl:",
+    "Frankly, my dear, I don't give a damn! :frog:",
+    "Just keep swimming :fish:",
+    "My name is CORE. Robo CORE. :robot:",
+    "Run you fools. Run! :scream:",
+    "Even the smallest bot can change the course of the future.",
+    "It's always darkest just before it goes pitch black"
+  ];
+  static const wittys = {
+    "pump": ["Yeah! ⛽️ it up!"],
+    "moon": ["Why not Mars!?"],
+    "stupid": ["Who are you calling stupid?"],
+    "lambo": ["Anything over my old Golf", "A  DeTomaso Pantera is way cooler"]
+  };
+
   @override
   exec(RoboWrapper bot) async {
     if (bot is RoboDiscord) {
-      var reply = randomOf([
-        "Who, me? I am good! :smile:",
-        "Well, thank you! :blush:",
-        "You are crazy man, just crazy :rofl:",
-        "Frankly, my dear, I don't give a damn! :frog:",
-        "Just keep swimming :fish:",
-        "My name is CORE. Robo CORE. :robot:",
-        "Run you fools. Run! :scream:",
-        "Even the smallest bot can change the course of the future.",
-        "It's always darkest just before it goes pitch black"
-      ]);
-      return await bot.reply(reply);
+      // Fallback
+      var reply = randomOf(replies);
+      // Try be a tad smarter
+      wittys.forEach((k, v) {
+        if (bot.text.contains(k)) {
+          reply = randomOf(v);
+        }
+      });
+      await bot.reply(reply);
     }
   }
 
