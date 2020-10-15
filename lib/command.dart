@@ -345,7 +345,7 @@ class FAQCommand extends Command {
     } else {
       answer = """
 *Help*
-https://help.cvault.finance
+[Help](https://help.cvault.finance)
 *Links*
 [Twitter](https://twitter.com/CORE_Vault) [Medium](https://medium.com/core-vault) [Telegram](https://t.me/COREVault) [Github](https://github.com/cVault-finance)
 *Articles*
