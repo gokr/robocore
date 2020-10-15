@@ -84,6 +84,23 @@ class HelpCommand extends Command {
   }
 }
 
+class AdminCommand extends Command {
+  AdminCommand()
+      : super("admin", "a", "admin|a", "Special RoboCORE admin stuff.");
+
+  @override
+  exec(RoboMessage bot) async {
+    var parts = bot.parts;
+    // channel = Show this channel
+    if (parts.length == 1) {
+      return await bot.reply("Need sub command");
+    }
+    if (parts[1] == "channelid") {
+      return await bot.reply("Channel id: ${bot.getChannelOrChatId}");
+    }
+  }
+}
+
 class PosterCommand extends Command {
   PosterCommand()
       : super("poster", "", "poster [add|remove] \"name\" {...json...}",
@@ -125,7 +142,7 @@ class PosterCommand extends Command {
     if (!add) {
       var poster = await Poster.find(name);
       if (poster != null) {
-        poster.deleteMessage(bot);
+        poster.deleteMessages(bot);
         poster.delete();
         return await bot.reply("Removed poster $name");
       } else {
@@ -535,7 +552,7 @@ class MentionCommand extends Command {
 
   // Double dispatch
   bool isValid(RoboMessage bot) {
-    return bot is RoboDiscordMessage && bot.isMention();
+    return bot.isMention();
   }
 
   static const replies = [
@@ -559,17 +576,15 @@ class MentionCommand extends Command {
 
   @override
   exec(RoboMessage bot) async {
-    if (bot is RoboDiscordMessage) {
-      // Fallback
-      var reply = randomOf(replies);
-      // Try be a tad smarter
-      wittys.forEach((k, v) {
-        if (bot.textLowerCase.contains(k)) {
-          reply = randomOf(v);
-        }
-      });
-      await bot.reply(reply);
-    }
+    // Fallback
+    var reply = randomOf(replies);
+    // Try be a tad smarter
+    wittys.forEach((k, v) {
+      if (bot.textLowerCase.contains(k)) {
+        reply = randomOf(v);
+      }
+    });
+    await bot.reply(reply);
   }
 
   @override
