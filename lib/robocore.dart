@@ -25,6 +25,8 @@ abstract class RoboWrapper {
 
   Future<int?> send(int channelOrChatId, dynamic content) async {}
 
+  Future pinMessage(int channelOrChatId, int id) async {}
+
   Future<dynamic> getMessage(int channelOrChatId, int id) async {}
 
   Future<dynamic> editMessage(int channel, int id, dynamic content) async {}
@@ -75,7 +77,11 @@ mixin RoboMessage on RoboWrapper {
 
   String get text;
 
+  String get textLowerCase;
+
   List<String> get parts;
+
+  int get getChannelOrChatId;
 
   reply(dynamic answer,
       {bool disablePreview = true, bool markdown = false}) async {}
@@ -94,13 +100,12 @@ class RoboDiscord extends RoboWrapper {
   }
 
   Future<dynamic> getMessage(int channel, id) async {
-    var channel = await bot.getDiscordChannel(id);
-    return channel.getMessage(Snowflake(id));
+    var ch = await bot.getDiscordChannel(channel);
+    return ch.getMessage(Snowflake(id));
   }
 
   Future<dynamic> deleteMessage(int channel, id) async {
-    var channel = await bot.getDiscordChannel(id);
-    var message = await channel.getMessage(Snowflake(id));
+    var message = await getMessage(channel, id);
     message?.delete();
   }
 
@@ -121,7 +126,12 @@ class RoboDiscord extends RoboWrapper {
     } else {
       message = await channel.send(content: content);
     }
-    return message.id;
+    return message.id.id;
+  }
+
+  Future<dynamic> pinMessage(int channel, id) async {
+    var message = await getMessage(channel, id);
+    message.pinMessage();
   }
 
   Future<dynamic> _send(ITextChannel channel, dynamic content) async {
@@ -145,7 +155,7 @@ class RoboTelegram extends RoboWrapper {
   }
 
   Future<dynamic> editMessage(int chatId, int id, dynamic content,
-      {bool disablePreview = true, bool markdown = false}) async {
+      {bool disablePreview = true, bool markdown = true}) async {
     return bot.teledart.telegram.editMessageText(content,
         chat_id: chatId,
         message_id: id,
@@ -154,11 +164,15 @@ class RoboTelegram extends RoboWrapper {
   }
 
   Future<int?> send(int chatId, dynamic content,
-      {bool disablePreview = true, bool markdown = false}) async {
+      {bool disablePreview = true, bool markdown = true}) async {
     var message = await bot.teledart.telegram.sendMessage(chatId, content,
         parse_mode: (markdown ? 'MarkdownV2' : 'HTML'),
         disable_web_page_preview: disablePreview);
     return message.message_id;
+  }
+
+  Future<dynamic> pinMessage(int chat, id) async {
+    return bot.teledart.telegram.pinChatMessage(chat, id);
   }
 }
 
@@ -190,6 +204,8 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
   }
 
   sender() => e.message.author.username;
+
+  int get getChannelOrChatId => e.message.channelId.id;
 
   reply(dynamic answer,
       {bool disablePreview = true, bool markdown = false}) async {
@@ -244,6 +260,8 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
 
   sender() => e.from.username ?? "(you have no username!)";
 
+  int get getChannelOrChatId => e.chat.id;
+
   reply(dynamic answer,
       {bool disablePreview = true, bool markdown = false}) async {
     await e.reply(answer,
@@ -263,9 +281,8 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
   }
 
   @override
-  bool isMention() {
-    return text.contains("@robocore_bot");
-  }
+  bool isMention() =>
+      text.contains("@robocore_bot") || text.contains("@robocoretest_bot");
 }
 
 /// The bot
@@ -452,6 +469,12 @@ class Robocore {
       ..add(StatsCommand())
       ..add(ContractsCommand())
       ..add(LogCommand()
+        ..users = [
+          124467899447508992,
+          298396371789152258,
+          751362716962390086,
+          757109953910538341 // gokr, CryptoXman, 0xRevert, X3
+        ]
         ..whitelist = [
           759890072392302592,
           764120413507813417,
@@ -459,6 +482,7 @@ class Robocore {
         ]) // price-discussion, robocore, robocore-development
       ..add(PriceCommand())
       ..add(FloorCommand())
+      ..add(AdminCommand()..users = [124467899447508992]) // gokr
       ..add(PosterCommand()
         ..users = [
           124467899447508992,
@@ -528,6 +552,13 @@ class Robocore {
 
     teledart
         .onMessage(entityType: 'bot_command')
+        .listen((TeleDartMessage message) async {
+      var wrapper = RoboTelegramMessage(this, message);
+      wrapper.runCommands();
+    });
+
+    teledart
+        .onMessage(entityType: 'mention')
         .listen((TeleDartMessage message) async {
       var wrapper = RoboTelegramMessage(this, message);
       wrapper.runCommands();

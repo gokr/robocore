@@ -25,11 +25,11 @@ class Field {
 class Poster {
   late String name;
 
-  /// The numeric id of the Discord channel or Telegram chat
-  late int channelOrChatId;
+  /// The numeric ids of target Discord channels, and the associated message id
+  Map<int, int?> channels = {};
 
-  /// The numeric id of the Poster message
-  int messageId = 0;
+  /// The numeric ids of target Telegram chats, and the associated message id
+  Map<int, int?> chats = {};
 
   // Mandatory
   late String title;
@@ -53,15 +53,18 @@ class Poster {
 
   List<Field> fields = [];
 
-  Snowflake get messageSnowflake => Snowflake(messageId);
-
   Poster.fromJson(this.name, dynamic json) {
     start = DateTime.parse(json['start']);
     end = DateTime.parse(json['end']);
     revealEnd = DateTime.parse(json['revealEnd']);
     recreateInterval = json['recreate'];
     updateInterval = json['update'];
-    channelOrChatId = json['channelId'];
+    for (var id in json['channels']) {
+      channels[id] = null;
+    }
+    for (var id in json['chats']) {
+      chats[id] = null;
+    }
     _readContent(json['content']);
   }
 
@@ -72,7 +75,8 @@ class Poster {
     json['revealEnd'] = revealEnd.toIso8601String();
     json['recreate'] = recreateInterval;
     json['update'] = updateInterval;
-    json['channelId'] = channelOrChatId;
+    json['channels'] = channels.keys.toList();
+    json['chats'] = chats.keys.toList();
     json['content'] = _writeContent();
     return json;
   }
@@ -151,42 +155,80 @@ class Poster {
   }
 
   /// Create (and delete any existing) embed
-  recreate(RoboWrapper bot) async {
-    deleteMessage(bot);
+  recreateMessages(RoboWrapper bot) async {
+    deleteMessages(bot);
     var content = build(bot);
-    // Send content and store message id
-    messageId = await bot.send(channelOrChatId, content) as int;
+    // Send content and store message ids
+    if (bot is RoboDiscord) {
+      for (var id in channels.keys) {
+        var messageId = await bot.send(id, content);
+        channels[id] = messageId;
+        await bot.pinMessage(id, messageId);
+      }
+    } else {
+      for (var id in chats.keys) {
+        var messageId = await bot.send(id, content);
+        if (messageId != null) {
+          chats[id] = messageId;
+          await bot.pinMessage(id, messageId);
+        }
+      }
+    }
     recreated = DateTime.now();
   }
 
-  // Delete message
-  deleteMessage(RoboWrapper bot) async {
-    if (messageId != 0)
+  deleteMessages(RoboWrapper bot) async {
+    if (bot is RoboDiscord) {
+      channels.forEach((ch, msg) async {
+        await _deleteMessage(bot, ch, msg);
+      });
+    } else {
+      chats.forEach((ch, msg) async {
+        await _deleteMessage(bot, ch, msg);
+      });
+    }
+  }
+
+  // Delete message, unless messageId is null
+  _deleteMessage(RoboWrapper bot, int channelOrChatId, int? messageId) async {
+    if (messageId != null) {
       try {
         await bot.deleteMessage(channelOrChatId, messageId);
       } catch (e) {
-        log.warning("Failed deleting poster message: $messageId");
+        log.warning(
+            "Failed deleting poster message: $channelOrChatId/$messageId");
       }
+    }
   }
 
-  /// Update content of existing embed
-  update(RoboWrapper bot) async {
-    // If message exists
-    // Find embed
-    if (messageId != 0)
+  /// Update content of existing message
+  updateMessages(RoboWrapper bot) async {
+    if (bot is RoboDiscord) {
+      channels.forEach((ch, msg) async {
+        await _updateMessage(bot, ch, msg);
+      });
+    } else {
+      chats.forEach((ch, msg) async {
+        await _updateMessage(bot, ch, msg);
+      });
+    }
+  }
+
+  _updateMessage(RoboWrapper bot, int channelOrChatId, int? messageId) async {
+    if (messageId != null) {
       try {
-        var content = build(bot);
-        // Edit it
-        await bot.editMessage(channelOrChatId, messageId, content);
+        await bot.editMessage(channelOrChatId, messageId, build(bot));
         updated = DateTime.now();
       } catch (e) {
-        log.warning("Failed updating poster message: $messageId");
+        log.warning(
+            "Failed updating poster message: $channelOrChatId/$messageId");
       }
+    }
   }
 
   dynamic build(RoboWrapper bot) {
     dynamic result;
-    if (bot is RoboDiscordMessage) {
+    if (bot is RoboDiscord) {
       // Create embed
       result = EmbedBuilder();
       result.title = title;
@@ -197,9 +239,16 @@ class Poster {
         result.addField(name: f.label, content: content);
       }
     } else {
-      result = "";
+      // TODO: thumbnailUrl
+      var buf = StringBuffer();
+      buf.writeln("<b>$title</b>");
+      for (var f in fields) {
+        var content = merge(f.content, bot);
+        buf.writeln("<b>${f.label}</b>: $content");
+      }
+      buf.writeln("<a href=\"$imageUrl\"></a>");
+      result = buf.toString();
     }
-    //embed.timestamp = DateTime.now().toUtc();
     return result;
   }
 
@@ -213,26 +262,26 @@ class Poster {
         // Time to delete?
         if (revealEnd.isBefore(now)) {
           log.info("Deleting poster $name");
-          deleteMessage(bot);
+          deleteMessages(bot);
           delete();
           return;
         }
         // Time to create or recreate?
         if (recreated.add(Duration(minutes: recreateInterval)).isBefore(now)) {
           log.info("Creating or recreating poster $name");
-          return recreate(bot);
+          return recreateMessages(bot);
         }
         // Time to reveal? If so update also
         if (end.isBefore(now) && reveal != null) {
           log.info("Revealing poster $name");
           _readContent(reveal as Map);
           reveal = null; // null out so reveal is only once
-          return update(bot);
+          return updateMessages(bot);
         }
         // Time to update?
         if (updated.add(Duration(minutes: updateInterval)).isBefore(now)) {
           log.info("Updating poster $name");
-          return update(bot);
+          return updateMessages(bot);
         }
       }
     } catch (e) {
