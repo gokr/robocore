@@ -74,7 +74,7 @@ class RoboDiscord extends RoboWrapper {
   MessageReceivedEvent e;
 
   RoboDiscord(Robocore bot, this.e) : super(bot) {
-    text = e.message.content;
+    text = e.message.content.toLowerCase();
     parts = splitMessage(text);
   }
 
@@ -131,7 +131,7 @@ class RoboTelegram extends RoboWrapper {
   TeleDartMessage e;
 
   RoboTelegram(Robocore bot, this.e) : super(bot) {
-    text = e.text;
+    text = e.text.toLowerCase();
     parts = splitMessage(text);
   }
 
@@ -355,7 +355,12 @@ class Robocore {
       ..add(PriceCommand())
       ..add(FloorCommand())
       ..add(PosterCommand()
-        ..users = [124467899447508992, 298396371789152258]); // gokr, CryptoXman
+        ..users = [
+          124467899447508992,
+          298396371789152258,
+          751362716962390086,
+          757109953910538341
+        ]); // gokr, CryptoXman, 0xRevert, X3
   }
 
   /// Go through all loggers and log
