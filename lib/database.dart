@@ -4,7 +4,6 @@ late PostgreSQLConnection db;
 
 Future<PostgreSQLConnection> openDatabase(Map config) async {
   var pg = config['postgresql'];
-  print(pg);
   db = PostgreSQLConnection(pg['host'], pg['port'], pg['databaseName'],
       username: pg['username'], password: pg['password']);
   await db.open();
