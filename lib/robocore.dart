@@ -26,16 +26,23 @@ abstract class RoboWrapper {
   runCommands() async {
     logMessage();
     for (var cmd in bot.commands) {
-      if (validCommand(cmd)) {
+      if (cmd.isValid(this)) {
         return await cmd.exec(this);
       }
     }
-    reply("I am afraid I can't do that Dave, I mean... ${sender()}");
+    if (isCommand())
+      reply("I am afraid I can't do that Dave, I mean... ${sender()}");
   }
 
   logMessage();
 
   bool validCommand(Command cmd);
+
+  bool isCommand() {
+    return text.startsWith(prefix);
+  }
+
+  String get prefix;
 
   /// Split a message into distinct words and 'A sentence' or '<some JSON>'
   List<String> splitMessage(String str) {
@@ -65,9 +72,12 @@ class RoboDiscord extends RoboWrapper {
         "Command: ${e.message.author}: ${e.message.content} channel: ${e.message.channel.id}");
   }
 
+  String get prefix => discordPrefix;
+
   bool validCommand(Command cmd) {
     var text = e.message.content;
     return cmd.listChecked(e) &&
+        cmd.userChecked(e) &&
         (text.startsWith(discordPrefix + cmd.name) ||
             (cmd.short != "" && (text == discordPrefix + cmd.short) ||
                 text.startsWith(discordPrefix + cmd.short + " ")));
@@ -124,6 +134,8 @@ class RoboTelegram extends RoboWrapper {
             text.startsWith(telegramPrefix + cmd.short + " "));
   }
 
+  String get prefix => discordPrefix;
+
   sender() => e.from.username;
 
   reply(dynamic answer, {bool disablePreview = true}) async {
@@ -153,9 +165,6 @@ class Robocore {
 
   // All loggers
   List<EventLogger> loggers = [];
-
-  // All posters
-  List<Poster> posters = [];
 
   /// All stickies
   //Map<String, Snowflake> stickies = {};
@@ -202,16 +211,6 @@ class Robocore {
     print(supplyLP);
   }
 
-  addPoster(Poster p) {
-    removePoster(p.name, p.channelId);
-    posters.add(p);
-  }
-
-  removePoster(String name, int chId) {
-    posters.removeWhere(
-        (element) => element.channelId == chId && element.name == name);
-  }
-
   addLogger(EventLogger logger) {
     loggers.removeWhere((element) =>
         element.channel == logger.channel && element.name == logger.name);
@@ -238,7 +237,8 @@ class Robocore {
     rewardsInUSD = rewardsInCORE * priceCOREinUSD;
 
     // Update posters, we copy since it may remove itself from the List in tick
-    for (var p in List.from(posters)) {
+    var ps = await Poster.getAll();
+    for (var p in ps) {
       p.tick(this);
     }
   }
@@ -326,28 +326,21 @@ class Robocore {
 
   buildCommands() {
     commands
-      ..add(MentionCommand(
-          "@RoboCORE", "", "@RoboCORE", "I will ... say something!"))
-      ..add(
-          HelpCommand("help", "h", "help|h", "Show all commands of RoboCORE."))
-      ..add(FAQCommand("faq", "", "faq", "Show links to FAQ etc."))
-      ..add(StartCommand("start", "", "start",
-          "Just say hi and get things going! Standard procedure in Telegram, not used in Discord really."))
-      ..add(StatsCommand(
-          "stats", "s", "stats|s", "Show some basic statistics, refreshed every minute."))
-      ..add(ContractsCommand(
-          "contracts", "c", "contracts|c", "Show links to relevant contracts."))
-      ..add(LogCommand("log", "l", "log|l [add|remove] [all|price|whale|swap]",
-          "Control logging of events in current channel, only log will show active loggers. Only works in private conversations with RoboCORE, or in select channels on Discord.")
+      ..add(MentionCommand())
+      ..add(HelpCommand())
+      ..add(FAQCommand())
+      ..add(StartCommand())
+      ..add(StatsCommand())
+      ..add(ContractsCommand())
+      ..add(LogCommand()
         ..whitelist = [
           759890072392302592,
           764120413507813417,
           763138788297408552
         ]) // price-discussion, robocore, robocore-development
-      ..add(PriceCommand(
-          "price", "p", "price|p [[\"amount\"] eth|core|lp]", "Show prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use an amount like \"!p 10 core\"."))
-      ..add(FloorCommand("floor", "f", "floor|f", "Show current floor prices."))
-      ..add(PosterCommand("poster", "", "poster [add|remove] \"name\" {...json...}", "Manage dynamic posters. On Telegram implemented as a live updated sticky, on Discord as a live updated regularly reposted message."));
+      ..add(PriceCommand())
+      ..add(FloorCommand())
+      ..add(PosterCommand()..users = [124467899447508992]);
   }
 
   /// Go through all loggers and log

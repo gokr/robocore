@@ -42,7 +42,7 @@ class Swap {
 
   static Future<PostgreSQLResult> createTable() async {
     return await db.query(
-        "create table _swap (swap_id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(swap_id), pair integer, created timestamp, sender text, _to text, tx text, sell boolean, amount0In numeric, amount0Out numeric, amount1In numeric, amount1Out numeric, amount numeric);");
+        "create table IF NOT EXISTS _swap (swap_id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(swap_id), pair integer, created timestamp, sender text, _to text, tx text, sell boolean, amount0In numeric, amount0Out numeric, amount1In numeric, amount1Out numeric, amount numeric);");
   }
 
   Future<void> save() async {

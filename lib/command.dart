@@ -26,6 +26,7 @@ abstract class Command {
   String name, short, syntax, help;
   List<int> blacklist = [];
   List<int> whitelist = [];
+  List<int> users = [];
 
   Command(this.name, this.short, this.syntax, this.help);
 
@@ -43,6 +44,11 @@ abstract class Command {
     return listCheckedChannel(e.message.channel);
   }
 
+  // If a command requires specific users
+  bool userChecked(MessageReceivedEvent e) {
+    return users.isEmpty || users.contains(e.message.author.id.id);
+  }
+
   bool listCheckedChannel(ITextChannel channel) {
     if (whitelist.isNotEmpty) {
       return whitelist.contains(channel.id.id);
@@ -55,12 +61,18 @@ abstract class Command {
     return listCheckedChannel(channel);
   }
 
+  // Double dispatch
+  bool isValid(RoboWrapper bot) {
+    return bot.validCommand(this);
+  }
+
   String get command => "$discordPrefix$name";
   String get shortCommand => "$discordPrefix$short";
 }
 
 class HelpCommand extends Command {
-  HelpCommand(name, short, syntax, help) : super(name, short, syntax, help);
+  HelpCommand()
+      : super("help", "h", "help|h", "Show all commands of RoboCORE.");
 
   @override
   exec(RoboWrapper bot) async {
@@ -69,21 +81,24 @@ class HelpCommand extends Command {
 }
 
 class PosterCommand extends Command {
-  PosterCommand(name, short, syntax, help) : super(name, short, syntax, help);
+  PosterCommand()
+      : super("poster", "", "poster [add|remove] \"name\" {...json...}",
+            """Manage dynamic posters. On Telegram implemented as a live updated sticky, on Discord as a live updated regularly reposted message.
+            This command is only available to specific admin users.""");
 
   @override
   exec(RoboWrapper bot) async {
     if (bot is RoboDiscord) {
-      var chId = bot.e.message.channel.id.id;
-      var posters = bot.bot.posters.where((p) => p.channelId == chId);
+      // All posters
+      var posters = await Poster.getAll();
       var parts = bot.parts;
-      // poster = shows posters
+      // poster list = Shows all posters
       // poster remove xxx = removes a named poster
       // poster add xxx '{"channel": "end": "2020-10-29T12:12:12", "recreate": 20, "update": 1,
       // "title": "LGE 2 is coming!", "image": "aURL", "thumbnail": "aURL", "fields": [{"label": "Countdown", "content": "{{timer}}"}]}'
       if (parts.length == 1) {
-        String active = posters.join(" ");
-        return await bot.reply("Active posters: $active");
+        String allPosters = posters.join(" ");
+        return await bot.reply("Active posters: $allPosters");
       }
       if (parts.length == 2) {
         return await bot.reply("Use add|remove");
@@ -97,20 +112,25 @@ class PosterCommand extends Command {
       bool add = parts[1] == "add";
       var name = parts[2];
       if (!add) {
-        bot.bot.removePoster(name, chId);
-        return await bot.reply("Removed poster $name");
+        var poster = await Poster.find(name);
+        if (poster != null) {
+          poster.delete();
+          return await bot.reply("Removed poster $name");
+        } else {
+          return await bot.reply("Could not find poster $name");
+        }
       }
 
       // Create a Poster
       try {
         var json = jsonDecode(trimQuotes(parts[3]));
         var poster = Poster.fromJson(name, json);
-        bot.bot.addPoster(poster);
+        await poster.insert();
       } catch (e) {
         return await bot.reply("Failed: $e");
       }
     } else {
-      await bot.reply("Working on it!");
+      await bot.reply("Not yet working on Telegram!");
     }
   }
 }
@@ -172,7 +192,9 @@ class StickyCommand extends Command {
 }
 */
 class PriceCommand extends Command {
-  PriceCommand(name, short, syntax, help) : super(name, short, syntax, help);
+  PriceCommand()
+      : super("price", "p", "price|p [[\"amount\"] eth|core|lp]",
+            "Show prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use an amount like \"!p 10 core\".");
 
   @override
   exec(RoboWrapper bot) async {
@@ -247,7 +269,7 @@ class PriceCommand extends Command {
 }
 
 class FloorCommand extends Command {
-  FloorCommand(name, short, syntax, help) : super(name, short, syntax, help);
+  FloorCommand() : super("floor", "f", "floor|f", "Show current floor prices.");
 
   @override
   exec(RoboWrapper bot) async {
@@ -290,7 +312,7 @@ class FloorCommand extends Command {
 }
 
 class FAQCommand extends Command {
-  FAQCommand(name, short, syntax, help) : super(name, short, syntax, help);
+  FAQCommand() : super("faq", "", "faq", "Show links to FAQ etc.");
 
   @override
   exec(RoboWrapper bot) async {
@@ -322,7 +344,9 @@ https://medium.com/@0xdec4f/the-idea-project-and-vision-of-core-vault-52f5eddfbf
 }
 
 class StartCommand extends Command {
-  StartCommand(name, short, syntax, help) : super(name, short, syntax, help);
+  StartCommand()
+      : super("start", "", "start",
+            "Just say hi and get things going! Standard procedure in Telegram, not used in Discord really.");
 
   @override
   exec(RoboWrapper bot) async {
@@ -331,7 +355,9 @@ class StartCommand extends Command {
 }
 
 class LogCommand extends Command {
-  LogCommand(name, short, syntax, help) : super(name, short, syntax, help);
+  LogCommand()
+      : super("log", "l", "log|l [add|remove] [all|price|whale|swap]",
+            "Control logging of events in current channel, only log will show active loggers. Only works in private conversations with RoboCORE, or in select channels on Discord.");
 
   @override
   exec(RoboWrapper w) async {
@@ -393,14 +419,15 @@ class LogCommand extends Command {
       String active = bot.loggersFor(ch).join(" ");
       return await w.reply("Active loggers: $active");
     } else {
-      return w.reply("Working on it!");
+      return w.reply("Sorry, not yet working on Telegram!");
     }
   }
 }
 
 class ContractsCommand extends Command {
-  ContractsCommand(name, short, syntax, help)
-      : super(name, short, syntax, help);
+  ContractsCommand()
+      : super("contracts", "c", "contracts|c",
+            "Show links to relevant contracts.");
 
   @override
   exec(RoboWrapper bot) async {
@@ -442,7 +469,9 @@ Links to CORE token and CORE-ETH trading pair
 }
 
 class StatsCommand extends Command {
-  StatsCommand(name, short, syntax, help) : super(name, short, syntax, help);
+  StatsCommand()
+      : super("stats", "s", "stats|s",
+            "Show some basic statistics, refreshed every minute.");
 
   @override
   exec(RoboWrapper w) async {
@@ -486,11 +515,17 @@ Stay CORE and keep HODLING!
 }
 
 class MentionCommand extends Command {
-  MentionCommand(name, short, syntax, help) : super(name, short, syntax, help);
+  MentionCommand()
+      : super("@RoboCORE", "", "@RoboCORE", "I will ... say something!");
+
+  // Double dispatch
+  bool isValid(RoboWrapper bot) {
+    return bot is RoboDiscord && bot.isMention();
+  }
 
   @override
   exec(RoboWrapper bot) async {
-    if (bot is RoboDiscord && bot.isMention()) {
+    if (bot is RoboDiscord) {
       const replies = [
         "Who, me? I am good! :smile:",
         "Well, thank you! :blush:",

@@ -4,6 +4,7 @@ import 'package:cron/cron.dart';
 import 'package:logging/logging.dart';
 import 'package:robocore/core.dart';
 import 'package:robocore/model/swap.dart';
+import 'package:robocore/poster.dart';
 
 import 'database.dart';
 
@@ -94,11 +95,11 @@ class Roboserver {
     await openDatabase(config);
     log.info("Postgres opened: ${db.databaseName}");
 
-    //await Swap.dropTable();
-    //print("dropped");
     try {
       await Swap.createTable();
-      log.info("Created Swap table");
+      //await Poster.dropTable();
+      await Poster.createTable();
+      log.info("Created tables");
     } catch (e) {
       print(e);
     }
