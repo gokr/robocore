@@ -354,7 +354,8 @@ class Robocore {
         ]) // price-discussion, robocore, robocore-development
       ..add(PriceCommand())
       ..add(FloorCommand())
-      ..add(PosterCommand()..users = [124467899447508992]);
+      ..add(PosterCommand()
+        ..users = [124467899447508992, 298396371789152258]); // gokr, CryptoXman
   }
 
   /// Go through all loggers and log
