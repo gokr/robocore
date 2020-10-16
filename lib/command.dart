@@ -556,13 +556,13 @@ class MentionCommand extends Command {
   }
 
   static const replies = [
-    "Who, me? I am good! :smile:",
-    "Well, thank you! :blush:",
-    "You are crazy man, just crazy :rofl:",
-    "Frankly, my dear, I don't give a damn! :frog:",
-    "Just keep swimming :fish:",
-    "My name is CORE. Robo CORE. :robot:",
-    "Run you fools. Run! :scream:",
+    "Who, me? I am good! 😄",
+    "Well, thank you! 😊",
+    "You are crazy man, just crazy 🤣",
+    "Frankly, my dear, I don't give a damn! 🐸",
+    "Just keep swimming 🐟",
+    "My name is CORE. Robo CORE. 🤖",
+    "Run you fools. Run! 😱",
     "Even the smallest bot can change the course of the future.",
     "It's always darkest just before it goes pitch black"
   ];
@@ -570,7 +570,7 @@ class MentionCommand extends Command {
     "pump": ["Yeah! ⛽️ it up!"],
     "moon": ["Why not Mars!?"],
     "stupid": ["Who are you calling stupid?"],
-    "love": ["I love you too! :heart:"],
+    "love": ["I love you too! ❤️"],
     "lambo": ["Anything over my old Golf", "A  DeTomaso Pantera is way cooler"]
   };
 
