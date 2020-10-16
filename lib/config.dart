@@ -20,8 +20,10 @@ dynamic loadConfig() {
       var level =
           Level.LEVELS.firstWhere((l) => l.name.toLowerCase() == logLevel);
       Logger.root.level = level;
+      print('Using logger level $level');
       Logger.root.onRecord.listen((LogRecord rec) {
-        print('${rec.level.name}: ${rec.time}: ${rec.message}');
+        print(
+            "[${rec.time}] [${rec.level.name}] [${rec.loggerName}] ${rec.message}");
       });
       return config;
     } catch (e) {

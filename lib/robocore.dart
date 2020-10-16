@@ -72,7 +72,9 @@ mixin RoboMessage on RoboWrapper {
     ]);
   }
 
-  logMessage();
+  logMessage() {
+    log.info("$roboChannel ($username): $text");
+  }
 
   bool isCommand() {
     return text.startsWith(prefix);
@@ -222,11 +224,6 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
     parts = splitMessage(text);
   }
 
-  logMessage() {
-    log.info(
-        "Command: ${e.message.author}: ${e.message.content} channel: ${e.message.channel.id}");
-  }
-
   String get prefix => discordPrefix;
 /*
   // Is this command valid to execute for this message?
@@ -291,10 +288,6 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
     text = e.text;
     textLowerCase = text.toLowerCase();
     parts = splitMessage(text);
-  }
-
-  logMessage() {
-    log.info("Command: ${e.from.username}: ${e.text}"); // TODO: channel?
   }
 
 /*
@@ -556,7 +549,7 @@ class Robocore {
     log.info("Postgres opened: ${db.databaseName}");
 
     // Create our two bots
-    discord = Nyxx(config['nyxx']);
+    discord = Nyxx(config['nyxx'], useDefaultLogger: false);
     teledart = TeleDart(Telegram(config['teledart']), Event());
 
     // Create our interface with Ethereum
@@ -564,6 +557,9 @@ class Robocore {
     await core.readContracts();
 
     buildCommands();
+
+    // One initial update
+    await updatePriceInfo();
 
     // We listen to all Swaps on COREETH
     subscription = core.listenToEvent(core.CORE2ETH, 'Swap', (ev, event) {
