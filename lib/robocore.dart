@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-
-import 'package:cron/cron.dart';
 import 'package:logging/logging.dart';
 import 'package:neat_periodic_task/neat_periodic_task.dart';
 import 'package:nyxx/nyxx.dart';
@@ -45,11 +43,12 @@ abstract class RoboWrapper {
 }
 
 mixin RoboMessage on RoboWrapper {
+  /// Find a Command valid for this message and let it handle it
   runCommands() async {
     logMessage();
     for (var cmd in bot.commands) {
       if (cmd.isValid(this)) {
-        return await cmd.exec(this);
+        return await cmd.handleMessage(this);
       }
     }
     if (isCommand()) reply(randomDNU());
@@ -57,7 +56,7 @@ mixin RoboMessage on RoboWrapper {
 
   String randomDNU() {
     return randomOf([
-      "I am afraid I can't do that Dave, I mean... ${sender()}",
+      "I am afraid I can't do that Dave, I mean... ${username}",
       "I have absolutely no clue what you are blabbering about",
       "Are you sure I am meant to understand that?",
       "I am no damn AI, what did you mean?",
@@ -66,6 +65,7 @@ mixin RoboMessage on RoboWrapper {
 
   logMessage();
 
+  /// Is this Command valid for this message?
   bool validCommand(Command cmd);
 
   bool isCommand() {
@@ -74,24 +74,31 @@ mixin RoboMessage on RoboWrapper {
 
   bool isMention();
 
-  // Either ! or /
+  /// Either ! or /
   String get prefix;
 
+  /// The actual message text
   String get text;
-
   String get textLowerCase;
 
   List<String> get parts;
 
-  int get getChannelOrChatId;
+  /// Returns id of channel (Discord) or chat (Telegram)
+  int get channelId;
+
+  /// Returns id of User
+  int get userId;
+
+  /// Username of sender
+  String get username;
+
+  /// Is this a Direct Chat (DM. PM)?
+  bool get isDirectChat;
 
   reply(dynamic answer,
       {bool disablePreview = true, bool markdown = false}) async {}
 
   dynamic buildHelp();
-
-  // Username of sender
-  String sender();
 }
 
 class RoboDiscord extends RoboWrapper {
@@ -196,18 +203,30 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
 
   String get prefix => discordPrefix;
 
+  // Is this command valid to execute for this message?
   bool validCommand(Command cmd) {
-    var text = e.message.content;
-    return cmd.listChecked(e) &&
-        cmd.userChecked(e) &&
-        (text.startsWith(discordPrefix + cmd.name) ||
-            (cmd.short != "" && (text == discordPrefix + cmd.short) ||
-                text.startsWith(discordPrefix + cmd.short + " ")));
+    // Some commands are valid for all in DM, or for select users with access
+    if (isDirectChat) {
+      return (cmd.validForAllInDM || cmd.validForUserId(userId)) &&
+          matches(cmd);
+    } else {
+      // Otherwise we check whitelist/blacklist of channel ids && users with access
+      return cmd.validForChannelId(channelId) &&
+          cmd.validForUserId(userId) &&
+          matches(cmd);
+    }
   }
 
-  sender() => e.message.author.username;
+  bool matches(Command cmd) {
+    return (text.startsWith(discordPrefix + cmd.name) ||
+        (cmd.short != "" && (text == discordPrefix + cmd.short) ||
+            text.startsWith(discordPrefix + cmd.short + " ")));
+  }
 
-  int get getChannelOrChatId => e.message.channelId.id;
+  String get username => e.message.author.username;
+  int get userId => e.message.author.id.id;
+  int get channelId => e.message.channelId.id;
+  bool get isDirectChat => e.message.channel.type == ChannelType.dm;
 
   reply(dynamic answer,
       {bool disablePreview = true, bool markdown = false}) async {
@@ -251,6 +270,7 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
     log.info("Command: ${e.from.username}: ${e.text}"); // TODO: channel?
   }
 
+  // In Telegram all commands are valid
   bool validCommand(Command cmd) {
     var text = e.text;
     return text.startsWith(telegramPrefix + cmd.name) ||
@@ -260,9 +280,10 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
 
   String get prefix => telegramPrefix;
 
-  sender() => e.from.username ?? "(you have no username!)";
-
-  int get getChannelOrChatId => e.chat.id;
+  String get username => e.from.username ?? "(you have no username!)";
+  int get userId => e.from.id;
+  int get channelId => e.chat.id;
+  bool get isDirectChat => e.chat.type == "private";
 
   reply(dynamic answer,
       {bool disablePreview = true, bool markdown = false}) async {

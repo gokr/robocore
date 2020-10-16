@@ -32,40 +32,34 @@ abstract class Command {
   List<int> whitelist = [];
   List<int> users = [];
 
+  /// Is this command fine for everyone, if executed in direct chat?
+  bool validForAllInDM = true;
+
   Command(this.name, this.short, this.syntax, this.help);
 
-  /// Handle the command
-  exec(RoboMessage bot);
+  /// Handle the message
+  handleMessage(RoboMessage bot);
 
   /// Handle the command, returns a String if handled, otherwise null
   Future<String?> inlineTelegram(String cmd, Robocore robot) async {
     return null;
   }
 
-  // Either whitelisted or blacklisted (can't be both). DMs are fine.
-  bool listChecked(MessageReceivedEvent e) {
-    if (e.message.channel.type == ChannelType.dm) return true;
-    return listCheckedChannel(e.message.channel);
-  }
-
-  // If a command requires specific users
-  bool userChecked(MessageReceivedEvent e) {
-    return users.isEmpty || users.contains(e.message.author.id.id);
-  }
-
-  bool listCheckedChannel(ITextChannel channel) {
+  /// Either whitelisted or blacklisted (can't be both)
+  bool validForChannelId(int id) {
     if (whitelist.isNotEmpty) {
-      return whitelist.contains(channel.id.id);
+      return whitelist.contains(id);
     } else {
-      return !blacklist.contains(channel.id.id);
+      return !blacklist.contains(id);
     }
   }
 
-  bool availableIn(ITextChannel channel) {
-    return listCheckedChannel(channel);
+  /// If a command is valid for given user id
+  bool validForUserId(int id) {
+    return users.isEmpty || users.contains(id);
   }
 
-  // Double dispatch
+  /// Is this Command valid to execute for this message? Double dispatch
   bool isValid(RoboMessage bot) {
     return bot.validCommand(this);
   }
@@ -79,7 +73,7 @@ class HelpCommand extends Command {
       : super("help", "h", "help|h", "Show all commands of RoboCORE.");
 
   @override
-  exec(RoboMessage bot) async {
+  handleMessage(RoboMessage bot) async {
     return await bot.reply(bot.buildHelp());
   }
 }
@@ -89,14 +83,14 @@ class AdminCommand extends Command {
       : super("admin", "a", "admin|a", "Special RoboCORE admin stuff.");
 
   @override
-  exec(RoboMessage bot) async {
+  handleMessage(RoboMessage bot) async {
     var parts = bot.parts;
     // channel = Show this channel
     if (parts.length == 1) {
       return await bot.reply("Need sub command");
     }
     if (parts[1] == "channelid") {
-      return await bot.reply("Channel id: ${bot.getChannelOrChatId}");
+      return await bot.reply("Channel id: ${bot.channelId}");
     }
   }
 }
@@ -108,7 +102,7 @@ class PosterCommand extends Command {
             This command is only available to specific admin users.""");
 
   @override
-  exec(RoboMessage bot) async {
+  handleMessage(RoboMessage bot) async {
     // All posters
     var posters = await Poster.getAll();
     var parts = bot.parts;
@@ -223,7 +217,7 @@ class PriceCommand extends Command {
             "Show prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use an amount like \"!p 10 core\".");
 
   @override
-  exec(RoboMessage bot) async {
+  handleMessage(RoboMessage bot) async {
     await bot.bot.updatePriceInfo();
     var parts = bot.parts;
     String? coin, amountString;
@@ -298,7 +292,7 @@ class FloorCommand extends Command {
   FloorCommand() : super("floor", "f", "floor|f", "Show current floor prices.");
 
   @override
-  exec(RoboMessage bot) async {
+  handleMessage(RoboMessage bot) async {
     dynamic answer;
     await bot.bot.updatePriceInfo();
     if (bot is RoboDiscordMessage) {
@@ -341,7 +335,7 @@ class FAQCommand extends Command {
   FAQCommand() : super("faq", "", "faq", "Show links to FAQ etc.");
 
   @override
-  exec(RoboMessage bot) async {
+  handleMessage(RoboMessage bot) async {
     dynamic answer;
     if (bot is RoboDiscordMessage) {
       answer = EmbedBuilder()
@@ -381,8 +375,8 @@ class StartCommand extends Command {
             "Just say hi and get things going! Standard procedure in Telegram, not used in Discord really.");
 
   @override
-  exec(RoboMessage bot) async {
-    return bot.reply("Well, hi there ${bot.sender()}! What can I do for you?");
+  handleMessage(RoboMessage bot) async {
+    return bot.reply("Well, hi there ${bot.username}! What can I do for you?");
   }
 }
 
@@ -392,7 +386,7 @@ class LogCommand extends Command {
             "Control logging of events in current channel, only log will show active loggers. Only works in private conversations with RoboCORE, or in select channels on Discord.");
 
   @override
-  exec(RoboMessage w) async {
+  handleMessage(RoboMessage w) async {
     if (w is RoboDiscordMessage) {
       var bot = w.bot;
       var ch = w.e.message.channel;
@@ -480,7 +474,7 @@ class ContractsCommand extends Command {
             "Show links to relevant contracts.");
 
   @override
-  exec(RoboMessage bot) async {
+  handleMessage(RoboMessage bot) async {
     dynamic answer;
     if (bot is RoboDiscordMessage) {
       answer = EmbedBuilder()
@@ -524,7 +518,7 @@ class StatsCommand extends Command {
             "Show some basic statistics, refreshed every minute.");
 
   @override
-  exec(RoboMessage w) async {
+  handleMessage(RoboMessage w) async {
     dynamic answer;
     var bot = w.bot;
     await bot.updatePriceInfo();
@@ -568,7 +562,7 @@ class MentionCommand extends Command {
   MentionCommand()
       : super("@RoboCORE", "", "@RoboCORE", "I will ... say something!");
 
-  // Double dispatch
+  // I am valid if the message mentions me
   bool isValid(RoboMessage bot) {
     return bot.isMention();
   }
@@ -593,7 +587,7 @@ class MentionCommand extends Command {
   };
 
   @override
-  exec(RoboMessage bot) async {
+  handleMessage(RoboMessage bot) async {
     // Fallback
     var reply = randomOf(replies);
     // Try be a tad smarter
