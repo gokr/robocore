@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cron/cron.dart';
 import 'package:logging/logging.dart';
+import 'package:neat_periodic_task/neat_periodic_task.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:robocore/command.dart';
 import 'package:robocore/core.dart';
@@ -362,16 +364,22 @@ class Robocore {
 
   /// Run contract queries
   background() async {
-    await updatePriceInfo();
-    rewardsInCORE = raw18(await core.cumulativeRewardsSinceStart());
-    rewardsInUSD = rewardsInCORE * priceCOREinUSD;
+    try {
+      await updateRewardsInfo();
+    } catch (e, s) {
+      log.warning("Exception during update of rewards info", e, s);
+    }
 
     // Update posters
-    var posters = await Poster.getAll();
-    for (var p in posters) {
-      // Call for both Discord and Telegram
-      p.tick(RoboDiscord(this));
-      p.tick(RoboTelegram(this));
+    try {
+      var posters = await Poster.getAll();
+      for (var p in posters) {
+        // Call for both Discord and Telegram
+        p.update(RoboDiscord(this));
+        p.update(RoboTelegram(this));
+      }
+    } catch (e, s) {
+      log.warning("Exception during update of posters", e, s);
     }
   }
 
@@ -426,6 +434,11 @@ class Robocore {
     // And then we can also calculate floor of LP
     floorLPinETH = floorLiquidity / supplyLP;
     floorLPinUSD = floorLPinETH * priceETHinUSD;
+  }
+
+  updateRewardsInfo() async {
+    rewardsInCORE = raw18(await core.cumulativeRewardsSinceStart());
+    rewardsInUSD = rewardsInCORE * priceCOREinUSD;
   }
 
   String priceStringCORE([num amount = 1]) {
@@ -513,17 +526,6 @@ class Robocore {
 
     buildCommands();
 
-    // Run cron
-    var cron = Cron();
-    // One initial background
-    await background();
-    log.info("Scheduling 1 minute daemon");
-    cron.schedule(new Schedule.parse("*/1 * * * *"), () async {
-      log.info('Running background ...');
-      await background();
-      log.info('Done.');
-    });
-
     // We listen to all Swaps on COREETH
     subscription = core.listenToEvent(core.CORE2ETH, 'Swap', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
@@ -532,36 +534,36 @@ class Robocore {
       performLogging(swap);
     });
 
-    // Hook up to Discord messages
+    // When we are ready in Discord
     discord.onReady.listen((ReadyEvent e) async {
       log.info("Robocore in Discord is ready!");
       discordReady = true;
       await updateUsername();
     });
 
+    // All Discord messages
     discord.onMessageReceived.listen((MessageReceivedEvent event) async {
-      var wrapper = RoboDiscordMessage(this, event);
-      wrapper.runCommands();
+      RoboDiscordMessage(this, event).runCommands();
     });
 
-    // Hook up to Telegram messages
+    // When we are ready in Telegram
     teledart.start().then((me) {
       log.info('RoboCORE in Telegram is ready!');
       teledartReady = true;
     });
 
+    // All Telegram bot commands
     teledart
         .onMessage(entityType: 'bot_command')
         .listen((TeleDartMessage message) async {
-      var wrapper = RoboTelegramMessage(this, message);
-      wrapper.runCommands();
+      RoboTelegramMessage(this, message).runCommands();
     });
 
+    // All Telegram messages mentioning me
     teledart
         .onMessage(entityType: 'mention')
         .listen((TeleDartMessage message) async {
-      var wrapper = RoboTelegramMessage(this, message);
-      wrapper.runCommands();
+      RoboTelegramMessage(this, message).runCommands();
     });
 
     /* NOT YET!
@@ -591,5 +593,18 @@ class Robocore {
       ]);
     });
     */
+
+    // Base background tasks are run every 10 seconds
+    final scheduler = NeatPeriodicTaskScheduler(
+      interval: Duration(seconds: 10),
+      name: 'background',
+      timeout: Duration(seconds: 5),
+      task: () async => background(),
+      minCycle: Duration(seconds: 5),
+    );
+
+    scheduler.start();
+    await ProcessSignal.sigterm.watch().first;
+    await scheduler.stop();
   }
 }
