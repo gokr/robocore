@@ -16,6 +16,15 @@ import 'database.dart';
 
 Logger log = Logger("Robocore");
 
+var gokr = RoboUser.discord(124467899447508992);
+var CryptoXman = RoboUser.discord(298396371789152258);
+var xRevert = RoboUser.discord(751362716962390086);
+var X3 = RoboUser.discord(757109953910538341);
+
+var priceDiscussionChannel = DiscordChannel(759890072392302592);
+var robocoreChannel = DiscordChannel(764120413507813417);
+var robocoreDevelopmentChannel = DiscordChannel(763138788297408552);
+
 abstract class RoboWrapper {
   Robocore bot;
 
@@ -65,9 +74,6 @@ mixin RoboMessage on RoboWrapper {
 
   logMessage();
 
-  /// Is this Command valid for this message?
-  bool validCommand(Command cmd);
-
   bool isCommand() {
     return text.startsWith(prefix);
   }
@@ -77,17 +83,37 @@ mixin RoboMessage on RoboWrapper {
   /// Either ! or /
   String get prefix;
 
+  // Is this command valid to execute for this message?
+  bool validCommand(Command cmd) {
+    // Some commands are valid for all in DM, or for select users with access
+    if (isDirectChat) {
+      return (cmd.validForAllInDM || cmd.validForUser(roboUser)) &&
+          matches(cmd);
+    } else {
+      // Otherwise we check whitelist/blacklist of channel ids && users with access
+      return cmd.validForChannel(roboChannel) &&
+          cmd.validForUser(roboUser) &&
+          matches(cmd);
+    }
+  }
+
+  bool matches(Command cmd) {
+    return (text.startsWith(prefix + cmd.name) ||
+        (cmd.short != "" && (text == prefix + cmd.short) ||
+            text.startsWith(prefix + cmd.short + " ")));
+  }
+
   /// The actual message text
   String get text;
   String get textLowerCase;
 
   List<String> get parts;
 
-  /// Returns id of channel (Discord) or chat (Telegram)
-  int get channelId;
+  /// Returns a channel (Discord) or chat (Telegram)
+  RoboChannel get roboChannel;
 
-  /// Returns id of User
-  int get userId;
+  /// Returns a RoboUser
+  RoboUser get roboUser;
 
   /// Username of sender
   String get username;
@@ -202,30 +228,31 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
   }
 
   String get prefix => discordPrefix;
-
+/*
   // Is this command valid to execute for this message?
   bool validCommand(Command cmd) {
     // Some commands are valid for all in DM, or for select users with access
     if (isDirectChat) {
-      return (cmd.validForAllInDM || cmd.validForUserId(userId)) &&
+      return (cmd.validForAllInDM || cmd.validForUser(roboUser)) &&
           matches(cmd);
     } else {
       // Otherwise we check whitelist/blacklist of channel ids && users with access
-      return cmd.validForChannelId(channelId) &&
-          cmd.validForUserId(userId) &&
+      return cmd.validForChannel(roboChannel) &&
+          cmd.validForUser(roboUser) &&
           matches(cmd);
     }
   }
+
 
   bool matches(Command cmd) {
     return (text.startsWith(discordPrefix + cmd.name) ||
         (cmd.short != "" && (text == discordPrefix + cmd.short) ||
             text.startsWith(discordPrefix + cmd.short + " ")));
   }
-
+*/
   String get username => e.message.author.username;
-  int get userId => e.message.author.id.id;
-  int get channelId => e.message.channelId.id;
+  RoboUser get roboUser => RoboUser.discord(e.message.author.id.id);
+  RoboChannel get roboChannel => DiscordChannel(e.message.channelId.id);
   bool get isDirectChat => e.message.channel.type == ChannelType.dm;
 
   reply(dynamic answer,
@@ -270,6 +297,7 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
     log.info("Command: ${e.from.username}: ${e.text}"); // TODO: channel?
   }
 
+/*
   // In Telegram all commands are valid
   bool validCommand(Command cmd) {
     var text = e.text;
@@ -277,12 +305,12 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
         (cmd.short != "" && (text == telegramPrefix + cmd.short) ||
             text.startsWith(telegramPrefix + cmd.short + " "));
   }
-
+*/
   String get prefix => telegramPrefix;
 
   String get username => e.from.username ?? "(you have no username!)";
-  int get userId => e.from.id;
-  int get channelId => e.chat.id;
+  RoboUser get roboUser => RoboUser.telegram(e.from.id);
+  RoboChannel get roboChannel => TelegramChannel(e.chat.id);
   bool get isDirectChat => e.chat.type == "private";
 
   reply(dynamic answer,
@@ -503,27 +531,17 @@ class Robocore {
       ..add(StatsCommand())
       ..add(ContractsCommand())
       ..add(LogCommand()
-        ..users = [
-          124467899447508992,
-          298396371789152258,
-          751362716962390086,
-          757109953910538341 // gokr, CryptoXman, 0xRevert, X3
-        ]
+        ..validForAllInDM = true
+        ..users = []
         ..whitelist = [
-          759890072392302592,
-          764120413507813417,
-          763138788297408552
-        ]) // price-discussion, robocore, robocore-development
+          priceDiscussionChannel,
+          robocoreChannel,
+          robocoreDevelopmentChannel
+        ])
       ..add(PriceCommand())
       ..add(FloorCommand())
-      ..add(AdminCommand()..users = [124467899447508992]) // gokr
-      ..add(PosterCommand()
-        ..users = [
-          124467899447508992,
-          298396371789152258,
-          751362716962390086,
-          757109953910538341
-        ]); // gokr, CryptoXman, 0xRevert, X3
+      ..add(AdminCommand()..users = [gokr])
+      ..add(PosterCommand()..users = [gokr, CryptoXman, xRevert, X3]);
   }
 
   /// Go through all loggers and log

@@ -10,6 +10,62 @@ import 'package:robocore/robocore.dart';
 const discordPrefix = "!";
 const telegramPrefix = "/";
 
+class RoboUser {
+  int? discordId, telegramId;
+
+  RoboUser.discord(this.discordId);
+  RoboUser.telegram(this.telegramId);
+  RoboUser.both(this.discordId, this.telegramId);
+
+  @override
+  bool operator ==(other) {
+    if (other is RoboUser)
+      return other.discordId == this.discordId ||
+          other.telegramId == this.telegramId;
+    return false;
+  }
+
+  String toString() => "RoboUser($discordId, $telegramId)";
+}
+
+abstract class RoboChannel {
+  late int id;
+
+  RoboChannel(this.id);
+
+  bool operator ==(other);
+
+  String toString();
+}
+
+class DiscordChannel extends RoboChannel {
+  DiscordChannel(int id) : super(id);
+
+  @override
+  bool operator ==(other) {
+    if (other is DiscordChannel) return other.id == this.id;
+    if (other is int) return other == this.id;
+    if (other is String) return other == this.id.toString();
+    return false;
+  }
+
+  String toString() => "DiscordChannel($id)";
+}
+
+class TelegramChannel extends RoboChannel {
+  TelegramChannel(int id) : super(id);
+
+  @override
+  bool operator ==(other) {
+    if (other is TelegramChannel) return other.id == this.id;
+    if (other is int) return other == this.id;
+    if (other is String) return other == this.id.toString();
+    return false;
+  }
+
+  String toString() => "TelegramChannel($id)";
+}
+
 // Hacky, but ok
 String trimQuotes(String s) {
   var trimmed = s;
@@ -28,9 +84,9 @@ String randomOf(List<String> list) {
 
 abstract class Command {
   String name, short, syntax, help;
-  List<int> blacklist = [];
-  List<int> whitelist = [];
-  List<int> users = [];
+  List<RoboChannel> blacklist = [];
+  List<RoboChannel> whitelist = [];
+  List<RoboUser> users = [];
 
   /// Is this command fine for everyone, if executed in direct chat?
   bool validForAllInDM = true;
@@ -46,17 +102,17 @@ abstract class Command {
   }
 
   /// Either whitelisted or blacklisted (can't be both)
-  bool validForChannelId(int id) {
+  bool validForChannel(RoboChannel ch) {
     if (whitelist.isNotEmpty) {
-      return whitelist.contains(id);
+      return whitelist.contains(ch);
     } else {
-      return !blacklist.contains(id);
+      return !blacklist.contains(ch);
     }
   }
 
-  /// If a command is valid for given user id
-  bool validForUserId(int id) {
-    return users.isEmpty || users.contains(id);
+  /// If a command is valid for given user
+  bool validForUser(RoboUser user) {
+    return users.isEmpty || users.contains(user);
   }
 
   /// Is this Command valid to execute for this message? Double dispatch
@@ -90,7 +146,7 @@ class AdminCommand extends Command {
       return await bot.reply("Need sub command");
     }
     if (parts[1] == "channelid") {
-      return await bot.reply("Channel id: ${bot.channelId}");
+      return await bot.reply("Channel id: ${bot.roboChannel}");
     }
   }
 }
