@@ -241,12 +241,12 @@ class Poster {
     } else {
       // TODO: thumbnailUrl
       var buf = StringBuffer();
-      buf.writeln("<b>$title</b>");
+      buf.writeln("**$title**");
       for (var f in fields) {
         var content = merge(f.content, bot);
-        buf.writeln("<b>${f.label}</b>: $content");
+        buf.writeln("**${f.label}**: $content");
       }
-      buf.writeln("<a href=\"$imageUrl\"></a>");
+      buf.writeln("[]($imageUrl)");
       result = buf.toString();
     }
     return result;
@@ -305,13 +305,25 @@ class Poster {
     } else {
       buf.write("in ");
       if (daysLeft > 0) {
-        buf.write("$daysLeft days, ");
+        if (daysLeft == 1) {
+          buf.write("$daysLeft day, ");
+        } else {
+          buf.write("$daysLeft days, ");
+        }
       }
       if (hoursLeft > 0) {
-        buf.write("$hoursLeft hours, and ");
+        if (hoursLeft == 1) {
+          buf.write("$hoursLeft hour, and ");
+        } else {
+          buf.write("$hoursLeft hours, and ");
+        }
       }
       if (minutesLeft > 0) {
-        buf.write("$minutesLeft minutes");
+        if (minutesLeft == 1) {
+          buf.write("$minutesLeft minute");
+        } else {
+          buf.write("$minutesLeft minutes");
+        }
       }
     }
     var countDown = buf.toString();
