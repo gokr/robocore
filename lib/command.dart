@@ -267,6 +267,12 @@ class StickyCommand extends Command {
   }
 }
 */
+/*class AliasesCommand extends Command {
+  PriceCommand()
+      : super("alias", "", "alias [remove \"foo\"|add \"foo\" \"bar\"]",
+            "Manage aliases for longer commands, in this channel. Running only alias shows existing aliases.");
+}*/
+
 class PriceCommand extends Command {
   PriceCommand()
       : super("price", "p", "price|p [[\"amount\"] eth|core|lp]",
@@ -438,89 +444,87 @@ class StartCommand extends Command {
 
 class LogCommand extends Command {
   LogCommand()
-      : super("log", "l", "log|l [add|remove] [all|price|whale|swap]",
+      : super(
+            "log",
+            "l",
+            "log|l add|remove [whale [limit] | swap | price [delta] | all]",
             "Control logging of events in current channel, only log will show active loggers. Only works in private conversations with RoboCORE, or in select channels on Discord.");
 
   @override
-  handleMessage(RoboMessage w) async {
-    if (w is RoboDiscordMessage) {
-      var bot = w.bot;
-      var ch = w.e.message.channel;
-      var parts = w.parts;
-      var loggers = w.bot.loggers.where((logger) => logger.channel == ch);
-      // log = shows loggers
-      // log remove all = removes all
-      // log add|remove xxx = adds or removes logger
-      if (parts.length == 1) {
-        String active = loggers.join(" ");
-        return await w.reply("Active loggers: $active");
+  handleMessage(RoboMessage msg) async {
+    var bot = msg.bot;
+    var ch = msg.roboChannel;
+    var parts = msg.parts;
+    var loggers = msg.bot.loggers.where((logger) => logger.channel == ch);
+    // log = shows loggers
+    // log remove all = removes all
+    // log add|remove xxx = adds or removes logger
+    if (parts.length == 1) {
+      String active = loggers.join(" ");
+      return await msg.reply("Active loggers: $active");
+    }
+    if (parts.length == 2) {
+      return await msg.reply("Use $syntax");
+    }
+    if (parts.length >= 3) {
+      if (!["add", "remove"].contains(parts[1])) {
+        return await msg.reply("Use $syntax");
       }
-      if (parts.length == 2) {
-        return await w.reply(
-            "Use add|remove [whale [limit] | swap | price [delta] | all]");
-      }
-      if (parts.length >= 3) {
-        if (!["add", "remove"].contains(parts[1])) {
-          return await w.reply("Use add|remove [whale|swap|price|all]");
-        }
-        bool add = parts[1] == "add";
-        var names = parts.sublist(2);
-        num? arg;
-        for (int i = 0; i < names.length; i++) {
-          var name = names[i];
-          // If arg
-          if (arg == null) {
-            // One lookahead
-            if (i < names.length + 1) {
-              arg = num.tryParse(names[i + 1]);
-            } else {
-              arg = null;
-            }
-            switch (name) {
-              case "whale":
-                if (add) {
-                  var logger = WhaleLogger("whale", ch);
-                  if (arg != null) logger.limit = arg;
-                  bot.addLogger(logger);
-                } else {
-                  bot.removeLogger("whale", ch);
-                }
-                break;
-              case "price":
-                if (add) {
-                  var logger = PriceLogger("whale", ch);
-                  if (arg != null) logger.delta = arg;
-                  bot.addLogger(logger);
-                } else {
-                  bot.removeLogger("price", ch);
-                }
-                break;
-              case "swap":
-                if (add) {
-                  bot.addLogger(SwapLogger("swap", ch));
-                } else {
-                  bot.removeLogger("swap", ch);
-                }
-                break;
-              case "all":
-                bot.removeLoggers(ch);
-                if (add) {
-                  bot.addLogger(PriceLogger("price", ch));
-                  bot.addLogger(SwapLogger("swap", ch));
-                  bot.addLogger(WhaleLogger("whale", ch));
-                }
-                break;
-            }
+      bool add = parts[1] == "add";
+      var names = parts.sublist(2);
+      num? arg;
+      for (int i = 0; i < names.length; i++) {
+        var name = names[i];
+        // If arg
+        if (arg == null) {
+          // One lookahead
+          if (i < names.length + 1) {
+            arg = num.tryParse(names[i + 1]);
           } else {
             arg = null;
           }
+          switch (name) {
+            case "whale":
+              if (add) {
+                var logger = WhaleLogger("whale", ch);
+                if (arg != null) logger.limit = arg;
+                bot.addLogger(logger);
+              } else {
+                bot.removeLogger("whale", ch);
+              }
+              break;
+            case "price":
+              if (add) {
+                var logger = PriceLogger("price", ch);
+                if (arg != null) logger.delta = arg;
+                bot.addLogger(logger);
+              } else {
+                bot.removeLogger("price", ch);
+              }
+              break;
+            case "swap":
+              if (add) {
+                bot.addLogger(SwapLogger("swap", ch));
+              } else {
+                bot.removeLogger("swap", ch);
+              }
+              break;
+            case "all":
+              bot.removeLoggers(ch);
+              if (add) {
+                bot.addLogger(PriceLogger("price", ch));
+                bot.addLogger(SwapLogger("swap", ch));
+                bot.addLogger(WhaleLogger("whale", ch));
+              }
+              break;
+          }
+        } else {
+          arg = null;
         }
       }
-      String active = bot.loggersFor(ch).join(" ");
-      return await w.reply("Active loggers: $active");
-    } else {
-      return w.reply("Sorry, not yet working on Telegram!");
     }
+    String active = bot.loggersFor(ch).join(" ");
+    return await msg.reply("Active loggers: $active");
   }
 }
 

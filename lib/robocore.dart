@@ -262,7 +262,7 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
       ..addAuthor((author) {
         author
           ..name = "RoboCORE"
-          ..iconUrl = bot.discord.self.avatarURL();
+          ..iconUrl = bot.nyxx.self.avatarURL();
       });
     for (var cmd in bot.commands) {
       embed.addField(name: cmd.syntax, content: cmd.help);
@@ -332,10 +332,14 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
 /// The bot
 class Robocore {
   late Map config;
-  late Nyxx discord;
+  late Nyxx nyxx;
   bool discordReady = false;
   late TeleDart teledart;
   bool teledartReady = false;
+
+  /// Abstraction wrappers
+  late RoboDiscord discord;
+  late RoboTelegram telegram;
 
   // All loggers
   List<EventLogger> loggers = [];
@@ -348,7 +352,7 @@ class Robocore {
 
   late StreamSubscription subscription;
 
-  ClientUser get self => discord.self;
+  ClientUser get self => nyxx.self;
 
   /// Commands
   List<Command> commands = [];
@@ -391,16 +395,16 @@ class Robocore {
     loggers.add(logger);
   }
 
-  removeLogger(String name, ITextChannel ch) {
+  removeLogger(String name, RoboChannel ch) {
     loggers.removeWhere(
         (element) => element.channel == ch && element.name == name);
   }
 
-  removeLoggers(ITextChannel ch) {
+  removeLoggers(RoboChannel ch) {
     loggers.removeWhere((element) => element.channel == ch);
   }
 
-  loggersFor(ITextChannel ch) {
+  loggersFor(RoboChannel ch) {
     return loggers.where((element) => element.channel == ch).toList();
   }
 
@@ -417,8 +421,8 @@ class Robocore {
       var posters = await Poster.getAll();
       for (var p in posters) {
         // Call for both Discord and Telegram
-        p.update(RoboDiscord(this));
-        p.update(RoboTelegram(this));
+        p.update(discord);
+        p.update(telegram);
       }
     } catch (e, s) {
       log.warning("Exception during update of posters", e, s);
@@ -426,7 +430,7 @@ class Robocore {
   }
 
   Future<ITextChannel> getDiscordChannel(int id) async {
-    return await discord.getChannel<ITextChannel>(Snowflake(id.toString()));
+    return await nyxx.getChannel<ITextChannel>(Snowflake(id.toString()));
   }
 
   Future<Chat> getTelegramChat(int id) async {
@@ -540,7 +544,8 @@ class Robocore {
   /// Go through all loggers and log
   performLogging(Swap swap) {
     for (var logger in loggers) {
-      logger.log(this, swap);
+      logger.log(discord, swap);
+      logger.log(telegram, swap);
     }
   }
 
@@ -549,8 +554,12 @@ class Robocore {
     log.info("Postgres opened: ${db.databaseName}");
 
     // Create our two bots
-    discord = Nyxx(config['nyxx'], useDefaultLogger: false);
+    nyxx = Nyxx(config['nyxx'], useDefaultLogger: false);
     teledart = TeleDart(Telegram(config['teledart']), Event());
+
+    // Create abstraction wrappers
+    discord = RoboDiscord(this);
+    telegram = RoboTelegram(this);
 
     // Create our interface with Ethereum
     core = Core.randomKey(config['apiurl'], config['wsurl']);
@@ -570,14 +579,14 @@ class Robocore {
     });
 
     // When we are ready in Discord
-    discord.onReady.listen((ReadyEvent e) async {
+    nyxx.onReady.listen((ReadyEvent e) async {
       log.info("Robocore in Discord is ready!");
       discordReady = true;
       await updateUsername();
     });
 
     // All Discord messages
-    discord.onMessageReceived.listen((MessageReceivedEvent event) async {
+    nyxx.onMessageReceived.listen((MessageReceivedEvent event) async {
       RoboDiscordMessage(this, event).runCommands();
     });
 
