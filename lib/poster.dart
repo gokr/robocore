@@ -254,7 +254,7 @@ class Poster {
 
   String toString() => name;
 
-  tick(RoboWrapper bot) {
+  update(RoboWrapper bot) {
     try {
       var now = DateTime.now();
       // Are we live yet?
