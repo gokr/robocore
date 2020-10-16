@@ -406,7 +406,8 @@ class LogCommand extends Command {
         return await w.reply("Active loggers: $active");
       }
       if (parts.length == 2) {
-        return await w.reply("Use add|remove [whale|swap|price|all]");
+        return await w.reply(
+            "Use add|remove [whale [limit] | swap | price [delta] | all]");
       }
       if (parts.length >= 3) {
         if (!["add", "remove"].contains(parts[1])) {
@@ -414,37 +415,54 @@ class LogCommand extends Command {
         }
         bool add = parts[1] == "add";
         var names = parts.sublist(2);
-        for (var name in names) {
-          switch (name) {
-            case "whale":
-              if (add) {
-                bot.addLogger(WhaleLogger("whale", ch));
-              } else {
-                bot.removeLogger("whale", ch);
-              }
-              break;
-            case "price":
-              if (add) {
-                bot.addLogger(PriceLogger("price", ch));
-              } else {
-                bot.removeLogger("price", ch);
-              }
-              break;
-            case "swap":
-              if (add) {
-                bot.addLogger(SwapLogger("swap", ch));
-              } else {
-                bot.removeLogger("swap", ch);
-              }
-              break;
-            case "all":
-              bot.removeLoggers(ch);
-              if (add) {
-                bot.addLogger(PriceLogger("price", ch));
-                bot.addLogger(SwapLogger("swap", ch));
-                bot.addLogger(WhaleLogger("whale", ch));
-              }
-              break;
+        num? arg;
+        for (int i = 0; i < names.length; i++) {
+          var name = names[i];
+          // If arg
+          if (arg == null) {
+            // One lookahead
+            if (i < names.length + 1) {
+              arg = num.tryParse(names[i + 1]);
+            } else {
+              arg = null;
+            }
+            switch (name) {
+              case "whale":
+                if (add) {
+                  var logger = WhaleLogger("whale", ch);
+                  if (arg != null) logger.limit = arg;
+                  bot.addLogger(logger);
+                } else {
+                  bot.removeLogger("whale", ch);
+                }
+                break;
+              case "price":
+                if (add) {
+                  var logger = PriceLogger("whale", ch);
+                  if (arg != null) logger.delta = arg;
+                  bot.addLogger(logger);
+                } else {
+                  bot.removeLogger("price", ch);
+                }
+                break;
+              case "swap":
+                if (add) {
+                  bot.addLogger(SwapLogger("swap", ch));
+                } else {
+                  bot.removeLogger("swap", ch);
+                }
+                break;
+              case "all":
+                bot.removeLoggers(ch);
+                if (add) {
+                  bot.addLogger(PriceLogger("price", ch));
+                  bot.addLogger(SwapLogger("swap", ch));
+                  bot.addLogger(WhaleLogger("whale", ch));
+                }
+                break;
+            }
+          } else {
+            arg = null;
           }
         }
       }

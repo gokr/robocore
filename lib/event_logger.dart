@@ -17,7 +17,8 @@ class EventLogger {
 }
 
 class WhaleLogger extends EventLogger {
-  num limit = 100;
+  // Amount in ETH
+  num limit = 200;
 
   WhaleLogger(String name, ITextChannel channel) : super(name, channel);
 
