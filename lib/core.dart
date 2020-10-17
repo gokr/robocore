@@ -93,7 +93,7 @@ class Core {
     coreVault = await _readContract('CoreVault.json', coreVaultAddr);
     CORE2ETH = await _readContract('UniswapPair.json', CORE2ETHAddr);
     ETH2USDT = await _readContract('UniswapPair.json', ETH2USDTAddr);
-    LGE2 = await _readContract('cLGE.json', LGE2Addr);
+    //LGE2 = await _readContract('cLGE.json', LGE2Addr);
   }
 
   Future<DeployedContract> _readContract(
