@@ -51,7 +51,7 @@ class Roboserver {
     });
 
     // We listen to all Contributions on LGE2
-    subscription = core.listenToEvent(core.LGE2, 'Contibution', (ev, event) {
+    /*subscription = core.listenToEvent(core.LGE2, 'Contibution', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
       var contrib = Contribution.from(2, ev, event);
       contrib.save();
@@ -63,5 +63,6 @@ class Roboserver {
       var cb = CoreBought.from(2, ev, event);
       cb.save();
     });
+    */
   }
 }
