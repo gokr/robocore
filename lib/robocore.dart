@@ -16,7 +16,7 @@ import 'database.dart';
 
 Logger log = Logger("Robocore");
 
-var gokr = RoboUser.discord(124467899447508992);
+var gokr = RoboUser.both(124467899447508992, 1156133961);
 var CryptoXman = RoboUser.discord(298396371789152258);
 var xRevert = RoboUser.discord(751362716962390086);
 var X3 = RoboUser.discord(757109953910538341);
@@ -25,6 +25,11 @@ var priceDiscussionChannel = DiscordChannel(759890072392302592);
 var robocoreChannel = DiscordChannel(764120413507813417);
 var robocoreDevelopmentChannel = DiscordChannel(763138788297408552);
 
+// For tests
+var robocoreTestGroup = TelegramChannel(-440184090);
+var robocoreTestChannel = DiscordChannel(762629759393726464);
+var robocoreTestChannelLogger = DiscordChannel(763910363439431700);
+
 abstract class RoboWrapper {
   Robocore bot;
 
@@ -32,7 +37,8 @@ abstract class RoboWrapper {
 
   Future<dynamic> getChannelOrChat(int id) async {}
 
-  Future<int?> send(int channelOrChatId, dynamic content) async {}
+  Future<int?> send(int channelOrChatId, dynamic content,
+      {bool disablePreview = true, bool markdown = true}) async {}
 
   Future pinMessage(int channelOrChatId, int id) async {}
 
@@ -155,7 +161,8 @@ class RoboDiscord extends RoboWrapper {
     }
   }
 
-  Future<int> send(int channelId, dynamic content) async {
+  Future<int> send(int channelId, dynamic content,
+      {bool disablePreview = true, bool markdown = true}) async {
     var channel = await bot.getDiscordChannel(channelId);
     dynamic message;
     if (content is EmbedBuilder) {
@@ -529,23 +536,24 @@ class Robocore {
       ..add(ContractsCommand())
       ..add(LogCommand()
         ..validForAllInDM = true
-        ..users = []
+        ..users = [gokr, CryptoXman, xRevert, X3]
         ..whitelist = [
           priceDiscussionChannel,
+          robocoreTestGroup,
           robocoreChannel,
           robocoreDevelopmentChannel
         ])
       ..add(PriceCommand())
       ..add(FloorCommand())
+      ..add(IdCommand())
       ..add(AdminCommand()..users = [gokr])
       ..add(PosterCommand()..users = [gokr, CryptoXman, xRevert, X3]);
   }
 
-  /// Go through all loggers and log
+  /// Go through all loggers and let them log if they want to
   performLogging(Swap swap) {
     for (var logger in loggers) {
-      logger.log(discord, swap);
-      logger.log(telegram, swap);
+      logger.log(this, swap);
     }
   }
 

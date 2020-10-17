@@ -12,7 +12,7 @@ class EventLogger {
 
   EventLogger(this.name, this.channel);
 
-  log(RoboWrapper bot, Swap swap) async {}
+  log(Robocore bot, Swap swap) async {}
 
   String toString() => name;
 }
@@ -23,7 +23,8 @@ class WhaleLogger extends EventLogger {
 
   WhaleLogger(String name, RoboChannel channel) : super(name, channel);
 
-  log(RoboWrapper wrapper, Swap swap) async {
+  log(Robocore bot, Swap swap) async {
+    var wrapper = channel.getWrapperFromBot(bot);
     if (raw18(swap.amount) > limit) {
       int random = Random().nextInt(5) + 1; // 1-5
       var answer;
@@ -34,14 +35,13 @@ class WhaleLogger extends EventLogger {
             ..thumbnailUrl = "http://rey.krampe.se/whale${random}.jpg"
             ..addField(
                 name:
-                    ":whale: Sold ${dec0(raw18(swap.amount0In))} CORE for **${dec0(raw18(swap.amount1Out))} ETH**!",
+                    ":whale: Sold ${dec0(raw18(swap.amount0In))} CORE for ${dec0(raw18(swap.amount1Out))} ETH!",
                 content:
                     ":chart_with_downwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})")
             ..timestamp = DateTime.now().toUtc();
         } else {
           answer = """
-🐳 Sold ${dec0(raw18(swap.amount0In))} CORE for *${dec0(raw18(swap.amount1Out))} ETH*\!
-[address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})
+🐳 <b>Sold ${dec0(raw18(swap.amount0In))} CORE for ${dec0(raw18(swap.amount1Out))} ETH!</b> <a href=\"http://rey.krampe.se/whale${random}.jpg\">whale</a> <a href=\"https://etherscan.io/address/${swap.to}\">address</a> <a href=\"https://etherscan.io/tx/${swap.tx}\">txn</a>
 """;
         }
       } else {
@@ -51,18 +51,17 @@ class WhaleLogger extends EventLogger {
             ..thumbnailUrl = "http://rey.krampe.se/whale${random}.jpg"
             ..addField(
                 name:
-                    ":whale: Bought ${dec0(raw18(swap.amount0Out))} CORE for *${dec0(raw18(swap.amount1In))} ETH*!",
+                    ":whale: Bought ${dec0(raw18(swap.amount0Out))} CORE for ${dec0(raw18(swap.amount1In))} ETH!",
                 content:
                     ":chart_with_upwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})")
             ..timestamp = DateTime.now().toUtc();
         } else {
           answer = """
-🐳 Bought ${dec0(raw18(swap.amount0Out))} CORE for *${dec0(raw18(swap.amount1In))} ETH*\!
-[address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})
+🐳 <b>Bought ${dec0(raw18(swap.amount0Out))} CORE for ${dec0(raw18(swap.amount1In))} ETH!</b> <a href=\"http://rey.krampe.se/whale${random}.jpg\"></a> <a href=\"https://etherscan.io/address/${swap.to}\">address</a> <a href=\"https://etherscan.io/tx/${swap.tx}\">txn</a>
 """;
         }
       }
-      wrapper.send(channel.id, answer);
+      wrapper.send(channel.id, answer, disablePreview: false, markdown: false);
     }
   }
 }
@@ -73,8 +72,8 @@ class PriceLogger extends EventLogger {
 
   PriceLogger(String name, RoboChannel channel) : super(name, channel);
 
-  log(RoboWrapper wrapper, Swap swap) async {
-    var bot = wrapper.bot;
+  log(Robocore bot, Swap swap) async {
+    var wrapper = channel.getWrapperFromBot(bot);
     // Did we move more than limit USD per CORE?
     if (lastPriceCOREinUSD != 0) {
       num diff = lastPriceCOREinUSD - bot.priceCOREinUSD;
@@ -83,7 +82,7 @@ class PriceLogger extends EventLogger {
         // Let's remember this
         lastPriceCOREinUSD = bot.priceCOREinUSD;
         var answer;
-        if (bot is RoboDiscord) {
+        if (wrapper is RoboDiscord) {
           answer = EmbedBuilder()
             ..addAuthor((author) {
               author.name = "Price alert! Moved $arrow \$${dec0(diff.abs())}!";
@@ -94,13 +93,13 @@ class PriceLogger extends EventLogger {
             ..timestamp = DateTime.now().toUtc();
         } else {
           answer = """
-*Price alert\! Moved $arrow \$${dec0(diff.abs())}\!*
-*Price CORE:* ${bot.priceStringCORE()}
-*Price ETH:* ${bot.priceStringETH()}
-*Price LP:* ${bot.priceStringLP()}
+<b>Price alert! Moved $arrow \$${dec0(diff.abs())}!</b>
+<b>Price CORE:</b> ${bot.priceStringCORE()}
+<b>Price ETH:</b> ${bot.priceStringETH()}
+<b>Price LP:</b> ${bot.priceStringLP()}
 """;
         }
-        wrapper.send(channel.id, answer);
+        wrapper.send(channel.id, answer, markdown: false);
       }
     } else {
       lastPriceCOREinUSD = bot.priceCOREinUSD;
@@ -111,7 +110,8 @@ class PriceLogger extends EventLogger {
 class SwapLogger extends EventLogger {
   SwapLogger(String name, RoboChannel channel) : super(name, channel);
 
-  log(RoboWrapper wrapper, Swap swap) async {
+  log(Robocore bot, Swap swap) async {
+    var wrapper = channel.getWrapperFromBot(bot);
     var answer;
     if (swap.sell) {
       // Swapped CORE->ETH
@@ -125,8 +125,7 @@ class SwapLogger extends EventLogger {
           ..timestamp = DateTime.now().toUtc();
       } else {
         answer = """
-*Sold ${dec4(raw18(swap.amount0In))} CORE for ${dec4(raw18(swap.amount1Out))} ETH*
-⬇️ [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})
+*Sold ${dec4(raw18(swap.amount0In))} CORE for ${dec4(raw18(swap.amount1Out))} ETH* ⬇️ [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})
 """;
       }
     } else {
@@ -141,8 +140,7 @@ class SwapLogger extends EventLogger {
           ..timestamp = DateTime.now().toUtc();
       } else {
         answer = """
-*Bought ${dec2(raw18(swap.amount0Out))} CORE for ${dec2(raw18(swap.amount1In))} ETH*
-⬆️ [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})
+*Bought ${dec2(raw18(swap.amount0Out))} CORE for ${dec2(raw18(swap.amount1In))} ETH* ⬆️ [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})
 """;
       }
     }

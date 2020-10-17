@@ -33,6 +33,8 @@ abstract class RoboChannel {
 
   RoboChannel(this.id);
 
+  RoboWrapper getWrapperFromBot(Robocore bot);
+
   bool operator ==(other);
 
   String toString();
@@ -50,6 +52,11 @@ class DiscordChannel extends RoboChannel {
   }
 
   String toString() => "DiscordChannel($id)";
+
+  @override
+  RoboWrapper getWrapperFromBot(Robocore bot) {
+    return bot.discord;
+  }
 }
 
 class TelegramChannel extends RoboChannel {
@@ -64,6 +71,11 @@ class TelegramChannel extends RoboChannel {
   }
 
   String toString() => "TelegramChannel($id)";
+
+  @override
+  RoboWrapper getWrapperFromBot(Robocore bot) {
+    return bot.telegram;
+  }
 }
 
 // Hacky, but ok
@@ -148,6 +160,16 @@ class AdminCommand extends Command {
     if (parts[1] == "channelid") {
       return await bot.reply("Channel id: ${bot.roboChannel}");
     }
+  }
+}
+
+class IdCommand extends Command {
+  IdCommand() : super("id", "", "id", "Show chat id and user id.");
+
+  @override
+  handleMessage(RoboMessage bot) async {
+    return await bot
+        .reply("Channel id: ${bot.roboChannel} User id: ${bot.roboUser}");
   }
 }
 
@@ -478,7 +500,7 @@ class LogCommand extends Command {
         // If arg
         if (arg == null) {
           // One lookahead
-          if (i < names.length + 1) {
+          if (i < names.length - 1) {
             arg = num.tryParse(names[i + 1]);
           } else {
             arg = null;
