@@ -640,6 +640,50 @@ Stay CORE and keep HODLING!
   }
 }
 
+//    uint256 public totalETHContributed;
+//    uint256 public totalCOREContributed;
+//    uint256 public totalWrapTokenContributed;
+class LGE2StatsCommand extends Command {
+  LGE2StatsCommand()
+      : super("lgestats", "", "lgestats",
+            "Show various numbers from the cLGE contract.");
+
+  @override
+  handleMessage(RoboMessage w) async {
+    dynamic answer;
+    var bot = w.bot;
+    await bot.updateLGE2Info();
+    if (w is RoboDiscordMessage) {
+      answer = EmbedBuilder()
+        ..addField(
+            name: "Contributed CORE",
+            content: "${dec2(bot.lge2CORE)} CORE, (${usd0(bot.lge2COREinUSD)})")
+        ..addField(
+            name: "Contributed ETH",
+            content: "${dec2(bot.lge2ETH)} ETH, (${usd0(bot.lge2ETHinUSD)}")
+        ..addField(
+            name: "Contributed Wrap Token",
+            content: "${dec2(bot.lge2WrapToken)}")
+        ..addFooter((footer) {
+          footer.text = "Keep on swimming";
+          //footer.text = "LGE2 ends in ${bot.lge2TimeLeftString()}!";
+        })
+        ..timestamp = DateTime.now().toUtc()
+        ..color = w.color();
+    } else {
+      answer = """
+<b>Contributed CORE</b>
+${dec2(bot.lge2CORE)} CORE, (${usd0(bot.lge2COREinUSD)})
+<b>Contributed ETH</b>
+${dec2(bot.lge2ETH)} ETH, (${usd0(bot.lge2ETHinUSD)}
+<b>Contributed Wrap Token</b>
+${dec2(bot.lge2WrapToken)}
+""";
+    }
+    return await w.reply(answer);
+  }
+}
+
 class MentionCommand extends Command {
   MentionCommand()
       : super("@RoboCORE", "", "@RoboCORE", "I will ... say something!");

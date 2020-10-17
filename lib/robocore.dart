@@ -387,6 +387,8 @@ class Robocore {
       floorLiquidity,
       supplyLP;
 
+  late num lge2CORE, lge2COREinUSD, lge2ETH, lge2ETHinUSD, lge2WrapToken;
+
   Robocore(this.config);
 
   // Just testing stuff
@@ -442,6 +444,15 @@ class Robocore {
 
   Future<Chat> getTelegramChat(int id) async {
     return await teledart.telegram.getChat(id);
+  }
+
+  updateLGE2Info() async {
+    lge2CORE = raw18(await core.lge2TotalCOREContributed());
+    lge2COREinUSD = lge2CORE * priceCOREinUSD;
+    lge2ETH = raw18(await core.lge2TotalETHContributed());
+    lge2ETHinUSD = lge2ETH * priceCOREinUSD;
+    lge2WrapToken = raw18(await core.lge2TotalWrapTokenContributed());
+    //lge2WrapTokeninUSD = lge2WrapToken *
   }
 
   /// Call getReserves on both CORE-ETH and ETH-USDT pairs on Uniswap
@@ -533,6 +544,7 @@ class Robocore {
       ..add(FAQCommand())
       ..add(StartCommand())
       ..add(StatsCommand())
+      ..add(LGE2StatsCommand())
       ..add(ContractsCommand())
       ..add(LogCommand()
         ..validForAllInDM = true

@@ -54,9 +54,9 @@ class Core {
   late DeployedContract CORE2ETH;
 
   // LGE2 contract address, LGE2.json
-  //EthereumAddress LGE2Addr = EthereumAddress.fromHex(
-  //    '0x32ce7e48debdccbfe0cd037cc89526e4382cb81b'); // WRONG!
-  //late DeployedContract LGE2;
+  EthereumAddress LGE2Addr =
+      EthereumAddress.fromHex('0xf7ca8f55c54cbb6d0965bc6d65c43adc500bc591');
+  late DeployedContract LGE2;
 
   // UniswapPair ETH-USDT contract address, UniswapPair.json
   EthereumAddress ETH2USDTAddr =
@@ -94,7 +94,7 @@ class Core {
     coreVault = await _readContract('CoreVault.json', coreVaultAddr);
     CORE2ETH = await _readContract('UniswapPair.json', CORE2ETHAddr);
     ETH2USDT = await _readContract('UniswapPair.json', ETH2USDTAddr);
-    //LGE2 = await _readContract('cLGE.json', LGE2Addr);
+    LGE2 = await _readContract('cLGE.json', LGE2Addr);
   }
 
   Future<DeployedContract> _readContract(
@@ -133,6 +133,34 @@ class Core {
         sender: address,
         contract: core,
         function: core.function('totalETHContributed'),
+        params: []);
+    return eth.first;
+  }
+
+  /// LGE2
+  Future<BigInt> lge2TotalETHContributed() async {
+    final eth = await ethClient.call(
+        sender: address,
+        contract: LGE2,
+        function: LGE2.function('totalETHContributed'),
+        params: []);
+    return eth.first;
+  }
+
+  Future<BigInt> lge2TotalCOREContributed() async {
+    final eth = await ethClient.call(
+        sender: address,
+        contract: LGE2,
+        function: LGE2.function('totalCOREContributed'),
+        params: []);
+    return eth.first;
+  }
+
+  Future<BigInt> lge2TotalWrapTokenContributed() async {
+    final eth = await ethClient.call(
+        sender: address,
+        contract: LGE2,
+        function: LGE2.function('totalWrapTokenContributed'),
         params: []);
     return eth.first;
   }
