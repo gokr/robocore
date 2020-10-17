@@ -660,7 +660,7 @@ class LGE2StatsCommand extends Command {
             content: "${dec2(bot.lge2CORE)} CORE, (${usd0(bot.lge2COREinUSD)})")
         ..addField(
             name: "Contributed ETH",
-            content: "${dec2(bot.lge2ETH)} ETH, (${usd0(bot.lge2ETHinUSD)}")
+            content: "${dec2(bot.lge2ETH)} ETH, (${usd0(bot.lge2ETHinUSD)})")
         ..addField(
             name: "Contributed Wrap Token",
             content: "${dec2(bot.lge2WrapToken)}")
@@ -675,7 +675,7 @@ class LGE2StatsCommand extends Command {
 <b>Contributed CORE</b>
 ${dec2(bot.lge2CORE)} CORE, (${usd0(bot.lge2COREinUSD)})
 <b>Contributed ETH</b>
-${dec2(bot.lge2ETH)} ETH, (${usd0(bot.lge2ETHinUSD)}
+${dec2(bot.lge2ETH)} ETH, (${usd0(bot.lge2ETHinUSD)})
 <b>Contributed Wrap Token</b>
 ${dec2(bot.lge2WrapToken)}
 """;

@@ -450,7 +450,7 @@ class Robocore {
     lge2CORE = raw18(await core.lge2TotalCOREContributed());
     lge2COREinUSD = lge2CORE * priceCOREinUSD;
     lge2ETH = raw18(await core.lge2TotalETHContributed());
-    lge2ETHinUSD = lge2ETH * priceCOREinUSD;
+    lge2ETHinUSD = lge2ETH * priceETHinUSD;
     lge2WrapToken = raw18(await core.lge2TotalWrapTokenContributed());
     //lge2WrapTokeninUSD = lge2WrapToken *
   }
