@@ -51,6 +51,6 @@ class CoreBought {
   }
 
   String makeMessage() {
-    return "CORE bought ${dec4(raw18(coreAmt))} CORE from <https://etherscan.io/address/$from>, txn: <https://etherscan.io/tx/$tx>";
+    return "CORE bought ${dec4(raw18(coreAmt))} CORE from <https://etherscan.io/address/$sender>, txn: <https://etherscan.io/tx/$tx>";
   }
 }
