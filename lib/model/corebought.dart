@@ -12,16 +12,16 @@ class CoreBought {
   DateTime created = DateTime.now().toUtc();
 
   late BigInt coreAmt;
-  late EthereumAddress from;
+  late EthereumAddress sender; //from
   late String tx;
 
-  CoreBought(this.id, this.lge, this.coreAmt, this.from, this.tx);
+  CoreBought(this.id, this.lge, this.coreAmt, this.sender, this.tx);
 
   CoreBought.from(this.lge, ContractEvent ev, FilterEvent fe) {
     final decoded = ev.decodeResults(fe.topics, fe.data);
     tx = fe.transactionHash;
     coreAmt = decoded[0] as BigInt;
-    from = decoded[1] as EthereumAddress;
+    sender = decoded[1] as EthereumAddress;
   }
 
   static Future<PostgreSQLResult> dropTable() async {
@@ -30,16 +30,16 @@ class CoreBought {
 
   static Future<PostgreSQLResult> createTable() async {
     return await db.query(
-        "create table IF NOT EXISTS _corebought (id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(id), lge integer, created timestamp, from text, tx text, coreAmt numeric);");
+        "create table IF NOT EXISTS _corebought (id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(id), lge integer, created timestamp, sender text, tx text, coreAmt numeric);");
   }
 
   Future<void> save() async {
     await db.query(
-        "INSERT INTO _corebought (lge, created, from, tx, coreAmt) VALUES (@lge, @created, @sender, @tx, @coreAmt)",
+        "INSERT INTO _corebought (lge, created, sender, tx, coreAmt) VALUES (@lge, @created, @sender, @tx, @coreAmt)",
         substitutionValues: {
           "lge": lge,
           "created": created.toIso8601String(),
-          "from": from.hex,
+          "sender": sender.hex,
           "tx": tx,
           "coreAmt": coreAmt.toString(),
         });
