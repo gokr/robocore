@@ -53,6 +53,10 @@ class Core {
       EthereumAddress.fromHex('0x32ce7e48debdccbfe0cd037cc89526e4382cb81b');
   late DeployedContract CORE2ETH;
 
+  // LGE2 contract address, LGE2.json
+  EthereumAddress LGE2Addr = EthereumAddress.fromHex('?');
+  late DeployedContract LGE2;
+
   // UniswapPair ETH-USDT contract address, UniswapPair.json
   EthereumAddress ETH2USDTAddr =
       EthereumAddress.fromHex('0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852');
@@ -89,6 +93,7 @@ class Core {
     coreVault = await _readContract('CoreVault.json', coreVaultAddr);
     CORE2ETH = await _readContract('UniswapPair.json', CORE2ETHAddr);
     ETH2USDT = await _readContract('UniswapPair.json', ETH2USDTAddr);
+    LGE2 = await _readContract('cLGE.json', LGE2Addr);
   }
 
   Future<DeployedContract> _readContract(

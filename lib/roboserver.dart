@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:logging/logging.dart';
 import 'package:robocore/core.dart';
+import 'package:robocore/model/contribution.dart';
+import 'package:robocore/model/corebought.dart';
 import 'package:robocore/model/swap.dart';
 import 'package:robocore/poster.dart';
 
@@ -28,7 +30,8 @@ class Roboserver {
 
     try {
       await Swap.createTable();
-      //await Poster.dropTable();
+      await Contribution.createTable();
+      await CoreBought.createTable();
       await Poster.createTable();
       log.info("Created tables");
     } catch (e) {
@@ -45,6 +48,20 @@ class Roboserver {
       //print("Topics: ${event.topics} data: ${event.data}");
       var swap = Swap.from(ev, event);
       swap.save();
+    });
+
+    // We listen to all Contributions on LGE2
+    subscription = core.listenToEvent(core.LGE2, 'Contibution', (ev, event) {
+      //print("Topics: ${event.topics} data: ${event.data}");
+      var contrib = Contribution.from(2, ev, event);
+      contrib.save();
+    });
+
+    // We listen to all Contributions on LGE2
+    subscription = core.listenToEvent(core.LGE2, 'COREBought', (ev, event) {
+      //print("Topics: ${event.topics} data: ${event.data}");
+      var cb = CoreBought.from(2, ev, event);
+      cb.save();
     });
   }
 }
