@@ -30,7 +30,7 @@ class Contribution {
 
   static Future<PostgreSQLResult> createTable() async {
     return await db.query(
-        "create table IF NOT EXISTS _contribution (id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(swap_id), lge integer, created timestamp, sender text, tx text, coreValue numeric);");
+        "create table IF NOT EXISTS _contribution (id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(id), lge integer, created timestamp, sender text, tx text, coreValue numeric);");
   }
 
   Future<void> save() async {
