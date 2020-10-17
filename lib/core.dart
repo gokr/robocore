@@ -54,7 +54,8 @@ class Core {
   late DeployedContract CORE2ETH;
 
   // LGE2 contract address, LGE2.json
-  EthereumAddress LGE2Addr = EthereumAddress.fromHex('?');
+  EthereumAddress LGE2Addr = EthereumAddress.fromHex(
+      '0x32ce7e48debdccbfe0cd037cc89526e4382cb81b'); // WRONG!
   late DeployedContract LGE2;
 
   // UniswapPair ETH-USDT contract address, UniswapPair.json
