@@ -163,14 +163,14 @@ class Poster {
       for (var id in channels.keys) {
         var messageId = await bot.send(id, content);
         channels[id] = messageId;
-        await bot.pinMessage(id, messageId);
+        //TODO: await bot.pinMessage(id, messageId);
       }
     } else {
       for (var id in chats.keys) {
         var messageId = await bot.send(id, content);
         if (messageId != null) {
           chats[id] = messageId;
-          await bot.pinMessage(id, messageId);
+          // TODO: await bot.pinMessage(id, messageId);
         }
       }
     }
@@ -241,10 +241,10 @@ class Poster {
     } else {
       // TODO: thumbnailUrl
       var buf = StringBuffer();
-      buf.writeln("**$title**");
+      buf.writeln("*$title*");
       for (var f in fields) {
         var content = merge(f.content, bot);
-        buf.writeln("**${f.label}**: $content");
+        buf.writeln("*${f.label}*: $content");
       }
       buf.writeln("[]($imageUrl)");
       result = buf.toString();
