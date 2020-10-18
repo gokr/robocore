@@ -606,7 +606,7 @@ packages:
     source: hosted
     version: "1.0.3"
   typed_data:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: typed_data
       url: "https://pub.dartlang.org"
