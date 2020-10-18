@@ -657,13 +657,21 @@ class LGE2StatsCommand extends Command {
       answer = EmbedBuilder()
         ..addField(
             name: "Contributed CORE",
-            content: "${dec2(bot.lge2CORE)} CORE, (${usd0(bot.lge2COREinUSD)})")
+            content: "${dec2(bot.lge2CORE)} CORE, (${usd2(bot.lge2COREinUSD)})")
         ..addField(
             name: "Contributed WBTC",
-            content: "${dec2(bot.lge2WBTC)} WBTC, (${usd0(bot.lge2WBTCinUSD)})")
+            content: "${dec2(bot.lge2WBTC)} WBTC, (${usd2(bot.lge2WBTCinUSD)})")
         ..addField(
             name: "Total",
-            content: "${usd0(bot.lge2WBTCinUSD + bot.lge2COREinUSD)}")
+            content: "${usd2(bot.lge2WBTCinUSD + bot.lge2COREinUSD)}")
+        ..addField(
+            name: "Bought CORE so far",
+            content:
+                "${dec2(bot.lge2COREBought)} CORE, (${usd2(bot.lge2COREBoughtInUSD)})")
+        ..addField(
+            name: "Bought CORE last hour",
+            content:
+                "${dec2(bot.lge2COREBoughtLastHour)} CORE, (${usd2(bot.lge2COREBoughtLastHourInUSD)})")
         ..addFooter((footer) {
           footer.text = "Keep on swimming";
           //footer.text = "LGE2 ends in ${bot.lge2TimeLeftString()}!";
@@ -673,11 +681,11 @@ class LGE2StatsCommand extends Command {
     } else {
       answer = """
 <b>Contributed CORE</b>
-${dec2(bot.lge2CORE)} CORE, (${usd0(bot.lge2COREinUSD)})
+${dec2(bot.lge2CORE)} CORE, (${usd2(bot.lge2COREinUSD)})
 <b>Contributed WBTC</b>
-${dec2(bot.lge2WBTC)} WBTC, (${usd0(bot.lge2WBTCinUSD)})
+${dec2(bot.lge2WBTC)} WBTC, (${usd2(bot.lge2WBTCinUSD)})
 <b>Total</b>
-${usd0(bot.lge2WBTCinUSD + bot.lge2COREinUSD)}
+${usd2(bot.lge2WBTCinUSD + bot.lge2COREinUSD)}
 """;
     }
     return await w.reply(answer);

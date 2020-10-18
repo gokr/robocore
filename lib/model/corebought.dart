@@ -50,6 +50,20 @@ class CoreBought {
     return results;
   }
 
+  static Future<BigInt> getTotalSum() async {
+    List<List<dynamic>> results =
+        await db.query("select sum(coreamt) from \"_corebought\"");
+    return numericToBigInt(results.first[0]);
+  }
+
+  static Future<BigInt> getSumLast(Duration duration) async {
+    var now = DateTime.now().toUtc();
+    List<List<dynamic>> results = await db.query(
+        "select sum(coreamt) from \"_corebought\" where created > @marker;",
+        substitutionValues: {"marker": now.subtract(duration)});
+    return numericToBigInt(results.first[0]);
+  }
+
   String makeMessage() {
     return "CORE bought ${dec4(raw18(coreAmt))} CORE from <https://etherscan.io/address/$sender>, txn: <https://etherscan.io/tx/$tx>";
   }
