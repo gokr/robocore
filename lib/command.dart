@@ -686,6 +686,10 @@ ${dec2(bot.lge2CORE)} CORE, (${usd2(bot.lge2COREinUSD)})
 ${dec2(bot.lge2WBTC)} WBTC, (${usd2(bot.lge2WBTCinUSD)})
 <b>Total</b>
 ${usd2(bot.lge2WBTCinUSD + bot.lge2COREinUSD)}
+<b>Bought CORE so far</b>
+${dec2(bot.lge2COREBought)} CORE, (${usd2(bot.lge2COREBoughtInUSD)})
+<Bought CORE last hour</b>
+${dec2(bot.lge2COREBoughtLastHour)} CORE, (${usd2(bot.lge2COREBoughtLastHourInUSD)})
 """;
     }
     return await w.reply(answer);
