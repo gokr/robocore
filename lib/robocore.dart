@@ -19,10 +19,11 @@ Logger log = Logger("Robocore");
 
 var gokr = RoboUser.both(124467899447508992, 1156133961);
 var CryptoXman = RoboUser.discord(298396371789152258);
-var xRevert = RoboUser.discord(751362716962390086);
+var xRevert = RoboUser.both(751362716962390086, 1118664380);
 var X3 = RoboUser.discord(757109953910538341);
 
 var priceDiscussionChannel = DiscordChannel(759890072392302592);
+var priceAndTradingChat = TelegramChannel(-1001361865863);
 var robocoreChannel = DiscordChannel(764120413507813417);
 var robocoreDevelopmentChannel = DiscordChannel(763138788297408552);
 
@@ -576,6 +577,7 @@ class Robocore {
         ..validForAllInDM = true
         ..users = [gokr, CryptoXman, xRevert, X3]
         ..whitelist = [
+          priceAndTradingChat,
           priceDiscussionChannel,
           robocoreTestGroup,
           robocoreChannel,
