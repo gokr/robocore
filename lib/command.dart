@@ -659,11 +659,11 @@ class LGE2StatsCommand extends Command {
             name: "Contributed CORE",
             content: "${dec2(bot.lge2CORE)} CORE, (${usd0(bot.lge2COREinUSD)})")
         ..addField(
-            name: "Contributed ETH",
-            content: "${dec2(bot.lge2ETH)} ETH, (${usd0(bot.lge2ETHinUSD)})")
+            name: "Contributed WBTC",
+            content: "${dec2(bot.lge2WBTC)} WBTC, (${usd0(bot.lge2WBTCinUSD)})")
         ..addField(
-            name: "Contributed Wrap Token",
-            content: "${dec2(bot.lge2WrapToken)}")
+            name: "Total",
+            content: "${usd0(bot.lge2WBTCinUSD + bot.lge2COREinUSD)}")
         ..addFooter((footer) {
           footer.text = "Keep on swimming";
           //footer.text = "LGE2 ends in ${bot.lge2TimeLeftString()}!";
@@ -674,10 +674,10 @@ class LGE2StatsCommand extends Command {
       answer = """
 <b>Contributed CORE</b>
 ${dec2(bot.lge2CORE)} CORE, (${usd0(bot.lge2COREinUSD)})
-<b>Contributed ETH</b>
-${dec2(bot.lge2ETH)} ETH, (${usd0(bot.lge2ETHinUSD)})
-<b>Contributed Wrap Token</b>
-${dec2(bot.lge2WrapToken)}
+<b>Contributed WBTC</b>
+${dec2(bot.lge2WBTC)} WBTC, (${usd0(bot.lge2WBTCinUSD)})
+<b>Total</b>
+${usd0(bot.lge2WBTCinUSD + bot.lge2COREinUSD)}
 """;
     }
     return await w.reply(answer);

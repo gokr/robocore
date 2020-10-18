@@ -9,6 +9,7 @@ import 'package:web3dart/web3dart.dart';
 import 'package:web_socket_channel/io.dart';
 
 final pow18 = BigInt.from(pow(10, 18));
+final pow8 = BigInt.from(pow(10, 8));
 final pow6 = BigInt.from(pow(10, 6));
 
 NumberFormat decimal6Formatter = NumberFormat("##0.00000#");
@@ -28,6 +29,7 @@ String usd2(num x) => dollar2Formatter.format(x);
 
 /// From raw
 num raw18(BigInt x) => (x / pow18).toDouble();
+num raw8(BigInt x) => (x / pow8).toDouble();
 num raw6(BigInt x) => (x / pow6).toDouble();
 
 class Core {
@@ -42,6 +44,11 @@ class Core {
   EthereumAddress coreAddr =
       EthereumAddress.fromHex('0x62359Ed7505Efc61FF1D56fEF82158CcaffA23D7');
   late DeployedContract core;
+
+  // WBTC contract address
+  EthereumAddress wbtcAddr =
+      EthereumAddress.fromHex('0x2260fac5e5542a773aa44fbcfedf7c193bc2c599');
+  late DeployedContract wbtc;
 
   // CoreVault contract address, CoreVault.json
   EthereumAddress coreVaultAddr =
@@ -58,10 +65,20 @@ class Core {
       EthereumAddress.fromHex('0xf7ca8f55c54cbb6d0965bc6d65c43adc500bc591');
   late DeployedContract LGE2;
 
+  // IERC20 contract address, IERC20.json
+  EthereumAddress IERC20Addr =
+      EthereumAddress.fromHex('0xf7ca8f55c54cbb6d0965bc6d65c43adc500bc591');
+  late DeployedContract IERC20;
+
   // UniswapPair ETH-USDT contract address, UniswapPair.json
   EthereumAddress ETH2USDTAddr =
       EthereumAddress.fromHex('0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852');
   late DeployedContract ETH2USDT;
+
+  // UniswapPair WBTC-USDT contract address, UniswapPair.json
+  EthereumAddress WBTC2USDTAddr =
+      EthereumAddress.fromHex('0x0de0fa91b6dbab8c8503aaa2d1dfa91a192cb149');
+  late DeployedContract WBTC2USDT;
 
   Core(String apiUrl, String wsUrl) {
     httpClient = Client();
@@ -91,9 +108,11 @@ class Core {
 
   _readContracts() async {
     core = await _readContract('CORE.json', coreAddr);
+    wbtc = await _readContract('IERC20.json', wbtcAddr);
     coreVault = await _readContract('CoreVault.json', coreVaultAddr);
     CORE2ETH = await _readContract('UniswapPair.json', CORE2ETHAddr);
     ETH2USDT = await _readContract('UniswapPair.json', ETH2USDTAddr);
+    WBTC2USDT = await _readContract('UniswapPair.json', WBTC2USDTAddr);
     LGE2 = await _readContract('cLGE.json', LGE2Addr);
   }
 
@@ -165,6 +184,19 @@ class Core {
     return eth.first;
   }
 
+  // LGE2 balanceOf
+  // WBTC: 0x2260fac5e5542a773aa44fbcfedf7c193bc2c599
+  // CORE: 0x62359Ed7505Efc61FF1D56fEF82158CcaffA23D7
+  Future<BigInt> balanceOf(
+      DeployedContract token, EthereumAddress ofToken) async {
+    final core = await ethClient.call(
+        sender: address,
+        contract: token,
+        function: token.function('balanceOf'),
+        params: [ofToken]);
+    return core.first;
+  }
+
   Future<BigInt> cumulativeRewardsSinceStart() async {
     final core = await ethClient.call(
         sender: address,
@@ -197,6 +229,15 @@ class Core {
         sender: address,
         contract: ETH2USDT,
         function: ETH2USDT.function('getReserves'),
+        params: []);
+    return result;
+  }
+
+  Future<List<dynamic>> getReservesWBTC2USDT() async {
+    final result = await ethClient.call(
+        sender: address,
+        contract: WBTC2USDT,
+        function: WBTC2USDT.function('getReserves'),
         params: []);
     return result;
   }

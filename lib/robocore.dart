@@ -370,6 +370,7 @@ class Robocore {
   num lastPriceCOREinUSD = 0;
 
   late num priceETHinUSD,
+      priceWBTCinUSD,
       priceETHinCORE,
       priceCOREinETH,
       priceCOREinUSD,
@@ -387,7 +388,12 @@ class Robocore {
       floorLiquidity,
       supplyLP;
 
-  late num lge2CORE, lge2COREinUSD, lge2ETH, lge2ETHinUSD, lge2WrapToken;
+  /*late num lge2CORE,
+      lge2COREinUSD,
+      lge2ETH,
+      lge2ETHinUSD,
+      lge2WrapToken;*/
+  late num lge2CORE, lge2WBTC, lge2COREinUSD, lge2WBTCinUSD;
 
   Robocore(this.config);
 
@@ -447,12 +453,15 @@ class Robocore {
   }
 
   updateLGE2Info() async {
-    lge2CORE = raw18(await core.lge2TotalCOREContributed());
+    //lge2CORE = raw18(await core.lge2TotalCOREContributed());
+    //lge2COREinUSD = lge2CORE * priceCOREinUSD;
+    //lge2ETH = raw18(await core.lge2TotalETHContributed());
+    //lge2ETHinUSD = lge2ETH * priceETHinUSD;
+    //lge2WrapToken = raw18(await core.lge2TotalWrapTokenContributed());
+    lge2CORE = raw18(await core.balanceOf(core.core, core.LGE2Addr));
     lge2COREinUSD = lge2CORE * priceCOREinUSD;
-    lge2ETH = raw18(await core.lge2TotalETHContributed());
-    lge2ETHinUSD = lge2ETH * priceETHinUSD;
-    lge2WrapToken = raw18(await core.lge2TotalWrapTokenContributed());
-    //lge2WrapTokeninUSD = lge2WrapToken *
+    lge2WBTC = raw8(await core.balanceOf(core.wbtc, core.LGE2Addr));
+    lge2WBTCinUSD = lge2WBTC * priceWBTCinUSD;
   }
 
   /// Call getReserves on both CORE-ETH and ETH-USDT pairs on Uniswap
@@ -465,6 +474,10 @@ class Robocore {
     reserves = await core.getReservesETH2USDT();
     // Base is ETH price in USD
     priceETHinUSD = raw6(reserves[1]) / raw18(reserves[0]);
+
+    reserves = await core.getReservesWBTC2USDT();
+    priceWBTCinUSD = raw6(reserves[1]) / raw8(reserves[0]);
+
     priceETHinCORE = poolCORE / poolETH;
     // Price of CORE
     priceCOREinETH = poolETH / poolCORE;
