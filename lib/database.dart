@@ -28,7 +28,7 @@ Future<PostgreSQLConnection> openDatabase(Map config) async {
 ///                i.e. when this is to be printed in base 10, only the first digit in base 10000 can (possibly) be printed with less than 4 characters.
 ///                Note that this does not apply for the digits after the decimal separator; the digits should be printed out in chunks of 4
 ///                characters and then truncated with the given dscale.
-BigInt numericToBigInt(Uint8List data) {
+BigInt numericToBigInt(Uint8List? data) {
   if (data == null) return BigInt.zero;
   int digits = data[0] * 256 + data[1];
   int weight = data[2] * 256 + data[3];

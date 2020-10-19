@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:nyxx/nyxx.dart';
 import 'package:robocore/core.dart';
 import 'package:robocore/event_logger.dart';
 import 'package:robocore/poster.dart';
+import 'package:robocore/util.dart';
 import 'package:robocore/robocore.dart';
 
 const discordPrefix = "!";
@@ -88,10 +88,6 @@ String trimQuotes(String s) {
     return trimmed.substring(0, trimmed.length - 1);
   }
   return trimmed;
-}
-
-String randomOf(List<String> list) {
-  return list[Random().nextInt(list.length)];
 }
 
 abstract class Command {
@@ -732,11 +728,11 @@ class MentionCommand extends Command {
   @override
   handleMessage(RoboMessage bot) async {
     // Fallback
-    var reply = randomOf(replies);
+    var reply = replies.pickRandom();
     // Try be a tad smarter
     wittys.forEach((k, v) {
       if (bot.textLowerCase.contains(k)) {
-        reply = randomOf(v);
+        reply = v.pickRandom();
       }
     });
     await bot.reply(reply);
