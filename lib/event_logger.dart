@@ -125,7 +125,7 @@ class SwapLogger extends EventLogger {
           ..timestamp = DateTime.now().toUtc();
       } else {
         answer = """
-*Sold ${dec4(raw18(swap.amount0In))} CORE for ${dec4(raw18(swap.amount1Out))} ETH* ⬇️ [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})
+<b>Sold ${dec4(raw18(swap.amount0In))} CORE for ${dec4(raw18(swap.amount1Out))} ETH</b> ⬇️ <a href=\"https://etherscan.io/address/${swap.to}\">address</a> <a href="\https://etherscan.io/tx/${swap.tx}\">tx</a>
 """;
       }
     } else {
@@ -140,10 +140,10 @@ class SwapLogger extends EventLogger {
           ..timestamp = DateTime.now().toUtc();
       } else {
         answer = """
-*Bought ${dec2(raw18(swap.amount0Out))} CORE for ${dec2(raw18(swap.amount1In))} ETH* ⬆️ [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})
+<b>Bought ${dec2(raw18(swap.amount0Out))} CORE for ${dec2(raw18(swap.amount1In))} ETH</b> ⬆️ <a href=\"https://etherscan.io/address/${swap.to}\">address</a> <a href="\https://etherscan.io/tx/${swap.tx}\">tx</a>
 """;
       }
     }
-    wrapper.send(channel.id, answer);
+    wrapper.send(channel.id, answer, markdown: false);
   }
 }
