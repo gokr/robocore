@@ -50,6 +50,14 @@ class Contribution {
     return results;
   }
 
+  static Future<BigInt> getSumLast(Duration duration) async {
+    var now = DateTime.now().toUtc();
+    List<List<dynamic>> results = await db.query(
+        "select sum(corevalue) from \"_contribution\" where created > @marker;",
+        substitutionValues: {"marker": now.subtract(duration)});
+    return numericToBigInt(results.first[0]);
+  }
+
   String makeMessage() {
     return "Contribution ${dec4(raw18(coreValue))} CORE from <https://etherscan.io/address/$sender>, txn: <https://etherscan.io/tx/$tx>";
   }

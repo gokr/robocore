@@ -6,6 +6,7 @@ import 'package:nyxx/nyxx.dart';
 import 'package:robocore/command.dart';
 import 'package:robocore/core.dart';
 import 'package:robocore/event_logger.dart';
+import 'package:robocore/model/contribution.dart';
 import 'package:robocore/model/corebought.dart';
 import 'package:robocore/model/swap.dart';
 import 'package:robocore/poster.dart';
@@ -402,7 +403,9 @@ class Robocore {
       lge2CORE,
       lge2WBTC,
       lge2COREinUSD,
-      lge2WBTCinUSD;
+      lge2WBTCinUSD,
+      lge2ETHContributedLastHour,
+      lge2ETHContributedLastHourInUSD;
 
   Robocore(this.config);
 
@@ -481,6 +484,12 @@ class Robocore {
     lge2COREBoughtLast24Hours =
         raw18(await CoreBought.getSumLast(Duration(hours: 24)));
     lge2COREBoughtLast24HoursInUSD = lge2COREBoughtLast24Hours * priceCOREinUSD;
+
+    lge2ETHContributedLastHour =
+        raw18(await Contribution.getSumLast(Duration(hours: 1)));
+    lge2ETHContributedLastHourInUSD =
+        lge2ETHContributedLastHour * priceCOREinUSD;
+
     lge2CORE = raw18(await core.balanceOf(core.core, core.LGE2Addr));
     lge2COREinUSD = lge2CORE * priceCOREinUSD;
     lge2WBTC = raw8(await core.balanceOf(core.wbtc, core.LGE2Addr));
