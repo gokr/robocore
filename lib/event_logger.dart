@@ -5,6 +5,7 @@ import 'package:robocore/command.dart';
 import 'package:robocore/core.dart';
 import 'package:robocore/robocore.dart';
 import 'package:robocore/model/swap.dart';
+import 'package:robocore/util.dart';
 
 class EventLogger {
   late String name;
@@ -23,12 +24,22 @@ class WhaleLogger extends EventLogger {
 
   WhaleLogger(String name, RoboChannel channel) : super(name, channel);
 
+  String makeHearts(num eth) {
+    return makeRepeatedString(eth.round(), "💚");
+  }
+
+  String makeBrokenHearts(num eth) {
+    return makeRepeatedString(eth.round(), "💔");
+  }
+
   log(Robocore bot, Swap swap) async {
     var wrapper = channel.getWrapperFromBot(bot);
-    if (raw18(swap.amount) > limit) {
+    var eth = raw18(swap.amount);
+    if (eth > limit) {
       int random = Random().nextInt(5) + 1; // 1-5
       var answer;
       if (swap.sell) {
+        var hearts = makeBrokenHearts(eth);
         if (wrapper is RoboDiscord) {
           answer = EmbedBuilder()
             ..title = "WHALE ALERT!"
@@ -38,13 +49,16 @@ class WhaleLogger extends EventLogger {
                     ":whale: Sold ${dec0(raw18(swap.amount0In))} CORE for ${dec0(raw18(swap.amount1Out))} ETH!",
                 content:
                     ":chart_with_downwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})")
+            ..addField(
+                name: "Price now ${usd2(bot.priceCOREinUSD)}", content: hearts)
             ..timestamp = DateTime.now().toUtc();
         } else {
           answer = """
-🐳 <b>Sold ${dec0(raw18(swap.amount0In))} CORE for ${dec0(raw18(swap.amount1Out))} ETH!</b> <a href=\"http://rey.krampe.se/whale${random}.jpg\">whale</a> <a href=\"https://etherscan.io/address/${swap.to}\">address</a> <a href=\"https://etherscan.io/tx/${swap.tx}\">txn</a>
+🐳 <b>Sold ${dec0(raw18(swap.amount0In))} CORE for ${dec0(raw18(swap.amount1Out))} ETH!</b> <a href=\"https://etherscan.io/address/${swap.to}\">address</a> <a href=\"https://etherscan.io/tx/${swap.tx}\">txn</a>
 """;
         }
       } else {
+        var hearts = makeHearts(eth);
         if (wrapper is RoboDiscord) {
           answer = EmbedBuilder()
             ..title = "WHALE ALERT!"
@@ -54,10 +68,12 @@ class WhaleLogger extends EventLogger {
                     ":whale: Bought ${dec0(raw18(swap.amount0Out))} CORE for ${dec0(raw18(swap.amount1In))} ETH!",
                 content:
                     ":chart_with_upwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})")
+            ..addField(
+                name: "Price now ${usd2(bot.priceCOREinUSD)}", content: hearts)
             ..timestamp = DateTime.now().toUtc();
         } else {
           answer = """
-🐳 <b>Bought ${dec0(raw18(swap.amount0Out))} CORE for ${dec0(raw18(swap.amount1In))} ETH!</b> <a href=\"http://rey.krampe.se/whale${random}.jpg\"></a> <a href=\"https://etherscan.io/address/${swap.to}\">address</a> <a href=\"https://etherscan.io/tx/${swap.tx}\">txn</a>
+🐳 <b>Bought ${dec0(raw18(swap.amount0Out))} CORE for ${dec0(raw18(swap.amount1In))} ETH!</b> <a href=\"https://etherscan.io/address/${swap.to}\">address</a> <a href=\"https://etherscan.io/tx/${swap.tx}\">txn</a>
 """;
         }
       }

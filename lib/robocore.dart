@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import 'package:neat_periodic_task/neat_periodic_task.dart';
 import 'package:nyxx/nyxx.dart';
@@ -398,8 +397,8 @@ class Robocore {
       lge2WrapToken;*/
   late num lge2COREBought,
       lge2COREBoughtInUSD,
-      lge2COREBoughtLastHour,
-      lge2COREBoughtLastHourInUSD,
+      lge2COREBoughtLast24Hours,
+      lge2COREBoughtLast24HoursInUSD,
       lge2CORE,
       lge2WBTC,
       lge2COREinUSD,
@@ -479,9 +478,9 @@ class Robocore {
     //lge2WrapToken = raw18(await core.lge2TotalWrapTokenContributed());
     lge2COREBought = raw18(await CoreBought.getTotalSum());
     lge2COREBoughtInUSD = lge2COREBought * priceCOREinUSD;
-    lge2COREBoughtLastHour =
-        raw18(await CoreBought.getSumLast(Duration(hours: 1)));
-    lge2COREBoughtLastHourInUSD = lge2COREBoughtLastHour * priceCOREinUSD;
+    lge2COREBoughtLast24Hours =
+        raw18(await CoreBought.getSumLast(Duration(hours: 24)));
+    lge2COREBoughtLast24HoursInUSD = lge2COREBoughtLast24Hours * priceCOREinUSD;
     lge2CORE = raw18(await core.balanceOf(core.core, core.LGE2Addr));
     lge2COREinUSD = lge2CORE * priceCOREinUSD;
     lge2WBTC = raw8(await core.balanceOf(core.wbtc, core.LGE2Addr));
