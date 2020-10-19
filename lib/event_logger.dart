@@ -55,6 +55,8 @@ class WhaleLogger extends EventLogger {
         } else {
           answer = """
 🐳 <b>Sold ${dec0(raw18(swap.amount0In))} CORE for ${dec0(raw18(swap.amount1Out))} ETH!</b> <a href=\"https://etherscan.io/address/${swap.to}\">address</a> <a href=\"https://etherscan.io/tx/${swap.tx}\">txn</a>
+$hearts
+Price now ${usd2(bot.priceCOREinUSD)}
 """;
         }
       } else {
@@ -74,10 +76,12 @@ class WhaleLogger extends EventLogger {
         } else {
           answer = """
 🐳 <b>Bought ${dec0(raw18(swap.amount0Out))} CORE for ${dec0(raw18(swap.amount1In))} ETH!</b> <a href=\"https://etherscan.io/address/${swap.to}\">address</a> <a href=\"https://etherscan.io/tx/${swap.tx}\">txn</a>
+$hearts
+Price now ${usd2(bot.priceCOREinUSD)}
 """;
         }
       }
-      wrapper.send(channel.id, answer, disablePreview: false, markdown: false);
+      wrapper.send(channel.id, answer, disablePreview: true, markdown: false);
     }
   }
 }
@@ -160,6 +164,6 @@ class SwapLogger extends EventLogger {
 """;
       }
     }
-    wrapper.send(channel.id, answer, markdown: false);
+    wrapper.send(channel.id, answer, markdown: false, disablePreview: true);
   }
 }
