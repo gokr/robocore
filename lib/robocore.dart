@@ -9,6 +9,7 @@ import 'package:robocore/event_logger.dart';
 import 'package:robocore/model/contribution.dart';
 import 'package:robocore/model/corebought.dart';
 import 'package:robocore/model/swap.dart';
+import 'package:robocore/util.dart';
 import 'package:robocore/poster.dart';
 import 'package:teledart/model.dart';
 import 'package:teledart/teledart.dart';
@@ -18,10 +19,11 @@ import 'database.dart';
 
 Logger log = Logger("Robocore");
 
+// Super users
 var gokr = RoboUser.both(124467899447508992, 1156133961);
 var CryptoXman = RoboUser.discord(298396371789152258);
 var xRevert = RoboUser.both(751362716962390086, 1118664380);
-var X3 = RoboUser.discord(757109953910538341);
+var X3 = RoboUser.both(757109953910538341, 1358048057);
 
 var priceDiscussionChannel = DiscordChannel(759890072392302592);
 var priceAndTradingChat = TelegramChannel(-1001361865863);
@@ -73,12 +75,12 @@ mixin RoboMessage on RoboWrapper {
   }
 
   String randomDNU() {
-    return randomOf([
+    return [
       "I am afraid I can't do that Dave, I mean... ${username}",
       "I have absolutely no clue what you are blabbering about",
       "Are you sure I am meant to understand that?",
       "I am no damn AI, what did you mean?",
-    ]);
+    ].pickRandom();
   }
 
   logMessage() {
