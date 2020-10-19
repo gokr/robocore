@@ -53,6 +53,10 @@ class CoreBought {
   static Future<BigInt> getTotalSum() async {
     List<List<dynamic>> results =
         await db.query("select sum(coreamt) from \"_corebought\"");
+    var res = results.first[0];
+    if (res is String) {
+      return BigInt.zero;
+    }
     return numericToBigInt(results.first[0]);
   }
 
@@ -61,6 +65,10 @@ class CoreBought {
     List<List<dynamic>> results = await db.query(
         "select sum(coreamt) from \"_corebought\" where created > @marker;",
         substitutionValues: {"marker": now.subtract(duration)});
+    var res = results.first[0];
+    if (res is String) {
+      return BigInt.zero;
+    }
     return numericToBigInt(results.first[0]);
   }
 

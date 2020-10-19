@@ -55,6 +55,10 @@ class Contribution {
     List<List<dynamic>> results = await db.query(
         "select sum(corevalue) from \"_contribution\" where created > @marker;",
         substitutionValues: {"marker": now.subtract(duration)});
+    var res = results.first[0];
+    if (res is String) {
+      return BigInt.zero;
+    }
     return numericToBigInt(results.first[0]);
   }
 
