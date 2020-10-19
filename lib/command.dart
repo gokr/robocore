@@ -669,9 +669,9 @@ class LGE2StatsCommand extends Command {
             content:
                 "${dec2(bot.lge2COREBought)} CORE, (${usd2(bot.lge2COREBoughtInUSD)})")
         ..addField(
-            name: "Bought CORE last hour",
+            name: "Bought CORE last 24 hours",
             content:
-                "${dec2(bot.lge2COREBoughtLastHour)} CORE, (${usd2(bot.lge2COREBoughtLastHourInUSD)})")
+                "${dec2(bot.lge2COREBoughtLast24Hours)} CORE, (${usd2(bot.lge2COREBoughtLast24HoursInUSD)})")
         ..addFooter((footer) {
           footer.text = "Keep on swimming";
           //footer.text = "LGE2 ends in ${bot.lge2TimeLeftString()}!";
@@ -689,7 +689,7 @@ ${usd2(bot.lge2WBTCinUSD + bot.lge2COREinUSD)}
 <b>Bought CORE so far</b>
 ${dec2(bot.lge2COREBought)} CORE, (${usd2(bot.lge2COREBoughtInUSD)})
 <b>Bought CORE last hour</b>
-${dec2(bot.lge2COREBoughtLastHour)} CORE, (${usd2(bot.lge2COREBoughtLastHourInUSD)})
+${dec2(bot.lge2COREBoughtLast24Hours)} CORE, (${usd2(bot.lge2COREBoughtLast24HoursInUSD)})
 """;
     }
     return await w.reply(answer);
