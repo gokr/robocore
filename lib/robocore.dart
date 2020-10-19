@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import 'package:neat_periodic_task/neat_periodic_task.dart';
 import 'package:nyxx/nyxx.dart';
@@ -408,9 +409,18 @@ class Robocore {
 
   // Just testing stuff
   test() async {
+    await openDatabase(config);
+    log.info("Postgres opened: ${db.databaseName}");
+
+    // Create our interface with Ethereum
+    core = Core.randomKey(config['apiurl'], config['wsurl']);
     await core.readContracts();
+
+    // One initial update
     await updatePriceInfo();
-    print(supplyLP);
+    await updateLGE2Info();
+    var s = await CoreBought.getTotalSum();
+    print(s);
   }
 
   addLogger(EventLogger logger) {
