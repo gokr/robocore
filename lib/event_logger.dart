@@ -90,6 +90,7 @@ Price now ${usd2(bot.priceCOREinUSD)}
 """;
         }
       }
+      print("Posted whale logger to $channel, $answer");
       wrapper.send(channel.id, answer, disablePreview: true, markdown: false);
     }
   }
