@@ -21,7 +21,7 @@ Logger log = Logger("Robocore");
 
 // Super users
 var gokr = RoboUser.both(124467899447508992, 1156133961);
-var CryptoXman = RoboUser.discord(298396371789152258);
+var CryptoXman = RoboUser.both(298396371789152258, 1179513113);
 var xRevert = RoboUser.both(751362716962390086, 1118664380);
 var X3 = RoboUser.both(757109953910538341, 1358048057);
 
