@@ -54,7 +54,7 @@ class Roboserver {
     subscription = core.listenToEvent(core.LGE2, 'Contibution', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
       var contrib = Contribution.from(2, ev, event);
-      contrib.save();
+      contrib.insert();
     });
 
     // We listen to all Contributions on LGE2

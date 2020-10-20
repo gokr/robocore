@@ -11,11 +11,17 @@ class Contribution {
   late int lge;
   DateTime created = DateTime.now().toUtc();
 
-  late BigInt coreValue;
+  BigInt coreValue = BigInt.zero;
   late EthereumAddress sender;
   late String tx;
 
-  Contribution(this.id, this.lge, this.coreValue, this.sender, this.tx);
+  late String coin;
+  double? price;
+  BigInt units = BigInt.zero;
+  int? holder;
+
+  Contribution(this.id, this.lge, this.created, this.sender, this.tx,
+      this.coreValue, this.coin, this.price, this.units, this.holder);
 
   Contribution.from(this.lge, ContractEvent ev, FilterEvent fe) {
     final decoded = ev.decodeResults(fe.topics, fe.data);
@@ -33,21 +39,57 @@ class Contribution {
         "create table IF NOT EXISTS _contribution (id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(id), lge integer, created timestamp, sender text, tx text, coreValue numeric);");
   }
 
-  Future<void> save() async {
-    await db.query(
-        "INSERT INTO _contribution (lge, created, sender, tx, coreValue) VALUES (@lge, @created, @sender, @tx, @coreValue)",
+  Future<void> update() async {
+    var result = await db.query(
+        "UPDATE _contribution SET lge = @lge, created = @created, sender = @sender, tx = @tx, coreValue = @coreValue, coin = @coin, price = @price, units = @units, holder = @holder WHERE id = @id",
+        substitutionValues: {
+          "id": id,
+          "lge": lge,
+          "created": created.toIso8601String(),
+          "sender": sender.hex,
+          "tx": tx,
+          "coreValue": coreValue.toString(),
+          "coin": coin,
+          "price": price,
+          "units": units.toString(),
+          "holder": holder
+        });
+    print(result);
+  }
+
+  Future<void> insert() async {
+    var result = await db.query(
+        "INSERT INTO _contribution (lge, created, sender, tx, coreValue, coin, price, units, holder) VALUES (@lge, @created, @sender, @tx, @coreValue, @coin, @price, @units, @holder)",
         substitutionValues: {
           "lge": lge,
           "created": created.toIso8601String(),
           "sender": sender.hex,
           "tx": tx,
           "coreValue": coreValue.toString(),
+          "coin": coin,
+          "price": price,
+          "units": units.toString(),
+          "holder": holder
         });
+    print(result);
   }
 
-  static Future<List<List>> getAll() async {
-    List<List<dynamic>> results = await db.query("SELECT * FROM _contribution");
-    return results;
+  static Future<List<Contribution>> getAll() async {
+    List<List<dynamic>> results = await db.query(
+        "SELECT id, lge, created, sender, tx, coreValue, coin, price, units, holder  FROM _contribution");
+    return results.map((list) {
+      return Contribution(
+          list[0],
+          list[1],
+          list[2],
+          EthereumAddress.fromHex(list[3]),
+          list[4],
+          numericToBigInt(list[5]),
+          list[6],
+          list[7],
+          numericToBigInt(list[8]),
+          list[9]);
+    }).toList();
   }
 
   static Future<BigInt> getSumLast(Duration duration) async {
