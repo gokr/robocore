@@ -17,3 +17,6 @@ postgresql:
   host: localhost
   port: 5432
   databaseName: robocore
+
+# API key for Etherscan
+etherscan: 9XXXXXXXXXXXXXXXXXXXXXXXXXXXXFC
