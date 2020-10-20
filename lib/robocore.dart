@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'package:logging/logging.dart';
 import 'package:neat_periodic_task/neat_periodic_task.dart';
 import 'package:nyxx/nyxx.dart';
@@ -388,6 +389,8 @@ class Robocore {
       priceLPinETH,
       floorCOREinUSD,
       floorCOREinETH,
+      floorCORE2inUSD,
+      floorCORE2inETH,
       floorLPinUSD,
       floorLPinETH,
       floorLiquidity,
@@ -545,6 +548,77 @@ class Robocore {
     // And then we can also calculate floor of LP
     floorLPinETH = floorLiquidity / supplyLP;
     floorLPinUSD = floorLPinETH * priceETHinUSD;
+    await updateNewFloor();
+  }
+
+  updateNewFloor() async {
+    await updateLGE2Info();
+    // Selling CORE2ETH back into pair1 and the rest into pair2:
+    //
+    // var newPoolETH = poolK / (poolCORE + (CORE2ETH * 0.997));
+    // var newPoolWBTC = poolK2 / (poolCORE2 + (10000 - poolCORE2 - poolCORE - CORE2ETH) * 0.997);
+
+    // Then price should be equal afterwards:
+    // var price1 = newPoolETH / (poolCORE + CORE2ETH)
+    // var price2 = (newPoolWBTC / (10000 - poolCORE - CORE2ETH)) * priceBTCinETH
+
+    // So we want to know CORE2ETH:
+    // newPoolETH / (poolCORE + CORE2ETH) = (newPoolWBTC / (10000 - poolCORE - CORE2ETH)) * priceBTCinETH
+    //
+    // Expanding one more step:
+    // (poolK / (poolCORE + (CORE2ETH) * 0.997)) / (poolCORE + CORE2ETH) = (poolK2 / (poolCORE2 + (10000 - poolCORE2 - poolCORE - CORE2ETH) * 0.997)) / (10000 - poolCORE - CORE2ETH) * priceBTCinETH
+    //
+    // And replacing with single letter variables (to make Symbolab happy):
+    // (k / (c + (x * 0.997))) / (c + x) = (l / (d + (10000 - d - c - x) * 0.997)) / (10000 - c - x) * z
+    var c = poolCORE;
+    var k = poolK;
+    var l = lge2CORE * lge2WBTC;
+    var z = priceWBTCinUSD / priceETHinUSD; // priceBTCinETH
+    var d = lge2CORE;
+    // The following was figured out using:
+    // https://www.symbolab.com/solver/equation-calculator/solve%20for%20x%2C%20%5Cleft(k%20%2F%20%5Cleft(c%20%2B%20x%20%5Ccdot%200.997%5Cright)%5Cright)%20%2F%20%5Cleft(c%20%2B%20x%5Cright)%20%3D%20%5Cleft(l%20%2F%20%5Cleft(d%20%2B%20%5Cleft(10000%20-%20d%20-%20c%20-%20x%5Cright)%20%5Ccdot%200.997%5Cright)%5Cright)%20%5Ccdot%20z%2F%20%5Cleft(10000%20-%20c%20-%20x%5Cright)
+    var zz = 0.000009 * pow(c, 2) * pow(l, 2) * pow(z, 2) +
+        0.000018 * c * l * d * k * z +
+        119.64 * c * l * k * z +
+        119.64 * l * d * k * z +
+        397603600 * l * k * z +
+        0.000009 * pow(d, 2) * pow(k, 2);
+    var temp1 = (2 * (0.997 * k - 0.997 * l * z));
+    var temp2 = -1.994 * c * k + 0.003 * d * k + 19940 * k + 1.997 * c * l * z;
+    var x1 = (temp2 + sqrt(zz)) / temp1;
+    var x2 = (temp2 - sqrt(zz)) / temp1;
+    print("PriceBTCinETH: $z, solution x1: $x1 x2: $x2");
+
+    // So now we have x1 and x2, two possible solutions to amount of CORE to sell into pair1.
+    double candidate = double.maxFinite;
+    if (x1 < (10000 - poolCORE - lge2CORE)) {
+      // x1 needs to be low enough
+      var newPoolETH = poolK / (poolCORE + (x1 * 0.997));
+      var p1 = newPoolETH / (poolCORE + x1);
+      print("poolK: $poolK, newPoolK: ${newPoolETH * (poolCORE + x1)}");
+      var newPoolWBTC = l / (d + (10000 - d - poolCORE - x1) * 0.997);
+      var p2 = (newPoolWBTC / (10000 - poolCORE - x1)) * z;
+      print("poolK2: $l, newPoolK: ${newPoolWBTC * (10000 - poolCORE - x1)}");
+      print("pool1CORE: ${poolCORE + x1}, pool1ETH: $newPoolETH");
+      print("pool2CORE: ${10000 - poolCORE - x1}, pool2WBTC: $newPoolWBTC");
+      print("Price 1 of CORE-ETH: $p1, CORE-WBTC: $p2");
+      candidate = p1;
+    }
+    if (x2 < (10000 - poolCORE - lge2CORE)) {
+      // x2 needs to be low enough
+      var newPoolETH = poolK / (poolCORE + (x2 * 0.997));
+      var p1 = newPoolETH / (poolCORE + x2);
+      print("poolK: $poolK, newPoolK: ${newPoolETH * (poolCORE + x2)}");
+      var newPoolWBTC = l / (d + (10000 - d - poolCORE - x2) * 0.997);
+      var p2 = (newPoolWBTC / (10000 - poolCORE - x2)) * z;
+      print("poolK2: $l, newPoolK: ${newPoolWBTC * (10000 - poolCORE - x2)}");
+      print("pool1CORE: ${poolCORE + x2}, pool1ETH: $newPoolETH");
+      print("pool2CORE: ${10000 - poolCORE - x2}, pool2WBTC: $newPoolWBTC");
+      print("Price 2 of CORE-ETH: $p1, CORE-WBTC: $p2");
+      candidate = min(candidate, p1);
+    }
+    floorCORE2inETH = candidate;
+    floorCORE2inUSD = floorCORE2inETH * priceETHinUSD;
   }
 
   updateRewardsInfo() async {
@@ -558,6 +632,10 @@ class Robocore {
 
   String floorStringCORE([num amount = 1]) {
     return "$amount CORE = ${usd2(floorCOREinUSD * amount)} (${dec4(floorCOREinETH * amount)} ETH)";
+  }
+
+  String floorStringCORE2([num amount = 1]) {
+    return "$amount CORE = ${usd2(floorCORE2inUSD * amount)} (${dec4(floorCORE2inETH * amount)} ETH)";
   }
 
   String priceStringLP([num amount = 1]) {

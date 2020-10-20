@@ -386,6 +386,10 @@ class FloorCommand extends Command {
             content:
                 "1 CORE = ${usd2(bot.bot.floorCOREinUSD)} (${dec4(bot.bot.floorCOREinETH)} ETH)")
         ..addField(
+            name: "New floor CORE (after LGE2)",
+            content:
+                "1 CORE = ${usd2(bot.bot.floorCORE2inUSD)} (${dec4(bot.bot.floorCORE2inETH)} ETH)")
+        ..addField(
             name: "Floor LP",
             content:
                 "1 LP = ${usd2(bot.bot.floorLPinUSD)} (${dec4(bot.bot.floorLPinETH)} ETH)")
@@ -395,6 +399,8 @@ class FloorCommand extends Command {
       answer = """
 <b>Floor CORE</b>
 1 CORE = ${usd2(bot.bot.floorCOREinUSD)} (${dec4(bot.bot.floorCOREinETH)} ETH)
+<b>New floor CORE (after LGE2)</b>
+1 CORE = ${usd2(bot.bot.floorCORE2inUSD)} (${dec4(bot.bot.floorCORE2inETH)} ETH)
 <b>Floor LP</b>
 1 LP = ${usd2(bot.bot.floorLPinUSD)} (${dec4(bot.bot.floorLPinETH)} ETH)
 """;
