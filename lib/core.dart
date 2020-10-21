@@ -40,6 +40,8 @@ class Core {
   late Client httpClient;
   late Web3Client ethClient;
 
+  // Tokens
+
   // CORE contract address, CORE.json
   EthereumAddress coreAddr =
       EthereumAddress.fromHex('0x62359Ed7505Efc61FF1D56fEF82158CcaffA23D7');
@@ -50,15 +52,16 @@ class Core {
       EthereumAddress.fromHex('0x2260fac5e5542a773aa44fbcfedf7c193bc2c599');
   late DeployedContract wbtc;
 
+  // WETH contract address
+  EthereumAddress wethAddr =
+      EthereumAddress.fromHex('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2');
+
+  // Contracts
+
   // CoreVault contract address, CoreVault.json
   EthereumAddress coreVaultAddr =
       EthereumAddress.fromHex('0xc5cacb708425961594b63ec171f4df27a9c0d8c9');
   late DeployedContract coreVault;
-
-  // UniswapPair CORE-ETH contract address, UniswapPair.json
-  EthereumAddress CORE2ETHAddr =
-      EthereumAddress.fromHex('0x32ce7e48debdccbfe0cd037cc89526e4382cb81b');
-  late DeployedContract CORE2ETH;
 
   // LGE2 contract address, LGE2.json
   EthereumAddress LGE2Addr =
@@ -70,6 +73,13 @@ class Core {
       EthereumAddress.fromHex('0xf7ca8f55c54cbb6d0965bc6d65c43adc500bc591');
   late DeployedContract IERC20;
 
+  // Uniswap pairs
+
+  // UniswapPair CORE-ETH contract address, UniswapPair.json
+  EthereumAddress CORE2ETHAddr =
+      EthereumAddress.fromHex('0x32ce7e48debdccbfe0cd037cc89526e4382cb81b');
+  late DeployedContract CORE2ETH;
+
   // UniswapPair ETH-USDT contract address, UniswapPair.json
   EthereumAddress ETH2USDTAddr =
       EthereumAddress.fromHex('0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852');
@@ -79,6 +89,11 @@ class Core {
   EthereumAddress WBTC2USDTAddr =
       EthereumAddress.fromHex('0x0de0fa91b6dbab8c8503aaa2d1dfa91a192cb149');
   late DeployedContract WBTC2USDT;
+
+  // UniswapPair WBTC-ETH contract address, UniswapPair.json
+  EthereumAddress WBTC2ETHAddr =
+      EthereumAddress.fromHex('0xbb2b8038a1640196fbe3e38816f3e67cba72d940');
+  late DeployedContract WBTC2ETH;
 
   Core(String apiUrl, String wsUrl) {
     httpClient = Client();
