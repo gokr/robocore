@@ -32,6 +32,9 @@ dependencies:
   yaml: ^2.2.1
   mustache: ^1.1.1
   
+  # Query Uniswap
+  graphql: ^3.0.0
+
   # Not used yet
   json_annotation: ^3.0.0
 
