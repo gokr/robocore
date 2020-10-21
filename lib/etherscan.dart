@@ -35,4 +35,8 @@ class Etherscan {
   Future<Map> ethGetTransactionByHash(String txn) async {
     return _transaction(txn, "eth_getTransactionByHash", "proxy");
   }
+
+  Future<Map> ethGetTransactionReceipt(String txn) async {
+    return _transaction(txn, "eth_getTransactionReceipt", "proxy");
+  }
 }
