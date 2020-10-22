@@ -268,7 +268,7 @@ class RoboLGE {
             logprint(l, "Historic value in CORE: $coreHistoric");
             logprint(
                 l, "Transfer amount: ${raw18(amount)} ${symbolOfSwap(token)}");
-            logprint(l, "Using amount ${raw18(amount)}");
+            logprint(l, "* Adding units amount ${raw18(amount)}");
             contrib.units = amount;
           } else if (token == core.WBTC2ETHAddr) {
             // ETH was deposited and caused a buy of WBTC
@@ -283,7 +283,8 @@ class RoboLGE {
                 l, "Historic value of WBTC in CORE: ${raw18(coreHistoric2)}");
             logprint(
                 l, "Transfer amount: ${raw8(amount)} ${symbolOfSwap(token)}");
-            logprint(l, "Using historic value ${raw18(coreHistoric2)}");
+            logprint(
+                l, "* Adding units historic value ${raw18(coreHistoric2)}");
             contrib.units = coreHistoric2;
           }
           // Just for info in db
@@ -314,7 +315,7 @@ class RoboLGE {
                 // CORE came in, we take it as it is
                 logprint(l,
                     "Transfer amount: ${raw18(amount)} ${symbolOfTokenTransfer(token)}");
-                logprint(l, "Using amount ${raw18(amount)}");
+                logprint(l, "* Adding units amount ${raw18(amount)}");
                 units += amount;
               } else if (token == core.wethAddr) {
                 // ETH came in, we ignore because LGE will use it to buy CORE or WBTC
@@ -327,24 +328,34 @@ class RoboLGE {
                 // c) it was the result of an LP breakup, LGE will swap it so we should ignore!
                 // If original token was the LP, then the first incoming WBTC will be the breakup to ignore.
                 if (depositToken == core.WBTC2ETHAddr && firstTime) {
-                  // Original deposit was LP and this is the first WBTC transfer, we ignore it!
+                  // This is case c) - original deposit was LP and this is the first WBTC transfer, we ignore it!
                   firstTime = false;
+                  logprint(l,
+                      "Ignoring WBTC transfer since it was the result of an LP break and will be swapped to CORE");
                 } else {
-                  // It was not an LP, it was deposit of WBTC
+                  // It was not a first time WBTC from an LP, it was deposit of WBTC or result of swap to WBTC (case a or b)
                   if (toLGE.length == 1) {
-                    // If only one transfer, then LGE didn't decide to swap, so it's a, we value it via WBTC->ETH->CORE
+                    // This is case a) - If only one transfer, then LGE didn't decide to swap, so we value it via WBTC->ETH->CORE
                     var coreHistoric =
                         await coreValueOfWBTC(amount, tx.blockNumber);
                     logprint(l,
                         "Historic value of WBTC in CORE: ${raw18(coreHistoric)}");
                     logprint(l,
                         "Transfer amount: ${raw8(amount)} ${symbolOfTokenTransfer(token)}");
-                    logprint(l, "Using historic value ${raw18(coreHistoric)}");
+                    logprint(l,
+                        "* Adding units historic value ${raw18(coreHistoric)}");
                     units += coreHistoric;
                   } else {
-                    // Ok, we have more transfers, so this one is ignored because LGE decided to swap it
+                    // Ok, this is b) - This is a result of market buy, we value it
+                    var coreHistoric =
+                        await coreValueOfWBTC(amount, tx.blockNumber);
                     logprint(l,
-                        "Ignoring WBTC transfer since it will be swapped to CORE");
+                        "Historic value of WBTC in CORE: ${raw18(coreHistoric)}");
+                    logprint(l,
+                        "Transfer amount: ${raw8(amount)} ${symbolOfTokenTransfer(token)}");
+                    logprint(l,
+                        "* Adding units historic value ${raw18(coreHistoric)}");
+                    units += coreHistoric;
                   }
                 }
               } else {
@@ -356,6 +367,7 @@ class RoboLGE {
             }
           }
           contrib.units = units;
+          logprint(l, "* Total units ${raw18(units)}");
           break;
         case addLiquidityAtomic:
           logprint(l, "addLiquidityAtomic: ${tx.value}");
@@ -388,7 +400,7 @@ class RoboLGE {
     print("Holders to update: ${sums.length}");
     for (var list in sums) {
       // Calculate deviation of coreValue from the more correct units value, in percent rounded to two decimals.
-      var holder = await Holder.findHolder(list[0]);
+      var holder = await Holder.findHolder(EthereumAddress.fromHex(list[0]));
       if (holder != null) {
         holder.units = list[1];
         holder.contractUnits = await core.unitsContributed(holder.address);
@@ -396,7 +408,8 @@ class RoboLGE {
         await holder.update();
         print("Updated ${holder.address.hex}");
       } else {
-        throw "Can't happen";
+        print(
+            "A new contribution that hasn't been processed yet - just ignore.");
       }
     }
     // Loop through Holders and query points in contract
