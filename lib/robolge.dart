@@ -157,8 +157,17 @@ class RoboLGE {
         pow(10, 18) * ((raw8(amount) * priceWBTCinETH) / priceCOREinETH));
   }
 
+  List<FilterEvent> transfersToLGE(List<FilterEvent> transfers) {
+    return transfers
+        .where((element) =>
+            element.topics.last ==
+            '0x000000000000000000000000f7ca8f55c54cbb6d0965bc6d65c43adc500bc591')
+        .toList();
+  }
+
   recreateHistory() async {
     var contribs = await Contribution.getAll();
+    // Various bags to collect txns to see at the end, nothing important.
     var atomics = [];
     var bad = [];
     var mended = [];
@@ -167,26 +176,32 @@ class RoboLGE {
     var eths = [];
     var tokens = [];
     var lps = [];
+
+    // Loop over all, we should also make a GraphQL thing later,
+    // to make sure we have all Contrib events collected.
     for (var contrib in contribs) {
+      // If holder is not created/mapped yet
       var holder = await Holder.findOrCreateHolder(contrib);
-      // If holder is not mapped yet, we do it
       if (contrib.holder == null) {
         contrib.holder = holder.id;
         await contrib.update();
       }
-      // Find tx info
+      // Print URL to txn, for easier debuggin
       var ethUrl = "https://etherscan.io/tx/${contrib.tx}";
       print("https://etherscan.io/tx/${contrib.tx}");
+
+      // Look up tx
       var tx = await core.ethClient.getTransactionByHash(contrib.tx);
+
       // Find function called
       var fn = bytesToHex(tx.input.sublist(0, 4));
 
-      // All other cases
+      // All cases
 
       // ETH will be used to market buy CORE or wBTC, depending on the current allocation.
       // wBTC will be used to market buy CORE or remain as wBTC depending on the current allocation
       // CORE will be used to maintain the peg. It cannot be sold. If the contract receives too much CORE it refunds it proportionally.
-      // wBTC/ETH UNI LP tokens will be unwrapped automatically and ETH+wBTC will be distributed following the rules above.*/
+      // wBTC/ETH UNI LP tokens will be unwrapped automatically and ETH+wBTC will be distributed following the rules above.
 
       // CORE, ETH, WETH, WBTC, WBTC/ETH LP
       // coreValue is set when it was ETH, WETH or WBTC/ETH LP (part of which is ETH)
@@ -196,12 +211,15 @@ class RoboLGE {
       var logs = rc.logs;
       var cos = findContributionEvents(logs);
       if (cos.length == 0) {
+        // Should never happen
         print("BAD APPLE! $ethUrl");
         bad.add(tx);
       }
       if (contrib.units > BigInt.parse("65487333214482957510")) {
         print("break");
       }
+      // Putting coreValue back into the Contribution (for some reason I may
+      // end up with zero sometimes, could be a bug in the web3 lib).
       if (cos.length == 1) {
         var co = cos.first;
         var cv = hexToInt(co.data.substring(2, 66));
@@ -212,32 +230,32 @@ class RoboLGE {
           mended.add(tx);
         }
       } else {
+        // Should never happen
         throw "Should be only one Contribution event per txn!";
       }
 
-      // Which function called?
+      // Which function called? We only have two relevant ones
       switch (fn) {
         case addLiquidityETH:
           print(
               "addLiquidityETH: ${tx.value} coreValue: ${raw18(contrib.coreValue)}");
           if (contrib.coreValue == BigInt.zero) {
+            // Should not happen
             throw "Bad coreValue still zero!";
           }
           eths.add(tx);
-          // All transfers
+          // Find all transfers
           var transfers = findTransferEvents(logs);
-          // All to the LGE contract
-          var toLGE = transfers
-              .where((element) =>
-                  element.topics.last ==
-                  '0x000000000000000000000000f7ca8f55c54cbb6d0965bc6d65c43adc500bc591')
-              .toList();
+          // but only those to the LGE contract
+          var toLGE = transfersToLGE(transfers);
           // Should only be one with this function!
           assert(toLGE.length == 1);
           var trans = toLGE.first;
           // Pick out amount and token from Transfer
           var amount = hexToInt(trans.data);
           var token = tokenOfSwapTransfer(trans);
+
+          // Could have been market buy of CORE or WBTC
           if (token == core.CORE2ETHAddr) {
             // ETH was deposited and caused a buy of CORE
             var priceCOREinETH =
@@ -261,51 +279,62 @@ class RoboLGE {
             print("Using historic value of WBTC in CORE");
             contrib.units = coreHistoric2;
           }
+          // Just for info in db
           contrib.coin = 'ETH';
           await contrib.update();
           break;
         case addLiquidityWithTokenWithAllowance:
           print(
               "addLiquidityWithTokenWithAllowance: ${tx.value} coreValue: ${raw18(contrib.coreValue)}");
-          // Token param
-          var token = EthereumAddress.fromHex(
+          // Token param, just for info
+          var depositToken = EthereumAddress.fromHex(
               hexToInt(bytesToHex(tx.input.sublist(5, 36))).toRadixString(16));
-          contrib.coin = symbolOfDepositToken(token);
+          contrib.coin = symbolOfDepositToken(depositToken);
           tokens.add(tx);
           // All transfers
           var transfers = findTransferEvents(logs);
-          // All to the LGE contract, but we look at contract emitting transfer!
-          var toLGE = transfers
-              .where((element) =>
-                  element.topics.last ==
-                  '0x000000000000000000000000f7ca8f55c54cbb6d0965bc6d65c43adc500bc591')
-              .toList();
+          // All to the LGE contract
+          var toLGE = transfersToLGE(transfers);
           var units = BigInt.zero;
+          // Used for LP logic, see below
+          bool firstTime = true;
           for (var trans in toLGE) {
+            // We look at contract emitting transfer to know what it was!
             var token = tokenOfTokenTransfer(trans);
-            // We don't care for WBTC-ETH LPs, those are broken up, burned and cause more transfers
+            // We don't care for WBTC-ETH LPs, those are broken up, and cause two more transfers into the contract
             if (token != core.WBTC2ETHAddr) {
               var amount = hexToInt(trans.data);
               if (token == core.coreAddr) {
-                // CORE was deposited, we take it as it is
+                // CORE came in, we take it as it is
                 print(
                     "Transfer amount: ${raw18(amount)},  ${symbolOfTokenTransfer(token)}");
                 print("Using amount");
                 units += amount;
               } else if (token == core.wethAddr) {
+                // ETH came in, we ignore because LGE will use it to buy CORE or WBTC
                 print(
                     "Ignoring transfer amount: ${raw18(amount)},  ${symbolOfTokenTransfer(token)}");
               } else if (token == core.wbtcAddr) {
-                // WBTC was deposited, we value it via WBTC->ETH->CORE
-                var coreHistoric =
-                    await coreValueOfWBTC(amount, tx.blockNumber);
-                print("Historic value of WBTC in CORE: ${raw18(coreHistoric)}");
-                print(
-                    "Transfer amount: ${raw8(amount)},  ${symbolOfTokenTransfer(token)}");
-                print("Using historic value");
-                units += coreHistoric;
+                // WBTC came in, we have two scenarios:
+                // a) it was the result of a market buy, we should value it
+                // b) it was the result of an LP breakup, LGE will swap it so we should ignore!
+                // If original token was the LP, then the first incoming WBTC will be the breakup to ignore.
+                if (depositToken == core.WBTC2ETHAddr && firstTime) {
+                  // It's b, we ignore it!
+                  firstTime = false;
+                } else {
+                  // It's a, we value it via WBTC->ETH->CORE
+                  var coreHistoric =
+                      await coreValueOfWBTC(amount, tx.blockNumber);
+                  print(
+                      "Historic value of WBTC in CORE: ${raw18(coreHistoric)}");
+                  print(
+                      "Transfer amount: ${raw8(amount)},  ${symbolOfTokenTransfer(token)}");
+                  print("Using historic value");
+                  units += coreHistoric;
+                }
               } else {
-                print("Ehum");
+                throw "Unknown incoming transfer, should not happen";
               }
             } else {
               print("Ignoring breaking up WBTC-ETH LP");
