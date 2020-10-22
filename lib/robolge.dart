@@ -165,11 +165,16 @@ class RoboLGE {
         .toList();
   }
 
+  // Print and stuff into buffer
+  logprint(StringBuffer log, String line) {
+    print(line);
+    log.writeln(line);
+  }
+
   recreateHistory() async {
     var contribs = await Contribution.getAll();
     // Various bags to collect txns to see at the end, nothing important.
     var atomics = [];
-    var bad = [];
     var mended = [];
     var changeAdmins = [];
     var admins = [];
@@ -180,15 +185,15 @@ class RoboLGE {
     // Loop over all, we should also make a GraphQL thing later,
     // to make sure we have all Contrib events collected.
     for (var contrib in contribs) {
+      var l = StringBuffer();
       // If holder is not created/mapped yet
       var holder = await Holder.findOrCreateHolder(contrib);
       if (contrib.holder == null) {
         contrib.holder = holder.id;
-        await contrib.update();
       }
       // Print URL to txn, for easier debuggin
       var ethUrl = "https://etherscan.io/tx/${contrib.tx}";
-      print("https://etherscan.io/tx/${contrib.tx}");
+      logprint(l, ethUrl);
 
       // Look up tx
       var tx = await core.ethClient.getTransactionByHash(contrib.tx);
@@ -212,8 +217,7 @@ class RoboLGE {
       var cos = findContributionEvents(logs);
       if (cos.length == 0) {
         // Should never happen
-        print("BAD APPLE! $ethUrl");
-        bad.add(tx);
+        throw "No Contribution event found in logs for txn";
       }
       if (contrib.units > BigInt.parse("65487333214482957510")) {
         print("break");
@@ -226,7 +230,6 @@ class RoboLGE {
         if (contrib.coreValue != cv) {
           print("Ok, mending coreValue");
           contrib.coreValue = cv;
-          await contrib.update();
           mended.add(tx);
         }
       } else {
@@ -237,7 +240,7 @@ class RoboLGE {
       // Which function called? We only have two relevant ones
       switch (fn) {
         case addLiquidityETH:
-          print(
+          logprint(l,
               "addLiquidityETH: ${tx.value} coreValue: ${raw18(contrib.coreValue)}");
           if (contrib.coreValue == BigInt.zero) {
             // Should not happen
@@ -260,31 +263,33 @@ class RoboLGE {
             // ETH was deposited and caused a buy of CORE
             var priceCOREinETH =
                 await uniswap.pairPriceAt(tx.blockNumber, token);
-            print("Price: $priceCOREinETH ETH/CORE");
+            logprint(l, "Price: $priceCOREinETH ETH/CORE");
             var coreHistoric = tx.value.getInEther.toDouble() / priceCOREinETH;
-            print("Historic value in CORE: $coreHistoric");
-            print("Transfer amount: ${raw18(amount)},  ${symbolOfSwap(token)}");
-            print("Using amount");
+            logprint(l, "Historic value in CORE: $coreHistoric");
+            logprint(l,
+                "Transfer amount: ${raw18(amount)},  ${symbolOfSwap(token)}");
+            logprint(l, "Using amount");
             contrib.units = amount;
           } else if (token == core.WBTC2ETHAddr) {
             // ETH was deposited and caused a buy of WBTC
             var priceCOREinETH =
                 await uniswap.pairPriceAt(tx.blockNumber, token);
-            print("Price: $priceCOREinETH ETH/CORE");
+            logprint(l, "Price: $priceCOREinETH ETH/CORE");
             var coreHistoric = tx.value.getInEther.toDouble() / priceCOREinETH;
-            print("Historic value of ETH in CORE: $coreHistoric");
+            logprint(l, "Historic value of ETH in CORE: $coreHistoric");
             var coreHistoric2 = await coreValueOfWBTC(amount, tx.blockNumber);
-            print("Historic value of WBTC in CORE: ${raw18(coreHistoric2)}");
-            print("Transfer amount: ${raw8(amount)},  ${symbolOfSwap(token)}");
-            print("Using historic value of WBTC in CORE");
+            logprint(
+                l, "Historic value of WBTC in CORE: ${raw18(coreHistoric2)}");
+            logprint(
+                l, "Transfer amount: ${raw8(amount)},  ${symbolOfSwap(token)}");
+            logprint(l, "Using historic value of WBTC in CORE");
             contrib.units = coreHistoric2;
           }
           // Just for info in db
           contrib.coin = 'ETH';
-          await contrib.update();
           break;
         case addLiquidityWithTokenWithAllowance:
-          print(
+          logprint(l,
               "addLiquidityWithTokenWithAllowance: ${tx.value} coreValue: ${raw18(contrib.coreValue)}");
           // Token param, just for info
           var depositToken = EthereumAddress.fromHex(
@@ -306,13 +311,13 @@ class RoboLGE {
               var amount = hexToInt(trans.data);
               if (token == core.coreAddr) {
                 // CORE came in, we take it as it is
-                print(
+                logprint(l,
                     "Transfer amount: ${raw18(amount)},  ${symbolOfTokenTransfer(token)}");
-                print("Using amount");
+                logprint(l, "Using amount");
                 units += amount;
               } else if (token == core.wethAddr) {
                 // ETH came in, we ignore because LGE will use it to buy CORE or WBTC
-                print(
+                logprint(l,
                     "Ignoring transfer amount: ${raw18(amount)},  ${symbolOfTokenTransfer(token)}");
               } else if (token == core.wbtcAddr) {
                 // WBTC came in, we have two scenarios:
@@ -326,39 +331,41 @@ class RoboLGE {
                   // It's a, we value it via WBTC->ETH->CORE
                   var coreHistoric =
                       await coreValueOfWBTC(amount, tx.blockNumber);
-                  print(
+                  logprint(l,
                       "Historic value of WBTC in CORE: ${raw18(coreHistoric)}");
-                  print(
+                  logprint(l,
                       "Transfer amount: ${raw8(amount)},  ${symbolOfTokenTransfer(token)}");
-                  print("Using historic value");
+                  logprint(l, "Using historic value");
                   units += coreHistoric;
                 }
               } else {
                 throw "Unknown incoming transfer, should not happen";
               }
             } else {
-              print("Ignoring breaking up WBTC-ETH LP");
+              logprint(l, "Ignoring breaking up WBTC-ETH LP");
               lps.add(tx);
             }
           }
           contrib.units = units;
-          await contrib.update();
           break;
         case addLiquidityAtomic:
-          print("addLiquidityAtomic: ${tx.value}");
+          logprint(l, "addLiquidityAtomic: ${tx.value}");
           atomics.add(tx);
           break;
         case changeAdmin:
-          print("changeAdmin: ${tx.value}");
+          logprint(l, "changeAdmin: ${tx.value}");
           changeAdmins.add(tx);
           break;
         case admin:
-          print("admin: ${tx.value}");
+          logprint(l, "admin: ${tx.value}");
           admins.add(tx);
           break;
         default:
           throw "Unknown function called";
       }
+      // Finally save Contribution with log
+      contrib.log = l.toString();
+      await contrib.update();
       print("------------------------------------------------");
     }
     print("Done");
