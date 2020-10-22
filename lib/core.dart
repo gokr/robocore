@@ -204,7 +204,7 @@ class Core {
         sender: address,
         contract: LGE2,
         function: LGE2.function('unitsContributed'),
-        params: []);
+        params: [holder]);
     return eth.first;
   }
 
