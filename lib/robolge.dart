@@ -241,7 +241,7 @@ class RoboLGE {
       switch (fn) {
         case addLiquidityETH:
           logprint(l,
-              "addLiquidityETH: ${tx.value} coreValue: ${raw18(contrib.coreValue)}");
+              "addLiquidityETH: ${tx.value.getInEther} coreValue: ${raw18(contrib.coreValue)}");
           if (contrib.coreValue == BigInt.zero) {
             // Should not happen
             throw "Bad coreValue still zero!";
@@ -262,27 +262,28 @@ class RoboLGE {
           if (token == core.CORE2ETHAddr) {
             // ETH was deposited and caused a buy of CORE
             var priceCOREinETH =
-                await uniswap.pairPriceAt(tx.blockNumber, token);
+                await uniswap.pairPriceAt(tx.blockNumber, core.CORE2ETHAddr);
             logprint(l, "Price: $priceCOREinETH ETH/CORE");
             var coreHistoric = tx.value.getInEther.toDouble() / priceCOREinETH;
             logprint(l, "Historic value in CORE: $coreHistoric");
-            logprint(l,
-                "Transfer amount: ${raw18(amount)},  ${symbolOfSwap(token)}");
-            logprint(l, "Using amount");
+            logprint(
+                l, "Transfer amount: ${raw18(amount)} ${symbolOfSwap(token)}");
+            logprint(l, "Using amount ${raw18(amount)}");
             contrib.units = amount;
           } else if (token == core.WBTC2ETHAddr) {
             // ETH was deposited and caused a buy of WBTC
             var priceCOREinETH =
-                await uniswap.pairPriceAt(tx.blockNumber, token);
+                await uniswap.pairPriceAt(tx.blockNumber, core.CORE2ETHAddr);
             logprint(l, "Price: $priceCOREinETH ETH/CORE");
             var coreHistoric = tx.value.getInEther.toDouble() / priceCOREinETH;
-            logprint(l, "Historic value of ETH in CORE: $coreHistoric");
+            logprint(
+                l, "Historic value of deposited ETH in CORE: $coreHistoric");
             var coreHistoric2 = await coreValueOfWBTC(amount, tx.blockNumber);
             logprint(
                 l, "Historic value of WBTC in CORE: ${raw18(coreHistoric2)}");
             logprint(
-                l, "Transfer amount: ${raw8(amount)},  ${symbolOfSwap(token)}");
-            logprint(l, "Using historic value of WBTC in CORE");
+                l, "Transfer amount: ${raw8(amount)} ${symbolOfSwap(token)}");
+            logprint(l, "Using historic value ${raw18(coreHistoric2)}");
             contrib.units = coreHistoric2;
           }
           // Just for info in db
@@ -290,7 +291,7 @@ class RoboLGE {
           break;
         case addLiquidityWithTokenWithAllowance:
           logprint(l,
-              "addLiquidityWithTokenWithAllowance: ${tx.value} coreValue: ${raw18(contrib.coreValue)}");
+              "addLiquidityWithTokenWithAllowance: ${tx.value.getInEther} coreValue: ${raw18(contrib.coreValue)}");
           // Token param, just for info
           var depositToken = EthereumAddress.fromHex(
               hexToInt(bytesToHex(tx.input.sublist(5, 36))).toRadixString(16));
@@ -312,13 +313,13 @@ class RoboLGE {
               if (token == core.coreAddr) {
                 // CORE came in, we take it as it is
                 logprint(l,
-                    "Transfer amount: ${raw18(amount)},  ${symbolOfTokenTransfer(token)}");
-                logprint(l, "Using amount");
+                    "Transfer amount: ${raw18(amount)} ${symbolOfTokenTransfer(token)}");
+                logprint(l, "Using amount ${raw18(amount)}");
                 units += amount;
               } else if (token == core.wethAddr) {
                 // ETH came in, we ignore because LGE will use it to buy CORE or WBTC
                 logprint(l,
-                    "Ignoring transfer amount: ${raw18(amount)},  ${symbolOfTokenTransfer(token)}");
+                    "Ignoring transfer amount: ${raw18(amount)} ${symbolOfTokenTransfer(token)}");
               } else if (token == core.wbtcAddr) {
                 // WBTC came in, we have two scenarios:
                 // a) it was the result of a market buy, we should value it
@@ -334,8 +335,8 @@ class RoboLGE {
                   logprint(l,
                       "Historic value of WBTC in CORE: ${raw18(coreHistoric)}");
                   logprint(l,
-                      "Transfer amount: ${raw8(amount)},  ${symbolOfTokenTransfer(token)}");
-                  logprint(l, "Using historic value");
+                      "Transfer amount: ${raw8(amount)} ${symbolOfTokenTransfer(token)}");
+                  logprint(l, "Using historic value ${raw18(coreHistoric)}");
                   units += coreHistoric;
                 }
               } else {
