@@ -59,7 +59,7 @@ class Contribution {
 
   Future<void> insert() async {
     var result = await db.query(
-        "INSERT INTO _contribution (lge, created, sender, tx, coreValue, coin, units, holder) VALUES (@lge, @created, @sender, @tx, @coreValue, @coin, @units, @holder)",
+        "INSERT INTO _contribution (lge, created, sender, tx, coreValue, coin, units, holder, log) VALUES (@lge, @created, @sender, @tx, @coreValue, @coin, @units, @holder, @log)",
         substitutionValues: {
           "lge": lge,
           "created": created.toIso8601String(),
@@ -76,7 +76,7 @@ class Contribution {
 
   static Future<List<Contribution>> getAll() async {
     List<List<dynamic>> results = await db.query(
-        "SELECT id, lge, created, sender, tx, coreValue, coin, units, holder, log  FROM _contribution");
+        "SELECT id, lge, created, sender, tx, coreValue, coin, units, holder, log FROM _contribution");
     return results.map((list) {
       return Contribution(
           list[0],
@@ -87,8 +87,8 @@ class Contribution {
           numericToBigInt(list[5]),
           list[6],
           numericToBigInt(list[7]),
-          list[9],
-          list[10]);
+          list[8],
+          list[9]);
     }).toList();
   }
 
