@@ -22,9 +22,13 @@ class Contribution {
   String log = "";
 
   updateDeviation() {
-    var diff = units - coreValue;
-    deviation = ((10000 * (diff / units)).roundToDouble() / 100).abs();
-    if (!deviation.isFinite) deviation = 0;
+    if (coreValue > BigInt.zero) {
+      var diff = units - coreValue;
+      deviation = ((10000 * (diff / units)).roundToDouble() / 100).abs();
+      if (!deviation.isFinite) deviation = 0;
+    } else {
+      deviation = 0;
+    }
   }
 
   Contribution(
