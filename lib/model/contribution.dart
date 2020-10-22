@@ -16,12 +16,12 @@ class Contribution {
   late String tx;
 
   late String coin;
-  double? price;
   BigInt units = BigInt.zero;
   int? holder;
+  String log = "";
 
   Contribution(this.id, this.lge, this.created, this.sender, this.tx,
-      this.coreValue, this.coin, this.price, this.units, this.holder);
+      this.coreValue, this.coin, this.units, this.holder, this.log);
 
   Contribution.from(this.lge, ContractEvent ev, FilterEvent fe) {
     final decoded = ev.decodeResults(fe.topics, fe.data);
@@ -36,12 +36,12 @@ class Contribution {
 
   static Future<PostgreSQLResult> createTable() async {
     return await db.query(
-        "create table IF NOT EXISTS _contribution (id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(id), lge integer, created timestamp, sender text, tx text, coreValue numeric);");
+        "create table IF NOT EXISTS _contribution (id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(id), lge integer, created timestamp, sender text, tx text, coreValue numeric, coin text, units numeric, holder int4, log text);");
   }
 
   Future<void> update() async {
     var result = await db.query(
-        "UPDATE _contribution SET lge = @lge, created = @created, sender = @sender, tx = @tx, coreValue = @coreValue, coin = @coin, price = @price, units = @units, holder = @holder WHERE id = @id",
+        "UPDATE _contribution SET lge = @lge, created = @created, sender = @sender, tx = @tx, coreValue = @coreValue, coin = @coin, units = @units, holder = @holder, log = @log WHERE id = @id",
         substitutionValues: {
           "id": id,
           "lge": lge,
@@ -50,16 +50,16 @@ class Contribution {
           "tx": tx,
           "coreValue": coreValue.toString(),
           "coin": coin,
-          "price": price,
           "units": units.toString(),
-          "holder": holder
+          "holder": holder,
+          "log": log
         });
     print(result);
   }
 
   Future<void> insert() async {
     var result = await db.query(
-        "INSERT INTO _contribution (lge, created, sender, tx, coreValue, coin, price, units, holder) VALUES (@lge, @created, @sender, @tx, @coreValue, @coin, @price, @units, @holder)",
+        "INSERT INTO _contribution (lge, created, sender, tx, coreValue, coin, units, holder) VALUES (@lge, @created, @sender, @tx, @coreValue, @coin, @units, @holder)",
         substitutionValues: {
           "lge": lge,
           "created": created.toIso8601String(),
@@ -67,16 +67,16 @@ class Contribution {
           "tx": tx,
           "coreValue": coreValue.toString(),
           "coin": coin,
-          "price": price,
           "units": units.toString(),
-          "holder": holder
+          "holder": holder,
+          "log": log
         });
     print(result);
   }
 
   static Future<List<Contribution>> getAll() async {
     List<List<dynamic>> results = await db.query(
-        "SELECT id, lge, created, sender, tx, coreValue, coin, price, units, holder  FROM _contribution");
+        "SELECT id, lge, created, sender, tx, coreValue, coin, units, holder, log  FROM _contribution");
     return results.map((list) {
       return Contribution(
           list[0],
@@ -86,9 +86,9 @@ class Contribution {
           list[4],
           numericToBigInt(list[5]),
           list[6],
-          list[7],
-          numericToBigInt(list[8]),
-          list[9]);
+          numericToBigInt(list[7]),
+          list[9],
+          list[10]);
     }).toList();
   }
 
