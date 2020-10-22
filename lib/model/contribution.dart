@@ -17,11 +17,28 @@ class Contribution {
 
   late String coin;
   BigInt units = BigInt.zero;
+  double deviation = 0;
   int? holder;
   String log = "";
 
-  Contribution(this.id, this.lge, this.created, this.sender, this.tx,
-      this.coreValue, this.coin, this.units, this.holder, this.log);
+  updateDeviation() {
+    var diff = units - coreValue;
+    deviation = ((10000 * (diff / units)).roundToDouble() / 100).abs();
+    if (!deviation.isFinite) deviation = 0;
+  }
+
+  Contribution(
+      this.id,
+      this.lge,
+      this.created,
+      this.sender,
+      this.tx,
+      this.coreValue,
+      this.coin,
+      this.units,
+      this.holder,
+      this.log,
+      this.deviation);
 
   Contribution.from(this.lge, ContractEvent ev, FilterEvent fe) {
     final decoded = ev.decodeResults(fe.topics, fe.data);
@@ -36,12 +53,12 @@ class Contribution {
 
   static Future<PostgreSQLResult> createTable() async {
     return await db.query(
-        "create table IF NOT EXISTS _contribution (id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(id), lge integer, created timestamp, sender text, tx text, coreValue numeric, coin text, units numeric, holder int4, log text);");
+        "create table IF NOT EXISTS _contribution (id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(id), lge integer, created timestamp, sender text, tx text, coreValue numeric, coin text, units numeric, deviation double, holder int4, log text);");
   }
 
   Future<void> update() async {
     var result = await db.query(
-        "UPDATE _contribution SET lge = @lge, created = @created, sender = @sender, tx = @tx, coreValue = @coreValue, coin = @coin, units = @units, holder = @holder, log = @log WHERE id = @id",
+        "UPDATE _contribution SET lge = @lge, created = @created, sender = @sender, tx = @tx, coreValue = @coreValue, coin = @coin, units = @units, holder = @holder, log = @log, deviation = @deviation WHERE id = @id",
         substitutionValues: {
           "id": id,
           "lge": lge,
@@ -52,14 +69,15 @@ class Contribution {
           "coin": coin,
           "units": units.toString(),
           "holder": holder,
-          "log": log
+          "log": log,
+          "deviation": deviation
         });
     print(result);
   }
 
   Future<void> insert() async {
     var result = await db.query(
-        "INSERT INTO _contribution (lge, created, sender, tx, coreValue, coin, units, holder, log) VALUES (@lge, @created, @sender, @tx, @coreValue, @coin, @units, @holder, @log)",
+        "INSERT INTO _contribution (lge, created, sender, tx, coreValue, coin, units, holder, log, deviation) VALUES (@lge, @created, @sender, @tx, @coreValue, @coin, @units, @holder, @log, @deviation)",
         substitutionValues: {
           "lge": lge,
           "created": created.toIso8601String(),
@@ -69,14 +87,15 @@ class Contribution {
           "coin": coin,
           "units": units.toString(),
           "holder": holder,
-          "log": log
+          "log": log,
+          "deviation": deviation
         });
     print(result);
   }
 
   static Future<List<Contribution>> getAll() async {
     List<List<dynamic>> results = await db.query(
-        "SELECT id, lge, created, sender, tx, coreValue, coin, units, holder, log FROM _contribution");
+        "SELECT id, lge, created, sender, tx, coreValue, coin, units, holder, log, deviation FROM _contribution");
     return results.map((list) {
       return Contribution(
           list[0],
@@ -88,7 +107,16 @@ class Contribution {
           list[6],
           numericToBigInt(list[7]),
           list[8],
-          list[9]);
+          list[9],
+          list[10]?.toDouble() ?? 0);
+    }).toList();
+  }
+
+  static Future<List> getSumOfUnitsPerSender() async {
+    var results = await db.query(
+        "select sender, sum(units) from \"_contribution\" group by sender;");
+    return results.map((list) {
+      return [list[0], numericToBigInt(list[1])];
     }).toList();
   }
 

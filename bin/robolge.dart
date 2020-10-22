@@ -9,6 +9,7 @@ main(List<String> arguments) async {
   await robo.start();
   //if (arguments[0] == "recreate") {
   await robo.recreateHistory();
+  await robo.checkContract();
   //} else if (arguments[0] == "check") {
   //  robo.checkContract();
   //}

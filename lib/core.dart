@@ -199,6 +199,15 @@ class Core {
     return eth.first;
   }
 
+  Future<BigInt> unitsContributed(EthereumAddress holder) async {
+    final eth = await ethClient.call(
+        sender: address,
+        contract: LGE2,
+        function: LGE2.function('unitsContributed'),
+        params: []);
+    return eth.first;
+  }
+
   // LGE2 balanceOf
   // WBTC: 0x2260fac5e5542a773aa44fbcfedf7c193bc2c599
   // CORE: 0x62359Ed7505Efc61FF1D56fEF82158CcaffA23D7
