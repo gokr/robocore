@@ -8,7 +8,7 @@ import 'package:robocore/model/contribution.dart';
 import 'package:robocore/model/corebought.dart';
 import 'package:robocore/model/holder.dart';
 import 'package:robocore/model/swap.dart';
-import 'package:robocore/poster.dart';
+import 'package:robocore/model/poster.dart';
 import 'package:robocore/uniswap.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
@@ -165,6 +165,15 @@ class RoboLGE {
         .toList();
   }
 
+  bool existsThreeTransfers(List<FilterEvent> transfers) {
+    int count = 0;
+    var coreOrwbtc = [core.wbtcAddr, core.coreAddr];
+    for (var t in transfers) {
+      if (coreOrwbtc.contains(tokenOfTokenTransfer(t))) count++;
+    }
+    return count == 3;
+  }
+
   // Print and stuff into buffer
   logprint(StringBuffer log, String line) {
     print(line);
@@ -201,6 +210,13 @@ class RoboLGE {
       logprint(l, ethUrl);
 
       // Look up tx
+      /*var lls = await core.ethClient.getLogs(FilterOptions(
+          fromBlock: BlockNum.exact(11076244),
+          toBlock: BlockNum.exact(11109131),
+          address: core.LGE2Addr,
+          topics: [
+            [contributionTopic]
+          ]));*/
       var tx = await core.ethClient.getTransactionByHash(contrib.tx);
 
       // Find function called
@@ -256,14 +272,14 @@ class RoboLGE {
           var transfers = findTransferEvents(logs);
           // but only those to the LGE contract
           var toLGE = transfersToLGE(transfers);
-          // Should only be one with this function!
+          // Should only be one transfer to LGE
           assert(toLGE.length == 1);
           var trans = toLGE.first;
           // Pick out amount and token from Transfer
           var amount = hexToInt(trans.data);
           var token = tokenOfSwapTransfer(trans);
 
-          // Could have been market buy of CORE or WBTC
+          // Either this was a market buy of CORE or WBTC
           if (token == core.CORE2ETHAddr) {
             // ETH was deposited and caused a buy of CORE
             var priceCOREinETH =
@@ -298,7 +314,7 @@ class RoboLGE {
         case addLiquidityWithTokenWithAllowance:
           logprint(l,
               "addLiquidityWithTokenWithAllowance: ${tx.value.getInEther} coreValue: ${raw18(contrib.coreValue)}");
-          // Token param, just for info
+          // Token param, the original token added: CORE, WBTC, WBTC/ETH LP
           var depositToken = EthereumAddress.fromHex(
               hexToInt(bytesToHex(tx.input.sublist(5, 36))).toRadixString(16));
           contrib.coin = symbolOfDepositToken(depositToken);
@@ -311,36 +327,31 @@ class RoboLGE {
           // Used for LP logic, see below
           bool firstTime = true;
           for (var trans in toLGE) {
-            // We look at contract emitting transfer to know what it was!
+            // We look at contract emitting the transfer to know what it was!
             var token = tokenOfTokenTransfer(trans);
-            // We don't care for WBTC-ETH LPs, those are broken up, and cause two more transfers into the contract
-            if (token != core.WBTC2ETHAddr) {
-              var amount = hexToInt(trans.data);
-              if (token == core.coreAddr) {
-                // CORE came in, we take it as it is
-                logprint(l,
-                    "Transfer amount: ${raw18(amount)} ${symbolOfTokenTransfer(token)}");
-                logprint(l, "* Adding units amount ${raw18(amount)}");
-                units += amount;
-              } else if (token == core.wethAddr) {
-                // ETH came in, we ignore because LGE will use it to buy CORE or WBTC
-                logprint(l,
-                    "Ignoring transfer amount: ${raw18(amount)} ${symbolOfTokenTransfer(token)}");
-              } else if (token == core.wbtcAddr) {
-                // WBTC came in, we have three scenarios:
-                // a) it was a straight deposit (only one transfer in toLGE)
-                // b) it was the result of a market buy, we should value it
-                // c) it was the result of an LP breakup, LGE will swap it so we should ignore!
-                // If original token was the LP, then the first incoming WBTC will be the breakup to ignore.
-                if (depositToken == core.WBTC2ETHAddr && firstTime) {
-                  // This is case c) - original deposit was LP and this is the first WBTC transfer, we ignore it!
-                  firstTime = false;
-                  logprint(l,
-                      "Ignoring WBTC transfer since it was the result of an LP break and will be swapped to CORE");
-                } else {
-                  // It was not a first time WBTC from an LP, it was deposit of WBTC or result of swap to WBTC (case a or b)
-                  if (toLGE.length == 1) {
-                    // This is case a) - If only one transfer, then LGE didn't decide to swap, so we value it via WBTC->ETH->CORE
+            var amount = hexToInt(trans.data);
+
+            // CORE came in as a transfer, we can take it as it is because we never sell CORE
+            if (token == core.coreAddr) {
+              logprint(l,
+                  "Transfer amount: ${raw18(amount)} ${symbolOfTokenTransfer(token)}");
+              logprint(l, "* Adding units amount ${raw18(amount)}");
+              units += amount;
+            } else if (token == core.wethAddr) {
+              // We always ignore WETH because it is always swapped to something else
+              logprint(l,
+                  "Ignoring transfer amount: ${raw18(amount)} ${symbolOfTokenTransfer(token)}");
+            } else {
+              // Three cases, original deposit of CORE, WBTC or WBTC/ETH LP
+              if (depositToken == core.WBTC2ETHAddr) {
+                if (token == core.wbtcAddr) {
+                  // The first WBTC part Transfer may be kept, or may be swapped to something else.
+                  // We can decide if we should count it by looking at all transfers to LGE
+                  // containing either CORE or WBTC. If there are three, this first one
+                  // should be ignored because it was swapped for ETH and then to either CORE or WBTC.
+                  var three = existsThreeTransfers(toLGE);
+                  print("Exists three CORE/WBTC transfers: $three");
+                  if (!firstTime || !existsThreeTransfers(toLGE)) {
                     var coreHistoric =
                         await coreValueOfWBTC(amount, tx.blockNumber);
                     logprint(l,
@@ -351,7 +362,14 @@ class RoboLGE {
                         "* Adding units historic value ${raw18(coreHistoric)}");
                     units += coreHistoric;
                   } else {
-                    // Ok, this is b) - This is a result of market buy, we value it
+                    firstTime = false;
+                  }
+                }
+              } else if (depositToken == core.wbtcAddr) {
+                // Either it is kept or swapped to CORE
+                if (toLGE.length == 1) {
+                  // WBTC kept
+                  if (token == core.wbtcAddr) {
                     var coreHistoric =
                         await coreValueOfWBTC(amount, tx.blockNumber);
                     logprint(l,
@@ -361,14 +379,34 @@ class RoboLGE {
                     logprint(l,
                         "* Adding units historic value ${raw18(coreHistoric)}");
                     units += coreHistoric;
+                  } else {
+                    throw "If WBTC was deposited and a single Transfer, it should be WBTC";
                   }
                 }
+              } else if (depositToken == core.coreAddr) {
+                if (token == core.coreAddr) {
+                  // CORE came in but we have already handled that up top!
+                } else {
+                  throw "If CORE was deposited no other Transfer should occur";
+                }
+              } else if (depositToken == core.wethAddr) {
+                // This will get swapped to CORE or WBTC
+                if (token == core.wbtcAddr) {
+                  var coreHistoric =
+                      await coreValueOfWBTC(amount, tx.blockNumber);
+                  logprint(l,
+                      "Historic value of WBTC in CORE: ${raw18(coreHistoric)}");
+                  logprint(l,
+                      "Transfer amount: ${raw8(amount)} ${symbolOfTokenTransfer(token)}");
+                  logprint(l,
+                      "* Adding units historic value ${raw18(coreHistoric)}");
+                  units += coreHistoric;
+                } else {
+                  throw "If WETH was deposited it should be WBTC or CORE";
+                }
               } else {
-                throw "Unknown incoming transfer, should not happen";
+                throw "Unknown deposit token";
               }
-            } else {
-              logprint(l, "Ignoring breaking up WBTC-ETH LP");
-              lps.add(tx);
             }
           }
           contrib.units = units;
