@@ -171,8 +171,13 @@ class RoboLGE {
     log.writeln(line);
   }
 
-  recreateHistory() async {
-    var contribs = await Contribution.getAll();
+  recreateHistory(bool incremental) async {
+    List<Contribution> contribs;
+    if (incremental) {
+      contribs = await Contribution.getUnprocessed();
+    } else {
+      contribs = await Contribution.getAll();
+    }
     // Various bags to collect txns to see at the end, nothing important.
     var atomics = [];
     var mended = [];

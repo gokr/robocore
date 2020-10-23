@@ -100,6 +100,16 @@ class Contribution {
   static Future<List<Contribution>> getAll() async {
     List<List<dynamic>> results = await db.query(
         "SELECT id, lge, created, sender, tx, coreValue, coin, units, holder, log, deviation FROM _contribution");
+    return fromResults(results);
+  }
+
+  static Future<List<Contribution>> getUnprocessed() async {
+    List<List<dynamic>> results = await db.query(
+        "SELECT id, lge, created, sender, tx, coreValue, coin, units, holder, log, deviation FROM _contribution where coin is null");
+    return fromResults(results);
+  }
+
+  static List<Contribution> fromResults(List<List<dynamic>> results) {
     return results.map((list) {
       return Contribution(
           list[0],
