@@ -6,7 +6,7 @@ import 'package:robocore/core.dart';
 import 'package:robocore/model/contribution.dart';
 import 'package:robocore/model/corebought.dart';
 import 'package:robocore/model/swap.dart';
-import 'package:robocore/poster.dart';
+import 'package:robocore/model/poster.dart';
 
 import 'database.dart';
 

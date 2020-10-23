@@ -2,8 +2,10 @@ import 'dart:convert';
 
 import 'package:nyxx/nyxx.dart';
 import 'package:robocore/core.dart';
-import 'package:robocore/event_logger.dart';
-import 'package:robocore/poster.dart';
+import 'package:robocore/loggers/pricelogger.dart';
+import 'package:robocore/loggers/swaplogger.dart';
+import 'package:robocore/loggers/whalelogger.dart';
+import 'package:robocore/model/poster.dart';
 import 'package:robocore/util.dart';
 import 'package:robocore/robocore.dart';
 
@@ -508,13 +510,22 @@ class LogCommand extends Command {
             arg = null;
           }
           switch (name) {
-            case "whale":
+            case "whalebuy":
               if (add) {
-                var logger = WhaleLogger("whale", ch);
+                var logger = WhaleBuyLogger("whalebuy", ch);
                 if (arg != null) logger.limit = arg;
                 bot.addLogger(logger);
               } else {
-                bot.removeLogger("whale", ch);
+                bot.removeLogger("whalebuy", ch);
+              }
+              break;
+            case "whalesell":
+              if (add) {
+                var logger = WhaleBuyLogger("whalesell", ch);
+                if (arg != null) logger.limit = arg;
+                bot.addLogger(logger);
+              } else {
+                bot.removeLogger("whalesell", ch);
               }
               break;
             case "price":
@@ -538,7 +549,8 @@ class LogCommand extends Command {
               if (add) {
                 bot.addLogger(PriceLogger("price", ch));
                 bot.addLogger(SwapLogger("swap", ch));
-                bot.addLogger(WhaleLogger("whale", ch));
+                bot.addLogger(WhaleLogger("whalebuy", ch));
+                bot.addLogger(WhaleLogger("whalesell", ch));
               }
               break;
           }
