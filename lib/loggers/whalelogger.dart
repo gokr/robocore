@@ -37,7 +37,9 @@ class WhaleSellLogger extends WhaleLogger {
   log(Robocore bot, Swap swap) async {
     var wrapper = channel.getWrapperFromBot(bot);
     var eth = raw18(swap.amount);
+    print("WHALE: Checking sell whale: ${swap.sell} amount: $eth");
     if (swap.sell && eth > limit) {
+      print("WHALE: Yes");
       int random = Random().nextInt(5) + 1; // 1-5
       var answer;
       //var hearts = makeBrokenHearts(eth);
@@ -74,6 +76,7 @@ class WhaleBuyLogger extends WhaleLogger {
   log(Robocore bot, Swap swap) async {
     var wrapper = channel.getWrapperFromBot(bot);
     var eth = raw18(swap.amount);
+    print("WHALE: Checking buy whale: ${swap.buy} amount: $eth");
     if (swap.buy && eth > limit) {
       int random = Random().nextInt(5) + 1; // 1-5
       var answer;

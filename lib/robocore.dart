@@ -393,8 +393,12 @@ class Robocore {
       floorCORE2inETH,
       floorLPinUSD,
       floorLPinETH,
+      floorLP2inUSD,
+      floorLP2inWBTC,
       floorLiquidity,
-      supplyLP;
+      floorLiquidity2,
+      supplyLP,
+      supplyLP2;
 
   /*late num lge2CORE,
       lge2COREinUSD,
@@ -591,12 +595,13 @@ class Robocore {
 
     // So now we have x1 and x2, two possible solutions to amount of CORE to sell into pair1.
     double candidate = double.maxFinite;
+    var newPoolWBTC;
     if (x1 < (10000 - poolCORE - lge2CORE)) {
       // x1 needs to be low enough
       var newPoolETH = poolK / (poolCORE + (x1 * 0.997));
       var p1 = newPoolETH / (poolCORE + x1);
       print("poolK: $poolK, newPoolK: ${newPoolETH * (poolCORE + x1)}");
-      var newPoolWBTC = l / (d + (10000 - d - poolCORE - x1) * 0.997);
+      newPoolWBTC = l / (d + (10000 - d - poolCORE - x1) * 0.997);
       var p2 = (newPoolWBTC / (10000 - poolCORE - x1)) * z;
       print("poolK2: $l, newPoolK: ${newPoolWBTC * (10000 - poolCORE - x1)}");
       print("pool1CORE: ${poolCORE + x1}, pool1ETH: $newPoolETH");
@@ -609,16 +614,26 @@ class Robocore {
       var newPoolETH = poolK / (poolCORE + (x2 * 0.997));
       var p1 = newPoolETH / (poolCORE + x2);
       print("poolK: $poolK, newPoolK: ${newPoolETH * (poolCORE + x2)}");
-      var newPoolWBTC = l / (d + (10000 - d - poolCORE - x2) * 0.997);
-      var p2 = (newPoolWBTC / (10000 - poolCORE - x2)) * z;
-      print("poolK2: $l, newPoolK: ${newPoolWBTC * (10000 - poolCORE - x2)}");
+      var newPoolWBTC2 = l / (d + (10000 - d - poolCORE - x2) * 0.997);
+      var p2 = (newPoolWBTC2 / (10000 - poolCORE - x2)) * z;
+      print("poolK2: $l, newPoolK: ${newPoolWBTC2 * (10000 - poolCORE - x2)}");
       print("pool1CORE: ${poolCORE + x2}, pool1ETH: $newPoolETH");
-      print("pool2CORE: ${10000 - poolCORE - x2}, pool2WBTC: $newPoolWBTC");
+      print("pool2CORE: ${10000 - poolCORE - x2}, pool2WBTC: $newPoolWBTC2");
       print("Price 2 of CORE-ETH: $p1, CORE-WBTC: $p2");
-      candidate = min(candidate, p1);
+      // Was this the less?
+      if (p1 < candidate) {
+        newPoolWBTC = newPoolWBTC2;
+        candidate = p1;
+      }
     }
     floorCORE2inETH = candidate;
     floorCORE2inUSD = floorCORE2inETH * priceETHinUSD;
+
+    // The liquidity is simply twice newPoolWBTC
+    //floorLiquidity2 = newPoolWBTC * 2;
+    // And then we can also calculate floor of LP
+    //floorLP2inWBTC = floorLiquidity2 / supplyLP2;
+    //floorLP2inUSD = floorLP2inWBTC * priceWBTCinUSD;
   }
 
   updateRewardsInfo() async {

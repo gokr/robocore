@@ -473,7 +473,7 @@ class LogCommand extends Command {
       : super(
             "log",
             "l",
-            "log|l add|remove [whale [limit] | swap | price [delta] | all]",
+            "log|l add|remove [whalebuy|whalesell [limit] | swap | price [delta] | all]",
             "Control logging of events in current channel, only log will show active loggers. Only works in private conversations with RoboCORE, or in select channels on Discord.");
 
   @override
@@ -521,7 +521,7 @@ class LogCommand extends Command {
               break;
             case "whalesell":
               if (add) {
-                var logger = WhaleBuyLogger("whalesell", ch);
+                var logger = WhaleSellLogger("whalesell", ch);
                 if (arg != null) logger.limit = arg;
                 bot.addLogger(logger);
               } else {
@@ -549,8 +549,8 @@ class LogCommand extends Command {
               if (add) {
                 bot.addLogger(PriceLogger("price", ch));
                 bot.addLogger(SwapLogger("swap", ch));
-                bot.addLogger(WhaleLogger("whalebuy", ch));
-                bot.addLogger(WhaleLogger("whalesell", ch));
+                bot.addLogger(WhaleBuyLogger("whalebuy", ch));
+                bot.addLogger(WhaleSellLogger("whalesell", ch));
               }
               break;
           }
