@@ -150,9 +150,12 @@ class RoboLGE {
   processTransfers(
       TransactionInformation tx, List<FilterEvent> logs, Contribution c) {}
 
-  Future<BigInt> coreValueOfWBTC(BigInt amount, BlockNum block) async {
+  Future<BigInt> coreValueOfWBTC(
+      BigInt amount, BlockNum block, StringBuffer l) async {
     var priceCOREinETH = await uniswap.pairPriceAt(block, core.CORE2ETHAddr);
+    logprint(l, "Price: $priceCOREinETH ETH/CORE");
     var priceWBTCinETH = await uniswap.pairPriceAt(block, core.WBTC2ETHAddr);
+    logprint(l, "Price: $priceWBTCinETH ETH/WBTC");
     return BigInt.from(
         pow(10, 18) * ((raw8(amount) * priceWBTCinETH) / priceCOREinETH));
   }
@@ -295,11 +298,11 @@ class RoboLGE {
             // ETH was deposited and caused a buy of WBTC
             var priceCOREinETH =
                 await uniswap.pairPriceAt(tx.blockNumber, core.CORE2ETHAddr);
-            logprint(l, "Price: $priceCOREinETH ETH/CORE");
             var coreHistoric = tx.value.getInEther.toDouble() / priceCOREinETH;
             logprint(
                 l, "Historic value of deposited ETH in CORE: $coreHistoric");
-            var coreHistoric2 = await coreValueOfWBTC(amount, tx.blockNumber);
+            var coreHistoric2 =
+                await coreValueOfWBTC(amount, tx.blockNumber, l);
             logprint(
                 l, "Historic value of WBTC in CORE: ${raw18(coreHistoric2)}");
             logprint(
@@ -353,7 +356,7 @@ class RoboLGE {
                   print("Exists three CORE/WBTC transfers: $three");
                   if (!firstTime || !existsThreeTransfers(toLGE)) {
                     var coreHistoric =
-                        await coreValueOfWBTC(amount, tx.blockNumber);
+                        await coreValueOfWBTC(amount, tx.blockNumber, l);
                     logprint(l,
                         "Historic value of WBTC in CORE: ${raw18(coreHistoric)}");
                     logprint(l,
@@ -371,7 +374,7 @@ class RoboLGE {
                   // WBTC kept
                   if (token == core.wbtcAddr) {
                     var coreHistoric =
-                        await coreValueOfWBTC(amount, tx.blockNumber);
+                        await coreValueOfWBTC(amount, tx.blockNumber, l);
                     logprint(l,
                         "Historic value of WBTC in CORE: ${raw18(coreHistoric)}");
                     logprint(l,
@@ -393,7 +396,7 @@ class RoboLGE {
                 // This will get swapped to CORE or WBTC
                 if (token == core.wbtcAddr) {
                   var coreHistoric =
-                      await coreValueOfWBTC(amount, tx.blockNumber);
+                      await coreValueOfWBTC(amount, tx.blockNumber, l);
                   logprint(l,
                       "Historic value of WBTC in CORE: ${raw18(coreHistoric)}");
                   logprint(l,
@@ -446,6 +449,10 @@ class RoboLGE {
       var holder = await Holder.findHolder(EthereumAddress.fromHex(list[0]));
       if (holder != null) {
         holder.units = list[1];
+        if (holder.units == BigInt.zero) {
+          //print("Hmmm");
+          //var ss = await Contribution.getTest();
+        }
         holder.contractUnits = await core.unitsContributed(holder.address);
         holder.updateDeviation();
         await holder.update();
