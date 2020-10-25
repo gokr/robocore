@@ -46,7 +46,14 @@ class Roboserver {
     // We listen to all Swaps on COREETH
     subscription = core.listenToEvent(core.CORE2ETH, 'Swap', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
-      var swap = Swap.from(ev, event);
+      var swap = Swap.from(ev, event, 1);
+      swap.save();
+    });
+
+    // We listen to all Swaps on CORE2CBTC
+    subscription = core.listenToEvent(core.CORE2CBTC, 'Swap', (ev, event) {
+      //print("Topics: ${event.topics} data: ${event.data}");
+      var swap = Swap.from(ev, event, 2);
       swap.save();
     });
 

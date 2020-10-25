@@ -5,6 +5,7 @@ import 'package:web3dart/web3dart.dart';
 
 class Swap {
   late int id;
+  late int pair;
   DateTime created = DateTime.now().toUtc();
 
   late BigInt amount0In, amount1In, amount0Out, amount1Out;
@@ -21,10 +22,10 @@ class Swap {
   // The swap amount in ETH
   BigInt get amount => sell ? amount1Out : amount1In;
 
-  Swap(this.id, this.amount0In, this.amount0Out, this.amount1In,
+  Swap(this.id, this.pair, this.amount0In, this.amount0Out, this.amount1In,
       this.amount1Out, this.sender, this.to, this.tx, this.sell);
 
-  Swap.from(ContractEvent ev, FilterEvent fe) {
+  Swap.from(ContractEvent ev, FilterEvent fe, int pair) {
     final decoded = ev.decodeResults(fe.topics, fe.data);
     tx = fe.transactionHash;
     sender = decoded[0] as EthereumAddress;
@@ -47,8 +48,9 @@ class Swap {
 
   Future<void> save() async {
     await db.query(
-        "INSERT INTO _swap (created, sender, _to, tx, sell, amount0In, amount0Out, amount1In, amount1Out, amount) VALUES (@created, @sender, @to, @tx, @sell, @amount0In, @amount0Out, @amount1In, @amount1Out, @amount)",
+        "INSERT INTO _swap (pair, created, sender, _to, tx, sell, amount0In, amount0Out, amount1In, amount1Out, amount) VALUES (@pair, @created, @sender, @to, @tx, @sell, @amount0In, @amount0Out, @amount1In, @amount1Out, @amount)",
         substitutionValues: {
+          "pair": pair,
           "created": created.toIso8601String(),
           "sender": sender.hex,
           "to": to.hex,

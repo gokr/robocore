@@ -80,6 +80,11 @@ class Core {
       EthereumAddress.fromHex('0x32ce7e48debdccbfe0cd037cc89526e4382cb81b');
   late DeployedContract CORE2ETH;
 
+  // UniswapPair CORE-cBTC contract address, UniswapPair.json
+  EthereumAddress CORE2CBTCAddr =
+      EthereumAddress.fromHex('0x6fad7d44640c5cd0120deec0301e8cf850becb68');
+  late DeployedContract CORE2CBTC;
+
   // UniswapPair ETH-USDT contract address, UniswapPair.json
   EthereumAddress ETH2USDTAddr =
       EthereumAddress.fromHex('0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852');
@@ -128,6 +133,7 @@ class Core {
     CORE2ETH = await _readContract('UniswapPair.json', CORE2ETHAddr);
     ETH2USDT = await _readContract('UniswapPair.json', ETH2USDTAddr);
     WBTC2USDT = await _readContract('UniswapPair.json', WBTC2USDTAddr);
+    CORE2CBTC = await _readContract('UniswapPair.json', CORE2CBTCAddr);
     LGE2 = await _readContract('cLGE.json', LGE2Addr);
   }
 
@@ -244,6 +250,24 @@ class Core {
         sender: address,
         contract: CORE2ETH,
         function: CORE2ETH.function('totalSupply'),
+        params: []);
+    return result.first;
+  }
+
+  Future<List<dynamic>> getReservesWBTC2CORE() async {
+    final result = await ethClient.call(
+        sender: address,
+        contract: CORE2CBTC,
+        function: CORE2CBTC.function('getReserves'),
+        params: []);
+    return result;
+  }
+
+  Future<BigInt> totalSupplyWBTC2CORE() async {
+    final result = await ethClient.call(
+        sender: address,
+        contract: CORE2CBTC,
+        function: CORE2CBTC.function('totalSupply'),
         params: []);
     return result.first;
   }
