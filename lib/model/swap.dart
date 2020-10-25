@@ -25,7 +25,8 @@ class Swap {
   Swap(this.id, this.pair, this.amount0In, this.amount0Out, this.amount1In,
       this.amount1Out, this.sender, this.to, this.tx, this.sell);
 
-  Swap.from(ContractEvent ev, FilterEvent fe, int pair) {
+  Swap.from(ContractEvent ev, FilterEvent fe, int p) {
+    pair = p;
     final decoded = ev.decodeResults(fe.topics, fe.data);
     tx = fe.transactionHash;
     sender = decoded[0] as EthereumAddress;
