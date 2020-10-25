@@ -731,10 +731,10 @@ class Robocore {
     // One initial update
     await updatePriceInfo();
 
-    // We listen to all Swaps on COREETH
+    // We listen to all Swaps on CORE2ETH
     subscription = core.listenToEvent(core.CORE2ETH, 'Swap', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
-      var swap = Swap.from(ev, event);
+      var swap = Swap.from(ev, event, 1);
       updatePriceInfo();
       performLogging(swap);
     });
