@@ -1,4 +1,5 @@
-import 'package:robocore/core.dart';
+import 'package:robocore/ethclient.dart';
+import 'package:robocore/util.dart';
 import "package:test/test.dart";
 
 void main() {

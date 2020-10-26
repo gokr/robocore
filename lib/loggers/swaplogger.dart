@@ -1,12 +1,16 @@
 import 'package:nyxx/nyxx.dart';
-import 'package:robocore/command.dart';
-import 'package:robocore/core.dart';
+import 'package:robocore/chat/robochannel.dart';
+import 'package:robocore/chat/robodiscord.dart';
+import 'package:robocore/ethclient.dart';
 import 'package:robocore/loggers/eventlogger.dart';
+import 'package:robocore/pair.dart';
 import 'package:robocore/robocore.dart';
 import 'package:robocore/model/swap.dart';
+import 'package:robocore/util.dart';
 
 class SwapLogger extends EventLogger {
-  SwapLogger(String name, RoboChannel channel) : super(name, channel);
+  SwapLogger(String name, Pair pair, RoboChannel channel)
+      : super(name, pair, channel);
 
   log(Robocore bot, Swap swap) async {
     var wrapper = channel.getWrapperFromBot(bot);

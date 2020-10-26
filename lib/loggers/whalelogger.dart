@@ -1,9 +1,11 @@
 import 'dart:math';
 
 import 'package:nyxx/nyxx.dart';
-import 'package:robocore/command.dart';
-import 'package:robocore/core.dart';
+import 'package:robocore/chat/robochannel.dart';
+import 'package:robocore/chat/robodiscord.dart';
+import 'package:robocore/ethclient.dart';
 import 'package:robocore/loggers/eventlogger.dart';
+import 'package:robocore/pair.dart';
 import 'package:robocore/robocore.dart';
 import 'package:robocore/model/swap.dart';
 import 'package:robocore/util.dart';
@@ -12,7 +14,8 @@ class WhaleLogger extends EventLogger {
   // Amount in ETH
   num limit = 200;
 
-  WhaleLogger(String name, RoboChannel channel) : super(name, channel);
+  WhaleLogger(String name, Pair pair, RoboChannel channel)
+      : super(name, pair, channel);
 
   String makeHearts(num eth, int limit) {
     return makeRepeatedString(eth.round(), "💚", limit);
@@ -32,7 +35,8 @@ class WhaleLogger extends EventLogger {
 }
 
 class WhaleSellLogger extends WhaleLogger {
-  WhaleSellLogger(String name, RoboChannel channel) : super(name, channel);
+  WhaleSellLogger(String name, Pair pair, RoboChannel channel)
+      : super(name, pair, channel);
 
   log(Robocore bot, Swap swap) async {
     var wrapper = channel.getWrapperFromBot(bot);
@@ -71,7 +75,8 @@ Price now ${usd2(bot.priceCOREinUSD)}
 }
 
 class WhaleBuyLogger extends WhaleLogger {
-  WhaleBuyLogger(String name, RoboChannel channel) : super(name, channel);
+  WhaleBuyLogger(String name, Pair pair, RoboChannel channel)
+      : super(name, pair, channel);
 
   log(Robocore bot, Swap swap) async {
     var wrapper = channel.getWrapperFromBot(bot);

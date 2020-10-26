@@ -2,9 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:logging/logging.dart';
-import 'package:robocore/core.dart';
+import 'package:robocore/ethclient.dart';
 import 'package:robocore/model/contribution.dart';
 import 'package:robocore/model/corebought.dart';
+import 'package:robocore/model/ethereum.dart';
 import 'package:robocore/model/swap.dart';
 import 'package:robocore/model/poster.dart';
 
@@ -17,7 +18,8 @@ class Roboserver {
   late Map config;
 
   /// To interact with Ethereum contracts
-  late Core core;
+  late EthClient ethClient;
+  late Ethereum ethereum;
 
   /// Subscription for Ethereum events
   late StreamSubscription subscription;
@@ -40,35 +42,42 @@ class Roboserver {
     }
 
     // Create our interface with Ethereum
-    core = Core.randomKey(config['apiurl'], config['wsurl']);
-    await core.readContracts();
+    ethClient = EthClient.randomKey(config['apiurl'], config['wsurl']);
+    await ethClient.initialize();
+
+    // Create our Ethereum world
+    ethereum = Ethereum(ethClient);
 
     // We listen to all Swaps on COREETH
-    subscription = core.listenToEvent(core.CORE2ETH, 'Swap', (ev, event) {
+    subscription = ethereum.CORE2ETH.listenToEvent('Swap', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
-      var swap = Swap.from(ev, event, 1);
+      var swap = Swap.from(ev, event, ethereum.CORE2ETH);
       swap.save();
     });
 
     // We listen to all Swaps on CORE2CBTC
-    subscription = core.listenToEvent(core.CORE2CBTC, 'Swap', (ev, event) {
+    subscription = ethereum.CORE2CBTC.listenToEvent('Swap', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
-      var swap = Swap.from(ev, event, 2);
+      var swap = Swap.from(ev, event, ethereum.CORE2CBTC);
       swap.save();
     });
 
+    /*
     // We listen to all Contributions on LGE2
-    subscription = core.listenToEvent(core.LGE2, 'Contibution', (ev, event) {
+    subscription =
+        ethClient.listenToEvent(ethClient.LGE2, 'Contibution', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
       var contrib = Contribution.from(2, ev, event);
       contrib.insert();
     });
 
-    // We listen to all Contributions on LGE2
-    subscription = core.listenToEvent(core.LGE2, 'COREBought', (ev, event) {
+    // We listen to all COREBought on LGE2
+    subscription =
+        ethClient.listenToEvent(ethClient.LGE2, 'COREBought', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
       var cb = CoreBought.from(2, ev, event);
       cb.save();
     });
+    */
   }
 }
