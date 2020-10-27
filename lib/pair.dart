@@ -11,12 +11,27 @@ class Pair extends Contract {
   //Token t1;
   //Token t2;
   // We can pull these from ERC20Detailed.json later
-  int decimals1 = 18;
+  late int _decimals1;
   late BigInt pow1;
-  int decimals2 = 18;
+  late int _decimals2;
   late BigInt pow2;
-  int decimalsLP = 18;
+  late int _decimalsLP;
   late BigInt powLP;
+
+  set decimals1(int x) {
+    _decimals1 = x;
+    pow1 = BigInt.from(pow(10, _decimals1));
+  }
+
+  set decimals2(int x) {
+    _decimals2 = x;
+    pow2 = BigInt.from(pow(10, _decimals2));
+  }
+
+  set decimalsLP(int x) {
+    _decimalsLP = x;
+    powLP = BigInt.from(pow(10, _decimalsLP));
+  }
 
   // These are all calculated when update() is called
   late num pool1, pool2, poolK;
@@ -27,9 +42,14 @@ class Pair extends Contract {
 
   Pair(this.id, EthClient client, this.name, String addressHex)
       : super(client, 'UniswapPair.json', addressHex) {
-    pow1 = BigInt.from(pow(10, decimals1));
-    pow1 = BigInt.from(pow(10, decimals2));
-    powLP = BigInt.from(pow(10, decimalsLP));
+    decimals1 = 18;
+    decimals2 = 18;
+    decimalsLP = 18;
+  }
+
+  initialize() async {
+    await super.initialize();
+    await update();
   }
 
   Future<List<dynamic>> getReserves() async {
@@ -46,7 +66,7 @@ class Pair extends Contract {
   }
 
   num raw2(BigInt amount) {
-    return (amount / pow1).toDouble();
+    return (amount / pow2).toDouble();
   }
 
   num rawLP(BigInt amount) {
