@@ -36,8 +36,8 @@ class StatsCommand extends Command {
             name: "Total issued CORE-ETH LP",
             content: "${dec0(bot.ethereum.CORE2ETH.supplyLP)}")
         ..addField(
-            name: "Total issued CORE-CBTC LP",
-            content: "${dec0(bot.ethereum.CORE2CBTC.supplyLP)}")
+            name: "Total issued CORE-CBTC μLP",
+            content: "${dec4(micro(bot.ethereum.CORE2CBTC.supplyLP))}")
         ..addFooter((footer) {
           footer.text = "Stay CORE and keep HODLING!";
         })
@@ -55,8 +55,8 @@ ${usd0(bot.ethereum.CORE2ETH.liquidity * bot.priceETHinUSD)}
 ${usd0(bot.ethereum.CORE2CBTC.liquidity + bot.priceWBTCinUSD)}
 <b>Total issued CORE-ETH LP</b>
 ${dec0(bot.ethereum.CORE2ETH.supplyLP)}
-<b>Total issued CORE-CBTC LP</b>
-${dec0(bot.ethereum.CORE2CBTC.supplyLP)}
+<b>Total issued CORE-CBTC μLP</b>
+${dec4(micro(bot.ethereum.CORE2CBTC.supplyLP))}
 
 Stay CORE and keep HODLING!
 """;

@@ -14,25 +14,31 @@ class FloorCommand extends Command {
     if (bot is RoboDiscordMessage) {
       answer = EmbedBuilder()
         ..addAuthor((author) {
-          author.name = "Floor prices calculated from contracts";
+          author.name = "Floor prices from contracts";
           //author.iconUrl = e.message.author.avatarURL();
         })
         ..addField(
-            name: "Floor CORE (will soon be updated)",
+            name: "Floor CORE",
             content:
                 "1 CORE = ${usd2(bot.bot.floorCOREinUSD)} (${dec4(bot.bot.floorCOREinETH)} ETH)")
         ..addField(
-            name: "Floor LP",
+            name: "Floor CORE-ETH LP",
             content:
                 "1 LP = ${usd2(bot.bot.floorLPinUSD)} (${dec4(bot.bot.floorLPinETH)} ETH)")
+        ..addField(
+            name: "Floor CORE-WBTC LP",
+            content:
+                "1 μLP = ${usd2(micro(bot.bot.floorLP2inUSD))} (${dec4(micro(bot.bot.floorLP2inWBTC))} WBTC)")
         ..timestamp = DateTime.now().toUtc()
         ..color = bot.color();
     } else {
       answer = """
 <b>Floor CORE</b>
 1 CORE = ${usd2(bot.bot.floorCOREinUSD)} (${dec4(bot.bot.floorCOREinETH)} ETH)
-<b>Floor LP</b>
+<b>Floor CORE-ETH LP</b>
 1 LP = ${usd2(bot.bot.floorLPinUSD)} (${dec4(bot.bot.floorLPinETH)} ETH)
+<b>Floor CORE-WBTC LP</b>
+1 μLP = ${usd2(micro(bot.bot.floorLP2inUSD))} (${dec4(micro(bot.bot.floorLP2inWBTC))} WBTC)
 """;
     }
     return await bot.reply(answer);

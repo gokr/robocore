@@ -20,19 +20,25 @@ class PriceCommand extends Command {
       if (bot is RoboDiscordMessage) {
         answer = EmbedBuilder()
           ..addAuthor((author) {
-            author.name = "Prices fresh directly from contracts";
+            author.name = "Prices fresh from contracts";
             //author.iconUrl = e.message.author.avatarURL();
           })
           ..addField(name: "Price CORE", content: bot.bot.priceStringCORE())
           ..addField(name: "Price ETH", content: bot.bot.priceStringETH())
-          ..addField(name: "Price LP", content: bot.bot.priceStringLP())
+          ..addField(name: "Price WBTC", content: bot.bot.priceStringWBTC())
+          ..addField(
+              name: "Price CORE-ETH LP", content: bot.bot.priceStringLP1())
+          ..addField(
+              name: "Price CORE-WBTC μLP", content: bot.bot.priceStringLP2())
           ..timestamp = DateTime.now().toUtc()
           ..color = bot.color();
       } else {
         answer = """
 <b>Price CORE:</b> ${bot.bot.priceStringCORE()}
 <b>Price ETH:</b> ${bot.bot.priceStringETH()}
-<b>Price LP:</b> ${bot.bot.priceStringLP()}
+<b>Price WBTC:</b> ${bot.bot.priceStringWBTC()}
+<b>Price CORE-ETH LP:</b> ${bot.bot.priceStringLP1()}
+<b>Price CORE-CBTC LP:</b> ${bot.bot.priceStringLP2()}
 """;
       }
       return await bot.reply(answer);
@@ -45,8 +51,9 @@ class PriceCommand extends Command {
       amountString = parts[1];
     }
     // Check valid coins
-    if (!["core", "eth", "lp"].contains(coin)) {
-      return await bot.reply("Coin can be core, eth or lp, not \"$coin\"");
+    if (!["core", "eth", "btc", "lp", "lp2"].contains(coin)) {
+      return await bot
+          .reply("Coin can be core, eth, btc, lp or lp2, not \"$coin\"");
     }
     // Parse amount as num
     if (amountString != null) {
@@ -65,8 +72,14 @@ class PriceCommand extends Command {
       case "eth":
         await bot.reply(bot.bot.priceStringETH(amount));
         break;
+      case "btc":
+        await bot.reply(bot.bot.priceStringWBTC(amount));
+        break;
       case "lp":
-        await bot.reply(bot.bot.priceStringLP(amount));
+        await bot.reply(bot.bot.priceStringLP1(amount));
+        break;
+      case "lp2":
+        await bot.reply(bot.bot.priceStringLP2(amount));
         break;
     }
     return;
