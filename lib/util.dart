@@ -33,6 +33,11 @@ String trimQuotes(String s) {
   return trimmed;
 }
 
+/// Note, this is "mikro" for LP2s, so 1e-5, not 1e-6!
+num micro(num x) {
+  return x * 1e-5;
+}
+
 // Formatting stuff
 NumberFormat decimal6Formatter = NumberFormat("##0.00000#");
 NumberFormat decimal4Formatter = NumberFormat("##0.000#");
