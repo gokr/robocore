@@ -203,7 +203,7 @@ class Robocore {
 
   /// Update base metrics (USD prices), the affected pair and finally floor of CORE.
   updatePriceInfo(Swap? swap) async {
-    updateBaseMetrics();
+    await updateBaseMetrics();
     if (swap != null) {
       swap.pair.update();
     } else {
@@ -253,25 +253,27 @@ class Robocore {
     var temp2 = -1.994 * c * k + 0.003 * d * k + 19940 * k + 1.997 * c * l * z;
     var x1 = (temp2 + sqrt(zz)) / temp1;
     var x2 = (temp2 - sqrt(zz)) / temp1;
-    print("PriceBTCinETH: $z, solution x1: $x1 x2: $x2");
+    print("Solutions x1: $x1, x2: $x2");
 
-    // So now we have x1 and x2, two possible solutions to amount of CORE to sell into pair1.
+    // So now we have x1 and x2, two possible solutions to amount of CORE to sell into pair1
+    // either using CORE from outside or from pair2. Now we need to see which one
+    // gives lowest price.
     double candidate = double.maxFinite;
     var newPoolWBTC, newPoolETH;
-    if (x1 < (10000 - pool1CORE - pool2CORE)) {
-      // x1 needs to be low enough
+    if (x1 < (10000 - pool1CORE)) {
+      // x1 needs to be less than available CORE
       newPoolETH = k / (pool1CORE + (x1 * 0.997));
       var p1 = newPoolETH / (pool1CORE + x1);
       print("poolK: $k, newPoolK: ${newPoolETH * (pool1CORE + x1)}");
       newPoolWBTC = l / (d + (10000 - d - pool1CORE - x1) * 0.997);
       var p2 = (newPoolWBTC / (10000 - pool1CORE - x1)) * z;
-      print("poolK2: $l, newPoolK: ${newPoolWBTC * (10000 - pool1CORE - x1)}");
+      print("poolK2: $l, newPoolK2: ${newPoolWBTC * (10000 - pool1CORE - x1)}");
       print("pool1CORE: ${pool1CORE + x1}, pool1ETH: $newPoolETH");
       print("pool2CORE: ${10000 - pool1CORE - x1}, pool2WBTC: $newPoolWBTC");
       print("Price 1 of CORE-ETH: $p1, CORE-WBTC: $p2");
       candidate = p1;
     }
-    if (x2 < (10000 - pool1CORE - pool2CORE)) {
+    if (x2 < (10000 - pool1CORE)) {
       // x2 needs to be low enough
       var newPoolETH2 = k / (pool1CORE + (x2 * 0.997));
       var p1 = newPoolETH2 / (pool1CORE + x2);
@@ -304,7 +306,9 @@ class Robocore {
 
   // Shortcuts for readability
   num get priceCOREinETH => ethereum.CORE2ETH.price1;
+  num get priceCOREinCBTC => ethereum.CORE2CBTC.price1;
   num get priceETHinCORE => ethereum.CORE2ETH.price2;
+  num get priceCBTCinCORE => ethereum.CORE2CBTC.price2;
   num get priceCOREinUSD => priceCOREinETH * priceETHinUSD;
   num get priceLPinETH => ethereum.CORE2ETH.priceLP;
   num get priceLPinUSD => priceLPinETH * priceETHinUSD;
@@ -319,16 +323,20 @@ class Robocore {
     return "$amount CORE = ${usd2(floorCOREinUSD * amount)} (${dec4(floorCOREinETH * amount)} ETH)";
   }
 
-  String priceStringLP([num amount = 1]) {
+  String priceStringLP1([num amount = 1]) {
     return "$amount LP = ${usd2(priceLPinUSD * amount)} (${dec4(priceLPinETH * amount)} ETH)";
   }
 
   String priceStringLP2([num amount = 1]) {
-    return "$amount LP2 = ${usd2(priceLP2inUSD * amount)} (${dec4(priceLP2inCBTC * amount)} CBTC)";
+    return "$amount μLP = ${usd2(micro(priceLP2inUSD * amount))} (${dec4(micro(priceLP2inCBTC * amount))} CBTC)";
   }
 
   String priceStringETH([num amount = 1]) {
     return "$amount ETH = ${usd2(priceETHinUSD * amount)} (${dec4(priceETHinCORE * amount)} CORE)";
+  }
+
+  String priceStringWBTC([num amount = 1]) {
+    return "$amount WBTC = ${usd2(priceWBTCinUSD * amount)} (${dec4(priceCBTCinCORE * amount)} CORE)";
   }
 
   updateUsername() async {
@@ -398,6 +406,7 @@ class Robocore {
 
     // Create our Ethereum world
     ethereum = Ethereum(ethClient);
+    await ethereum.initialize();
 
     buildCommands();
 
