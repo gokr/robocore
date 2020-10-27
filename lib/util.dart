@@ -33,10 +33,23 @@ String trimQuotes(String s) {
   return trimmed;
 }
 
-/// Note, this is "mikro" for LP2s, so 1e-5, not 1e-6!
-num micro(num x) {
-  return x * 1e-5;
-}
+/// Note, this is x1e-5
+num toCentimilli(num x) => x * 1e-5;
+
+/// Note, this is x1e5
+num centimilli(num x) => x * 1e5;
+
+// Used powers of 10
+final pow18 = BigInt.from(pow(10, 18));
+final pow8 = BigInt.from(pow(10, 8));
+final pow6 = BigInt.from(pow(10, 6));
+final pow5 = BigInt.from(pow(10, 5));
+
+/// From raw
+num raw18(BigInt x) => (x / pow18).toDouble();
+num raw8(BigInt x) => (x / pow8).toDouble();
+num raw6(BigInt x) => (x / pow6).toDouble();
+num raw5(BigInt x) => (x / pow5).toDouble();
 
 // Formatting stuff
 NumberFormat decimal6Formatter = NumberFormat("##0.00000#");

@@ -3,13 +3,14 @@ import 'package:robocore/commands/command.dart';
 import 'package:robocore/loggers/pricelogger.dart';
 import 'package:robocore/loggers/swaplogger.dart';
 import 'package:robocore/loggers/whalelogger.dart';
+import 'package:robocore/pair.dart';
 
 class LogCommand extends Command {
   LogCommand()
       : super(
             "log",
             "l",
-            "log|l add|remove core-eth|core-cbtc [whalebuy|whalesell [limit] | swap | price [delta] | all]",
+            "log|l   add core-eth|core-cbtc (whalebuy|whalesell [limit] | swap | price [percent])  |  remove 'name'  |  removeall ]",
             "Control logging of events in current channel, only log will show active loggers. Only works in private conversations with RoboCORE, or in select channels on Discord.");
 
   @override
@@ -25,79 +26,78 @@ class LogCommand extends Command {
       String active = loggers.join(" ");
       return await msg.reply("Active loggers: $active");
     }
-    if (parts.length < 4) {
+    if (parts.length < 2) {
       return await msg.reply("Use $syntax");
     }
-    if (parts.length >= 4) {
-      if (!["add", "remove"].contains(parts[1])) {
+    if (parts.length >= 2) {
+      if (!["add", "remove", "removeall"].contains(parts[1])) {
         return await msg.reply("Use $syntax");
       }
-      bool add = parts[1] == "add";
-      var pairname = parts[2];
-      var pair = bot.ethereum.findPair(pairname.toLowerCase());
-      if (pair == null) {
-        return await msg.reply(
-            "Could not find pair $pairname, use one of ${bot.ethereum.pairNames()}");
-      }
-      var names = parts.sublist(3);
-      num? arg;
-      for (int i = 0; i < names.length; i++) {
-        var name = names[i];
-        // If arg
-        if (arg == null) {
-          // One lookahead
-          if (i < names.length - 1) {
-            arg = num.tryParse(names[i + 1]);
-          } else {
-            arg = null;
+      if (parts[1] == "removeall") {
+        bot.removeLoggers(ch);
+      } else {
+        bool add = parts[1] == "add";
+        var names;
+        Pair? pair;
+        if (add) {
+          var pairname = parts[2];
+          pair = bot.ethereum.findCOREPair(pairname.toLowerCase());
+          if (pair == null) {
+            return await msg.reply(
+                "Could not find pair $pairname, use one of ${bot.ethereum.corePairNames()}");
           }
-          switch (name) {
-            case "whalebuy":
+          names = parts.sublist(3);
+        } else {
+          names = parts.sublist(2);
+        }
+        num? arg;
+        for (int i = 0; i < names.length; i++) {
+          var name = names[i];
+          // If arg
+          if (arg == null) {
+            // One lookahead
+            if (i < names.length - 1) {
+              arg = num.tryParse(names[i + 1]);
+            } else {
+              arg = null;
+            }
+            var number = bot.loggersFor(ch).length + 1;
+            if (name.startsWith("whalebuy")) {
               if (add) {
-                var logger = WhaleBuyLogger("whalebuy", pair, ch);
+                var logger =
+                    WhaleBuyLogger("whalebuy$number", pair as Pair, ch);
                 if (arg != null) logger.limit = arg;
                 bot.addLogger(logger);
               } else {
-                bot.removeLogger("whalebuy", ch);
+                bot.removeLogger(name, ch);
               }
-              break;
-            case "whalesell":
+            } else if (name.startsWith("whalesell")) {
               if (add) {
-                var logger = WhaleSellLogger("whalesell", pair, ch);
+                var logger =
+                    WhaleSellLogger("whalesell$number", pair as Pair, ch);
                 if (arg != null) logger.limit = arg;
                 bot.addLogger(logger);
               } else {
-                bot.removeLogger("whalesell", ch);
+                bot.removeLogger(name, ch);
               }
-              break;
-            case "price":
+            } else if (name.startsWith("price")) {
               if (add) {
-                var logger = PriceLogger("price", pair, ch);
+                var logger = PriceLogger("price$number", pair as Pair, ch);
                 if (arg != null) logger.delta = arg;
                 bot.addLogger(logger);
               } else {
-                bot.removeLogger("price", ch);
+                bot.removeLogger(name, ch);
               }
-              break;
-            case "swap":
+            } else if (name.startsWith("swap")) {
               if (add) {
-                bot.addLogger(SwapLogger("swap", pair, ch));
+                bot.addLogger(SwapLogger("swap$number", pair as Pair, ch));
               } else {
-                bot.removeLogger("swap", ch);
+                bot.removeLogger(name, ch);
               }
-              break;
-            case "all":
-              bot.removeLoggers(ch);
-              if (add) {
-                bot.addLogger(PriceLogger("price", pair, ch));
-                bot.addLogger(SwapLogger("swap", pair, ch));
-                bot.addLogger(WhaleBuyLogger("whalebuy", pair, ch));
-                bot.addLogger(WhaleSellLogger("whalesell", pair, ch));
-              }
-              break;
+            }
+          } else {
+            arg = null;
           }
-        } else {
-          arg = null;
         }
       }
     }

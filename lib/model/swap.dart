@@ -24,6 +24,9 @@ class Swap {
   // The swap amount in ETH
   BigInt get amount => sell ? amount1Out : amount1In;
 
+  // The swap amount in token1
+  BigInt get amount1 => sell ? amount0In : amount0Out;
+
   Swap(this.id, this.pair, this.amount0In, this.amount0Out, this.amount1In,
       this.amount1Out, this.sender, this.to, this.tx, this.sell);
 

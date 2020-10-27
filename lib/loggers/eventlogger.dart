@@ -12,5 +12,9 @@ class EventLogger {
 
   log(Robocore bot, Swap swap) async {}
 
-  String toString() => name;
+  String toString() => "$name($pair)";
+
+  bool operator ==(o) => o is EventLogger && name == o.name;
+
+  int get hashCode => name.hashCode;
 }

@@ -6,15 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:web_socket_channel/io.dart';
 
-final pow18 = BigInt.from(pow(10, 18));
-final pow8 = BigInt.from(pow(10, 8));
-final pow6 = BigInt.from(pow(10, 6));
-
-/// From raw
-num raw18(BigInt x) => (x / pow18).toDouble();
-num raw8(BigInt x) => (x / pow8).toDouble();
-num raw6(BigInt x) => (x / pow6).toDouble();
-
 class EthClient {
   // Me
   late Credentials credentials;

@@ -28,7 +28,7 @@ class FloorCommand extends Command {
         ..addField(
             name: "Floor CORE-WBTC LP",
             content:
-                "1 μLP = ${usd2(micro(bot.bot.floorLP2inUSD))} (${dec4(micro(bot.bot.floorLP2inWBTC))} WBTC)")
+                "1 cmLP = ${usd2(toCentimilli(bot.bot.floorLP2inUSD))} (${dec4(toCentimilli(bot.bot.floorLP2inWBTC))} WBTC)")
         ..timestamp = DateTime.now().toUtc()
         ..color = bot.color();
     } else {
@@ -38,7 +38,7 @@ class FloorCommand extends Command {
 <b>Floor CORE-ETH LP</b>
 1 LP = ${usd2(bot.bot.floorLPinUSD)} (${dec4(bot.bot.floorLPinETH)} ETH)
 <b>Floor CORE-WBTC LP</b>
-1 μLP = ${usd2(micro(bot.bot.floorLP2inUSD))} (${dec4(micro(bot.bot.floorLP2inWBTC))} WBTC)
+1 cmLP = ${usd2(toCentimilli(bot.bot.floorLP2inUSD))} (${dec4(toCentimilli(bot.bot.floorLP2inWBTC))} WBTC)
 """;
     }
     return await bot.reply(answer);

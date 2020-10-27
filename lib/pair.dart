@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:robocore/contract.dart';
 
 import 'package:robocore/ethclient.dart';
+import 'package:robocore/util.dart';
 
 class Pair extends Contract {
   int id;
@@ -11,6 +12,8 @@ class Pair extends Contract {
   //Token t1;
   //Token t2;
   // We can pull these from ERC20Detailed.json later
+  late String token1name, token2name;
+
   late int _decimals1;
   late BigInt pow1;
   late int _decimals2;
@@ -52,6 +55,10 @@ class Pair extends Contract {
     await update();
   }
 
+  bool operator ==(o) => o is Pair && name == o.name;
+
+  int get hashCode => name.hashCode;
+
   Future<List<dynamic>> getReserves() async {
     return await callFunction('getReserves');
   }
@@ -87,4 +94,14 @@ class Pair extends Contract {
     // Price of LP is calculated as the full pool valuated in Token2, divided by supply
     priceLP = ((pool1 * price1) + pool2) / supplyLP;
   }
+
+  String priceString1([num amount = 1]) {
+    return "$amount $token1name = ${dec4(price1 * amount)} $token2name";
+  }
+
+  String priceString2([num amount = 1]) {
+    return "$amount $token2name = ${dec4(price2 * amount)} $token1name";
+  }
+
+  String toString() => name;
 }

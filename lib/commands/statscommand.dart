@@ -21,23 +21,23 @@ class StatsCommand extends Command {
             content:
                 "${dec0(bot.ethereum.CORE2ETH.pool1)} CORE, ${dec0(bot.ethereum.CORE2ETH.pool2)} ETH")
         ..addField(
-            name: "Pooled CORE-CBTC",
-            content:
-                "${dec0(bot.ethereum.CORE2CBTC.pool1)} CORE, ${dec0(bot.ethereum.CORE2CBTC.pool2)} CBTC")
-        ..addField(
             name: "Liquidity CORE-ETH",
             content:
                 "${usd0(bot.ethereum.CORE2ETH.liquidity * bot.priceETHinUSD)}")
         ..addField(
-            name: "Liquidity CORE-CBTC",
-            content:
-                "${usd0(bot.ethereum.CORE2CBTC.liquidity + bot.priceWBTCinUSD)}")
-        ..addField(
             name: "Total issued CORE-ETH LP",
             content: "${dec0(bot.ethereum.CORE2ETH.supplyLP)}")
         ..addField(
-            name: "Total issued CORE-CBTC μLP",
-            content: "${dec4(micro(bot.ethereum.CORE2CBTC.supplyLP))}")
+            name: "Pooled CORE-CBTC",
+            content:
+                "${dec0(bot.ethereum.CORE2CBTC.pool1)} CORE, ${dec0(bot.ethereum.CORE2CBTC.pool2)} CBTC")
+        ..addField(
+            name: "Liquidity CORE-CBTC",
+            content:
+                "${usd0(bot.ethereum.CORE2CBTC.liquidity * bot.priceWBTCinUSD)}")
+        ..addField(
+            name: "Total issued CORE-CBTC cmLP",
+            content: "${dec0(centimilli(bot.ethereum.CORE2CBTC.supplyLP))}")
         ..addFooter((footer) {
           footer.text = "Stay CORE and keep HODLING!";
         })
@@ -47,16 +47,16 @@ class StatsCommand extends Command {
       answer = """
 <b>Pooled CORE-ETH</b>
 ${dec0(bot.ethereum.CORE2ETH.pool1)} CORE, ${dec0(bot.ethereum.CORE2ETH.pool2)} ETH
-<b>Pooled CORE-CBTC</b>
-${dec0(bot.ethereum.CORE2CBTC.pool1)} CORE, ${dec0(bot.ethereum.CORE2CBTC.pool2)} CBTC
 <b>Liquidity CORE-ETH</b>
 ${usd0(bot.ethereum.CORE2ETH.liquidity * bot.priceETHinUSD)}
-<b>Liquidity CORE-CBTC</b>
-${usd0(bot.ethereum.CORE2CBTC.liquidity + bot.priceWBTCinUSD)}
 <b>Total issued CORE-ETH LP</b>
 ${dec0(bot.ethereum.CORE2ETH.supplyLP)}
-<b>Total issued CORE-CBTC μLP</b>
-${dec4(micro(bot.ethereum.CORE2CBTC.supplyLP))}
+<b>Pooled CORE-CBTC</b>
+${dec0(bot.ethereum.CORE2CBTC.pool1)} CORE, ${dec0(bot.ethereum.CORE2CBTC.pool2)} CBTC
+<b>Liquidity CORE-CBTC</b>
+${usd0(bot.ethereum.CORE2CBTC.liquidity * bot.priceWBTCinUSD)}
+<b>Total issued CORE-CBTC cmLP</b>
+${dec0(centimilli(bot.ethereum.CORE2CBTC.supplyLP))}
 
 Stay CORE and keep HODLING!
 """;

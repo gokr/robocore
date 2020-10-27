@@ -328,7 +328,7 @@ class Robocore {
   }
 
   String priceStringLP2([num amount = 1]) {
-    return "$amount μLP = ${usd2(micro(priceLP2inUSD * amount))} (${dec4(micro(priceLP2inCBTC * amount))} CBTC)";
+    return "$amount cmLP = ${usd2(priceLP2inUSD * toCentimilli(amount))} (${dec4(priceLP2inCBTC * toCentimilli(amount))} CBTC)";
   }
 
   String priceStringETH([num amount = 1]) {

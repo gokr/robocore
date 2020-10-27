@@ -34,23 +34,38 @@ class Ethereum {
     // Uniswap pairs
     CORE2ETH = Pair(
         1, client, "core-eth", '0x32ce7e48debdccbfe0cd037cc89526e4382cb81b');
+    CORE2ETH
+      ..token1name = "CORE"
+      ..token2name = "ETH";
     await addPair(CORE2ETH);
     CORE2CBTC = Pair(
         2, client, "core-cbtc", '0x6fad7d44640c5cd0120deec0301e8cf850becb68');
-    CORE2CBTC.decimals2 = 8;
+    CORE2CBTC
+      ..decimals2 = 8
+      ..token1name = "CORE"
+      ..token2name = "CBTC";
     await addPair(CORE2CBTC);
     ETH2USDT = Pair(
         3, client, "eth-usdt", '0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852');
-    ETH2USDT.decimals2 = 6;
+    ETH2USDT
+      ..decimals2 = 6
+      ..token1name = "ETH"
+      ..token2name = "USDT";
     await addPair(ETH2USDT);
     WBTC2USDT = Pair(
         4, client, "wbtc-usdt", '0x0de0fa91b6dbab8c8503aaa2d1dfa91a192cb149');
-    ETH2USDT.decimals1 = 18;
-    ETH2USDT.decimals2 = 6;
+    ETH2USDT
+      ..decimals1 = 18
+      ..decimals2 = 6
+      ..token1name = "ETH"
+      ..token2name = "USDT";
     await addPair(WBTC2USDT);
     WBTC2ETH = Pair(
         5, client, "wbtc-eth", '0xbb2b8038a1640196fbe3e38816f3e67cba72d940');
-    WBTC2ETH.decimals1 = 8;
+    WBTC2ETH
+      ..decimals1 = 8
+      ..token1name = "WBTC"
+      ..token2name = "ETH";
     await addPair(WBTC2ETH);
 
     // Contracts
@@ -71,7 +86,19 @@ class Ethereum {
     return pairs[name];
   }
 
+  Pair? findCOREPair(String name) {
+    var p = findPair(name);
+    if (p?.token1name == "CORE") {
+      return p;
+    }
+    return null;
+  }
+
   String pairNames() {
     return pairs.keys.join(", ");
+  }
+
+  String corePairNames() {
+    return pairs.keys.where((k) => k.startsWith("core")).toList().join(", ");
   }
 }

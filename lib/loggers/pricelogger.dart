@@ -8,43 +8,49 @@ import 'package:robocore/model/swap.dart';
 import 'package:robocore/util.dart';
 
 class PriceLogger extends EventLogger {
-  num delta = 100;
-  num lastPriceCOREinUSD = 0;
+  num delta = 10;
+  num lastPrice = 0;
 
   PriceLogger(String name, Pair pair, RoboChannel channel)
       : super(name, pair, channel);
 
   log(Robocore bot, Swap swap) async {
     var wrapper = channel.getWrapperFromBot(bot);
-    // Did we move more than limit USD per CORE?
-    if (lastPriceCOREinUSD != 0) {
-      num diff = lastPriceCOREinUSD - bot.priceCOREinUSD;
-      String arrow = diff.isNegative ? "UP" : "DOWN";
-      if (diff.abs() > delta) {
-        // Let's remember this
-        lastPriceCOREinUSD = bot.priceCOREinUSD;
-        var answer;
-        if (wrapper is RoboDiscord) {
-          answer = EmbedBuilder()
-            ..addAuthor((author) {
-              author.name = "Price alert! Moved $arrow \$${dec0(diff.abs())}!";
-            })
-            ..addField(name: "Price CORE", content: bot.priceStringCORE())
-            ..addField(name: "Price ETH", content: bot.priceStringETH())
-            ..addField(name: "Price LP", content: bot.priceStringLP())
-            ..timestamp = DateTime.now().toUtc();
-        } else {
-          answer = """
-<b>Price alert! Moved $arrow \$${dec0(diff.abs())}!</b>
-<b>Price CORE:</b> ${bot.priceStringCORE()}
-<b>Price ETH:</b> ${bot.priceStringETH()}
-<b>Price LP:</b> ${bot.priceStringLP()}
+    // Our pair?
+    if (swap.pair == pair) {
+      // Did we move more than limit percent?
+      if (lastPrice != 0) {
+        num percent = ((lastPrice - pair.price1).abs() / lastPrice) * 100;
+        String arrow = (lastPrice - pair.price1).isNegative ? "UP" : "DOWN";
+        if (percent > delta) {
+          // Let's remember this
+          lastPrice = pair.price1;
+          var t1 = pair.token1name;
+          var t2 = pair.token2name;
+
+          var answer;
+          if (wrapper is RoboDiscord) {
+            answer = EmbedBuilder()
+              ..addAuthor((author) {
+                author.name = "Price alert! Moved $arrow ${dec2(percent)}%!";
+              })
+              ..addField(name: "Price $t1", content: pair.priceString1())
+              ..addField(name: "Price $t2", content: pair.priceString2())
+              ..timestamp = DateTime.now().toUtc();
+          } else {
+            answer = """
+<b>Price alert! Moved $arrow ${dec2(percent)}%!</b>
+<b>Price $t1:</b> ${pair.priceString1()}
+<b>Price $t2:</b> ${pair.priceString2()}
 """;
+          }
+          wrapper.send(channel.id, answer, markdown: false);
         }
-        wrapper.send(channel.id, answer, markdown: false);
+      } else {
+        lastPrice = pair.price1;
       }
-    } else {
-      lastPriceCOREinUSD = bot.priceCOREinUSD;
     }
   }
+
+  String toString() => "$name($pair, >$delta%)";
 }
