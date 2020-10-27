@@ -26,9 +26,9 @@ class FloorCommand extends Command {
             content:
                 "1 LP = ${usd2(bot.bot.floorLPinUSD)} (${dec4(bot.bot.floorLPinETH)} ETH)")
         ..addField(
-            name: "Floor CORE-WBTC LP",
+            name: "Floor CORE-CBTC LP",
             content:
-                "1 cmLP = ${usd2(toCentimilli(bot.bot.floorLP2inUSD))} (${dec4(toCentimilli(bot.bot.floorLP2inWBTC))} WBTC)")
+                "1 cmLP = ${usd2(toCentimilli(bot.bot.floorLP2inUSD))} (${dec4(toCentimilli(bot.bot.floorLP2inWBTC))} CBTC)")
         ..timestamp = DateTime.now().toUtc()
         ..color = bot.color();
     } else {
@@ -37,8 +37,8 @@ class FloorCommand extends Command {
 1 CORE = ${usd2(bot.bot.floorCOREinUSD)} (${dec4(bot.bot.floorCOREinETH)} ETH)
 <b>Floor CORE-ETH LP</b>
 1 LP = ${usd2(bot.bot.floorLPinUSD)} (${dec4(bot.bot.floorLPinETH)} ETH)
-<b>Floor CORE-WBTC LP</b>
-1 cmLP = ${usd2(toCentimilli(bot.bot.floorLP2inUSD))} (${dec4(toCentimilli(bot.bot.floorLP2inWBTC))} WBTC)
+<b>Floor CORE-CBTC LP</b>
+1 cmLP = ${usd2(toCentimilli(bot.bot.floorLP2inUSD))} (${dec4(toCentimilli(bot.bot.floorLP2inWBTC))} CBTC)
 """;
     }
     return await bot.reply(answer);

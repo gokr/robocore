@@ -29,7 +29,7 @@ class PriceCommand extends Command {
           ..addField(
               name: "Price CORE-ETH LP", content: bot.bot.priceStringLP1())
           ..addField(
-              name: "Price CORE-WBTC cmLP", content: bot.bot.priceStringLP2())
+              name: "Price CORE-CBTC cmLP", content: bot.bot.priceStringLP2())
           ..timestamp = DateTime.now().toUtc()
           ..color = bot.color();
       } else {
