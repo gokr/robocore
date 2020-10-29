@@ -3,7 +3,7 @@ import 'package:yaml/yaml.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
-const configFileName = 'robocore.yaml';
+var configFileName = 'robocore.yaml';
 
 /// Load YAML configuration
 dynamic loadConfig() {
