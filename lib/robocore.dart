@@ -384,7 +384,11 @@ class Robocore {
   /// Go through all loggers and let them log if they want to
   performLogging(Swap swap) {
     for (var logger in loggers) {
-      logger.log(this, swap);
+      try {
+        logger.log(this, swap);
+      } catch (e) {
+        log.warning("Error calling logger: $e");
+      }
     }
   }
 
