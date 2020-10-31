@@ -16,7 +16,6 @@ import 'package:robocore/commands/admincommand.dart';
 import 'package:robocore/commands/command.dart';
 import 'package:robocore/commands/contractscommand.dart';
 import 'package:robocore/commands/faqcommand.dart';
-import 'package:robocore/commands/floorcommand.dart';
 import 'package:robocore/commands/helpcommand.dart';
 import 'package:robocore/commands/idcommand.dart';
 import 'package:robocore/commands/lgecommand.dart';
@@ -26,9 +25,9 @@ import 'package:robocore/commands/postercommand.dart';
 import 'package:robocore/commands/pricecommand.dart';
 import 'package:robocore/commands/startcommand.dart';
 import 'package:robocore/commands/statscommand.dart';
+import 'package:robocore/commands/tllcommand.dart';
 import 'package:robocore/ethclient.dart';
 import 'package:robocore/loggers/eventlogger.dart';
-import 'package:robocore/model/contribution.dart';
 import 'package:robocore/model/corebought.dart';
 import 'package:robocore/model/ethereum.dart';
 import 'package:robocore/model/swap.dart';
@@ -95,7 +94,9 @@ class Robocore {
       floorLP2inUSD,
       floorLP2inWBTC,
       floorLiquidity,
-      floorLiquidity2;
+      floorLiquidity2,
+      TLLinUSD,
+      TVPLinUSD;
 
 /*  late num lge2COREBought,
       lge2COREBoughtInUSD,
@@ -302,6 +303,13 @@ class Robocore {
     floorLiquidity2 = newPoolWBTC * 2;
     floorLP2inWBTC = floorLiquidity2 / p2.supplyLP;
     floorLP2inUSD = floorLP2inWBTC * priceWBTCinUSD;
+
+    // TLL - Total Liquidity Locked
+    TLLinUSD = ethereum.CORE2CBTC.liquidity * priceWBTCinUSD;
+    TLLinUSD += ethereum.CORE2ETH.liquidity * priceETHinUSD;
+    // TVPL - Total Value Permanently Locked
+    TVPLinUSD = floorLiquidity * priceETHinUSD;
+    TVPLinUSD += floorLiquidity2 * priceWBTCinUSD;
   }
 
   // Shortcuts for readability
@@ -375,7 +383,7 @@ class Robocore {
           robocoreDevelopmentChannel
         ])
       ..add(PriceCommand())
-      ..add(FloorCommand())
+      ..add(TLLCommand())
       ..add(IdCommand())
       ..add(AdminCommand()..users = [gokr])
       ..add(PosterCommand()..users = [gokr, CryptoXman, xRevert, X3]);
