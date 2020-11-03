@@ -16,7 +16,7 @@ class Contract {
   }
 
   initialize() async {
-    contract = await _readContract('UniswapPair.json', address);
+    contract = await _readContract(abi, address);
   }
 
   Future<DeployedContract> _readContract(

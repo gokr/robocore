@@ -4,7 +4,7 @@ import 'package:robocore/config.dart';
 main(List<String> arguments) async {
   Map config = loadConfig();
   log.info("Starting Robocore");
-  var bot = Robocore(config);
+  var bot = Robocore.config(config);
   // await bot.test();
   await bot.start();
 }

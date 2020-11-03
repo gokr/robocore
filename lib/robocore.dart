@@ -29,7 +29,7 @@ import 'package:robocore/commands/tllcommand.dart';
 import 'package:robocore/ethclient.dart';
 import 'package:robocore/loggers/eventlogger.dart';
 import 'package:robocore/model/corebought.dart';
-import 'package:robocore/model/ethereum.dart';
+import 'package:robocore/ethereum.dart';
 import 'package:robocore/model/swap.dart';
 import 'package:robocore/util.dart';
 import 'package:robocore/model/poster.dart';
@@ -56,6 +56,9 @@ var robocoreDevelopmentChannel = DiscordChannel(763138788297408552);
 var robocoreTestGroup = TelegramChannel(-440184090);
 var robocoreTestChannel = DiscordChannel(762629759393726464);
 var robocoreTestChannelLogger = DiscordChannel(763910363439431700);
+
+// We keep a damn global just because it's easy
+late Robocore bot;
 
 /// The bot
 class Robocore {
@@ -110,6 +113,11 @@ class Robocore {
       lge2ETHContributedLastHourInUSD;
 */
   Robocore(this.config);
+
+  factory Robocore.config(Map config) {
+    bot = Robocore(config);
+    return bot;
+  }
 
   // Just testing stuff
   test() async {
@@ -310,6 +318,9 @@ class Robocore {
     // TVPL - Total Value Permanently Locked
     TVPLinUSD = floorLiquidity * priceETHinUSD;
     TVPLinUSD += floorLiquidity2 * priceWBTCinUSD;
+
+    // Calculating floor and TLL/TVPL using q
+    //var q = (10000 - )
   }
 
   // Shortcuts for readability

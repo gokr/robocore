@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 import 'package:robocore/ethclient.dart';
 import 'package:robocore/model/contribution.dart';
 import 'package:robocore/model/corebought.dart';
-import 'package:robocore/model/ethereum.dart';
+import 'package:robocore/ethereum.dart';
 import 'package:robocore/model/swap.dart';
 import 'package:robocore/model/poster.dart';
 

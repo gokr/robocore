@@ -1,4 +1,6 @@
+import 'package:robocore/balancer.dart';
 import 'package:robocore/contract.dart';
+import 'package:robocore/corevault.dart';
 import 'package:robocore/ethclient.dart';
 import 'package:robocore/pair.dart';
 import 'package:robocore/token.dart';
@@ -17,7 +19,9 @@ class Ethereum {
   late Pair WBTC2USDT;
   late Pair WBTC2ETH;
 
-  late Contract LGE2, COREVAULT;
+  late Contract LGE2;
+  late CoreVault COREVAULT;
+  late Balancer BALANCER;
 
   Ethereum(this.client);
 
@@ -72,9 +76,11 @@ class Ethereum {
     LGE2 = Contract(
         client, 'cLGE.json', '0xf7ca8f55c54cbb6d0965bc6d65c43adc500bc591');
     await LGE2.initialize();
-    COREVAULT = Contract(
-        client, 'CoreVault.json', '0xc5cacb708425961594b63ec171f4df27a9c0d8c9');
+    COREVAULT = CoreVault(client);
     await COREVAULT.initialize();
+
+    BALANCER = Balancer(client);
+    await BALANCER.initialize();
   }
 
   addPair(Pair p) async {
@@ -84,6 +90,13 @@ class Ethereum {
 
   Pair? findPair(String name) {
     return pairs[name];
+  }
+
+  Pair? findPairById(int id) {
+    for (var p in pairs.values) {
+      if (p.id == id) return p;
+    }
+    return null;
   }
 
   Pair? findCOREPair(String name) {
