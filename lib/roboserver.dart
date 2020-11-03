@@ -13,6 +13,9 @@ import 'database.dart';
 
 Logger log = Logger("Roboserver");
 
+// We keep a damn global just because it's easy
+late Roboserver bot;
+
 /// Server
 class Roboserver {
   late Map config;
@@ -25,6 +28,11 @@ class Roboserver {
   late StreamSubscription subscription;
 
   Roboserver(this.config);
+
+  factory Roboserver.config(Map config) {
+    bot = Roboserver(config);
+    return bot;
+  }
 
   start() async {
     await openDatabase(config);
