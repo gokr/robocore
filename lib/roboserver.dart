@@ -47,6 +47,7 @@ class Roboserver {
 
     // Create our Ethereum world
     ethereum = Ethereum(ethClient);
+    await ethereum.initialize();
 
     // We listen to all Swaps on COREETH
     subscription = ethereum.CORE2ETH.listenToEvent('Swap', (ev, event) {
