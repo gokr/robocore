@@ -1,8 +1,10 @@
 import 'dart:math';
 
+import 'package:robocore/balancer.dart';
 import 'package:robocore/contract.dart';
 
 import 'package:robocore/ethclient.dart';
+import 'package:robocore/robocore.dart';
 import 'package:robocore/util.dart';
 
 class Pair extends Contract {
@@ -38,8 +40,10 @@ class Pair extends Contract {
 
   // These are all calculated when update() is called
   late num pool1, pool2, poolK;
-  late num price1, price2, priceLP;
+  late num price1, price2, valueLP, priceLP;
   late num supplyLP;
+
+  BalancerPool? balancer;
 
   num get liquidity => pool2 * 2;
 
@@ -91,8 +95,15 @@ class Pair extends Contract {
     // This is all LPs minted so far
     supplyLP = rawLP(await totalSupply());
 
-    // Price of LP is calculated as the full pool valuated in Token2, divided by supply
-    priceLP = ((pool1 * price1) + pool2) / supplyLP;
+    // Value of LP is calculated as the full pool valuated in Token2, divided by supply
+    valueLP = ((pool1 * price1) + pool2) / supplyLP;
+
+    // Also pick out current balancer spot price in ETH
+    if (balancer != null) {
+      var eth = await balancer?.getSpotPrice(bot.ethereum.WETH.address, address)
+          as BigInt;
+      priceLP = raw18(eth);
+    }
   }
 
   String priceString1([num amount = 1]) {

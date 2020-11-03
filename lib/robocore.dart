@@ -329,10 +329,14 @@ class Robocore {
   num get priceETHinCORE => ethereum.CORE2ETH.price2;
   num get priceCBTCinCORE => ethereum.CORE2CBTC.price2;
   num get priceCOREinUSD => priceCOREinETH * priceETHinUSD;
+  num get valueLPinETH => ethereum.CORE2ETH.valueLP;
+  num get valueLPinUSD => valueLPinETH * priceETHinUSD;
   num get priceLPinETH => ethereum.CORE2ETH.priceLP;
   num get priceLPinUSD => priceLPinETH * priceETHinUSD;
-  num get priceLP2inCBTC => ethereum.CORE2CBTC.priceLP;
-  num get priceLP2inUSD => priceLP2inCBTC * priceWBTCinUSD;
+  num get valueLP2inCBTC => ethereum.CORE2CBTC.valueLP;
+  num get valueLP2inUSD => valueLP2inCBTC * priceWBTCinUSD;
+  num get priceLP2inETH => ethereum.CORE2CBTC.priceLP;
+  num get priceLP2inUSD => priceLP2inETH * priceETHinUSD;
 
   String priceStringCORE([num amount = 1]) {
     return "$amount CORE = ${usd2(priceCOREinUSD * amount)} (${dec4(priceCOREinETH * amount)} ETH)";
@@ -342,12 +346,28 @@ class Robocore {
     return "$amount CORE = ${usd2(floorCOREinUSD * amount)} (${dec4(floorCOREinETH * amount)} ETH)";
   }
 
+  String floorStringLP1([num amount = 1]) {
+    return "$amount LP = ${usd2(floorLPinUSD * amount)} (${dec4(floorLPinETH * amount)} ETH)";
+  }
+
+  String floorStringLP2([num amount = 1]) {
+    return "$amount cmLP = ${usd2(floorLP2inUSD * toCentimilli(amount))} (${dec4(floorLP2inWBTC * toCentimilli(amount))} CBTC)";
+  }
+
   String priceStringLP1([num amount = 1]) {
     return "$amount LP = ${usd2(priceLPinUSD * amount)} (${dec4(priceLPinETH * amount)} ETH)";
   }
 
+  String valueStringLP1([num amount = 1]) {
+    return "$amount LP = ${usd2(valueLPinUSD * amount)} (${dec4(valueLPinETH * amount)} ETH)";
+  }
+
   String priceStringLP2([num amount = 1]) {
-    return "$amount cmLP = ${usd2(priceLP2inUSD * toCentimilli(amount))} (${dec4(priceLP2inCBTC * toCentimilli(amount))} CBTC)";
+    return "$amount cmLP = ${usd2(priceLP2inUSD * toCentimilli(amount))} (${dec4(priceLP2inETH * toCentimilli(amount))} ETH)";
+  }
+
+  String valueStringLP2([num amount = 1]) {
+    return "$amount cmLP = ${usd2(valueLP2inUSD * toCentimilli(amount))} (${dec4(valueLP2inCBTC * toCentimilli(amount))} CBTC)";
   }
 
   String priceStringETH([num amount = 1]) {
