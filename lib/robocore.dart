@@ -343,15 +343,15 @@ class Robocore {
   }
 
   String floorStringCORE([num amount = 1]) {
-    return "$amount CORE = ${usd2(floorCOREinUSD * amount)} (${dec4(floorCOREinETH * amount)} ETH)";
+    return "$amount FLOOR CORE = ${usd2(floorCOREinUSD * amount)} (${dec4(floorCOREinETH * amount)} ETH)";
   }
 
   String floorStringLP1([num amount = 1]) {
-    return "$amount LP = ${usd2(floorLPinUSD * amount)} (${dec4(floorLPinETH * amount)} ETH)";
+    return "$amount FLOOR LP = ${usd2(floorLPinUSD * amount)} (${dec4(floorLPinETH * amount)} ETH)";
   }
 
   String floorStringLP2([num amount = 1]) {
-    return "$amount cmLP = ${usd2(floorLP2inUSD * toCentimilli(amount))} (${dec4(floorLP2inWBTC * toCentimilli(amount))} CBTC)";
+    return "$amount FLOOR cmLP = ${usd2(floorLP2inUSD * toCentimilli(amount))} (${dec4(floorLP2inWBTC * toCentimilli(amount))} CBTC)";
   }
 
   String priceStringLP1([num amount = 1]) {

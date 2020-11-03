@@ -5,7 +5,7 @@ import 'package:robocore/commands/command.dart';
 
 class PriceCommand extends Command {
   PriceCommand()
-      : super("price", "p", "price|p [[\"amount\"] eth|core|lp]",
+      : super("price", "p", "price|p [[\"amount\"] eth|core|btc|lp1|lp2]",
             "Show prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use an amount like \"!p 10 core\".");
 
   @override
@@ -57,21 +57,33 @@ class PriceCommand extends Command {
       coin = parts[2].toLowerCase();
       amountString = parts[1];
     }
+    var validCoins = (bot.isDirectChat)
+        ? [
+            "core",
+            "eth",
+            "btc",
+            "lp",
+            "lp1",
+            "lp2",
+            "cmlp",
+            "flp1",
+            "flp2",
+            "fcore"
+          ]
+        : [
+            "core",
+            "eth",
+            "btc",
+            "lp",
+            "lp1",
+            "lp2",
+            "cmlp",
+          ];
     // Check valid coins
-    if (![
-      "core",
-      "eth",
-      "btc",
-      "lp",
-      "lp1",
-      "lp2",
-      "cmlp",
-      "flp1", // Muahaha, secret!
-      "flp2", // Muahaha, secret!
-      "fcore" // Muahaha, secret!
-    ].contains(coin)) {
-      return await bot.reply(
-          "Coin can be core, eth, btc, lp (or lp1) or lp2 (or cmlp), not \"$coin\"");
+    if (!validCoins.contains(coin)) {
+      return await bot.reply((bot.isDirectChat)
+          ? "Coin can be core, eth, btc, lp (or lp1), lp2 (or cmlp), fcore, flp1 or flp2 - not \"$coin\""
+          : "Coin can be core, eth, btc, lp (or lp1) or lp2 (or cmlp) - not \"$coin\"");
     }
     // Parse amount as num
     if (amountString != null) {
