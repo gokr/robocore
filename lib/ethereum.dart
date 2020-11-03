@@ -6,6 +6,9 @@ import 'package:robocore/pair.dart';
 import 'package:robocore/token.dart';
 import 'package:web3dart/web3dart.dart';
 
+late Ethereum ethereum;
+
+/// Model of pairs, tokens, contracts
 class Ethereum {
   EthClient client;
 
@@ -22,7 +25,9 @@ class Ethereum {
   late Contract LGE2;
   late CoreVault COREVAULT;
 
-  Ethereum(this.client);
+  Ethereum(this.client) {
+    ethereum = this;
+  }
 
   initialize() async {
     // Contracts

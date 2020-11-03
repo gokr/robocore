@@ -22,7 +22,6 @@ class Roboserver {
 
   /// To interact with Ethereum contracts
   late EthClient ethClient;
-  late Ethereum ethereum;
 
   /// Subscription for Ethereum events
   late StreamSubscription subscription;
@@ -54,8 +53,7 @@ class Roboserver {
     await ethClient.initialize();
 
     // Create our Ethereum world
-    ethereum = Ethereum(ethClient);
-    await ethereum.initialize();
+    await Ethereum(ethClient).initialize();
 
     // We listen to all Swaps on COREETH
     subscription = ethereum.CORE2ETH.listenToEvent('Swap', (ev, event) {

@@ -4,6 +4,7 @@ import 'package:robocore/balancer.dart';
 import 'package:robocore/contract.dart';
 
 import 'package:robocore/ethclient.dart';
+import 'package:robocore/ethereum.dart';
 import 'package:robocore/robocore.dart';
 import 'package:robocore/util.dart';
 
@@ -100,7 +101,7 @@ class Pair extends Contract {
 
     // Also pick out current balancer spot price in ETH
     if (balancer != null) {
-      var eth = await balancer?.getSpotPrice(bot.ethereum.WETH.address, address)
+      var eth = await balancer?.getSpotPrice(ethereum.WETH.address, address)
           as BigInt;
       priceLP = raw18(eth);
     }

@@ -57,9 +57,6 @@ var robocoreTestGroup = TelegramChannel(-440184090);
 var robocoreTestChannel = DiscordChannel(762629759393726464);
 var robocoreTestChannelLogger = DiscordChannel(763910363439431700);
 
-// We keep a damn global just because it's easy
-late Robocore bot;
-
 /// The bot
 class Robocore {
   late Map config;
@@ -77,9 +74,6 @@ class Robocore {
 
   /// To interact with Ethereum contracts
   late EthClient ethClient;
-
-  // Model of pairs, tokens, contracts
-  late Ethereum ethereum;
 
   late StreamSubscription subscription;
 
@@ -113,11 +107,6 @@ class Robocore {
       lge2ETHContributedLastHourInUSD;
 */
   Robocore(this.config);
-
-  factory Robocore.config(Map config) {
-    bot = Robocore(config);
-    return bot;
-  }
 
   // Just testing stuff
   test() async {
@@ -448,8 +437,7 @@ class Robocore {
     await ethClient.initialize();
 
     // Create our Ethereum world
-    ethereum = Ethereum(ethClient);
-    await ethereum.initialize();
+    await Ethereum(ethClient).initialize();
 
     buildCommands();
 

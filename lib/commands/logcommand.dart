@@ -1,5 +1,6 @@
 import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/commands/command.dart';
+import 'package:robocore/ethereum.dart';
 import 'package:robocore/loggers/pricelogger.dart';
 import 'package:robocore/loggers/swaplogger.dart';
 import 'package:robocore/loggers/whalelogger.dart';
@@ -41,10 +42,10 @@ class LogCommand extends Command {
         Pair? pair;
         if (add) {
           var pairname = parts[2];
-          pair = bot.ethereum.findCOREPair(pairname.toLowerCase());
+          pair = ethereum.findCOREPair(pairname.toLowerCase());
           if (pair == null) {
             return await msg.reply(
-                "Could not find pair $pairname, use one of ${bot.ethereum.corePairNames()}");
+                "Could not find pair $pairname, use one of ${ethereum.corePairNames()}");
           }
           names = parts.sublist(3);
         } else {
