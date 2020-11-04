@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:logging/logging.dart';
 import 'package:robocore/ethclient.dart';
 import 'package:robocore/model/contribution.dart';
 import 'package:robocore/model/corebought.dart';
@@ -9,9 +8,8 @@ import 'package:robocore/ethereum.dart';
 import 'package:robocore/model/swap.dart';
 import 'package:robocore/model/poster.dart';
 
+import 'config.dart';
 import 'database.dart';
-
-Logger log = Logger("Roboserver");
 
 // We keep a damn global just because it's easy
 late Roboserver bot;
@@ -57,14 +55,14 @@ class Roboserver {
 
     // We listen to all Swaps on COREETH
     subscription = ethereum.CORE2ETH.listenToEvent('Swap', (ev, event) {
-      //print("Topics: ${event.topics} data: ${event.data}");
+      print("Topics: ${event.topics} data: ${event.data}");
       var swap = Swap.from(ev, event, ethereum.CORE2ETH);
       swap.save();
     });
 
     // We listen to all Swaps on CORE2CBTC
     subscription = ethereum.CORE2CBTC.listenToEvent('Swap', (ev, event) {
-      //print("Topics: ${event.topics} data: ${event.data}");
+      print("Topics: ${event.topics} data: ${event.data}");
       var swap = Swap.from(ev, event, ethereum.CORE2CBTC);
       swap.save();
     });

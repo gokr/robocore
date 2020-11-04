@@ -4,7 +4,8 @@ import 'package:robocore/corevault.dart';
 import 'package:robocore/ethclient.dart';
 import 'package:robocore/pair.dart';
 import 'package:robocore/token.dart';
-import 'package:web3dart/web3dart.dart';
+
+import 'config.dart';
 
 late Ethereum ethereum;
 
@@ -18,6 +19,8 @@ class Ethereum {
 
   late Pair CORE2ETH;
   late Pair CORE2CBTC;
+  DateTime statsTimestamp = DateTime.now();
+
   late Pair ETH2USDT;
   late Pair WBTC2USDT;
   late Pair WBTC2ETH;
@@ -125,5 +128,17 @@ class Ethereum {
 
   String corePairNames() {
     return pairs.keys.where((k) => k.startsWith("core")).toList().join(", ");
+  }
+
+  /// Fetch pair stats if older than 1 minute
+  fetchStats() async {
+    var limit = statsTimestamp.add(Duration(minutes: 1));
+    if (DateTime.now().isAfter(limit)) {
+      log.info("Fetching pair stats");
+      await CORE2ETH.fetchStats();
+      await CORE2CBTC.fetchStats();
+      log.info("Fetching pair stats, done.");
+      statsTimestamp = DateTime.now();
+    }
   }
 }

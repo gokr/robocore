@@ -1,55 +1,46 @@
 import 'package:graphql/client.dart';
+import 'package:robocore/graphqlwrapper.dart';
 import 'package:web3dart/credentials.dart';
 import 'package:web3dart/web3dart.dart';
 
-class Uniswap {
+late Uniswap uniswap;
+
+class Uniswap extends GraphQLWrapper {
   late GraphQLClient client;
 
-  static const String apiKey = "QmWTrJJ9W8h3JE19FhCzzPYsJ2tgXZCdUqnbyuo64ToTBN";
-  static const String uri =
+  final String uri =
       "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2";
 
-  Uniswap() {}
-
-  // Create a graphql client
-  Future<GraphQLClient> connect() async {
-    final HttpLink _httpLink = HttpLink(uri: uri);
-
-    final AuthLink _authLink = AuthLink(
-      getToken: () async => 'Bearer $apiKey',
-    );
-
-    final Link _link = _authLink.concat(_httpLink);
-
-    client = GraphQLClient(
-      cache: InMemoryCache(),
-      link: _link,
-    );
-    return client;
+  Uniswap() {
+    uniswap = this;
   }
 
-  static const String pairPrice = r'''
-  query PairPriceAt($adr: String!, $block: Int!) {
-    pair(id: $adr, block: {number: $block}) {
-      id
+  /// See https://uniswap.org/docs/v2/API/entities/
+  Future<QueryResult?> pairStatsAtBlock(
+      BlockNum block, EthereumAddress pair) async {
+    try {
+      var options = QueryOptions(documentNode: gql(r'''
+  query volumeStats($adr: String!, $block: Int!) {
+    pair(id: $adr, block: {number: $block}){
+      reserve0
+      reserve1
+      totalSupply
+      reserveETH
+      reserveUSD
+      trackedReserveETH
+      token0Price
       token1Price
+      volumeToken0
+      volumeToken1
+      volumeUSD
+      txCount
     }
   }
-''';
-
-  Future<double> pairPriceAt(BlockNum block, EthereumAddress pair) async {
-    try {
-      var options = QueryOptions(
-          documentNode: gql(pairPrice),
-          variables: <String, dynamic>{
-            'adr': pair.hex,
-            'block': block.blockNum
-          });
+'''), variables: <String, dynamic>{'adr': pair.hex, 'block': block.blockNum});
       var result = await client.query(options);
-      return double.parse(result.data['pair']['token1Price']);
+      return result;
     } catch (e) {
-      print("OUCH!");
-      return 0;
+      return null;
     }
   }
 }

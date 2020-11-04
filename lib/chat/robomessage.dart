@@ -1,7 +1,7 @@
 import 'package:robocore/chat/robochannel.dart';
 import 'package:robocore/chat/robouser.dart';
 import 'package:robocore/commands/command.dart';
-import 'package:robocore/robocore.dart';
+import 'package:robocore/config.dart';
 import 'package:robocore/robowrapper.dart';
 import 'package:robocore/util.dart';
 

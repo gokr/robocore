@@ -5,8 +5,11 @@ import 'package:path/path.dart' as path;
 
 var configFileName = 'robocore.yaml';
 
+late Logger log;
+
 /// Load YAML configuration
-dynamic loadConfig() {
+dynamic loadConfig(String name) {
+  log = Logger(name);
   var home = Platform.environment['HOME'];
   var configPath = path.join(home, configFileName);
   var f = File(configPath);

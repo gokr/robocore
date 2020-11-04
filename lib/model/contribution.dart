@@ -1,5 +1,4 @@
 import 'package:postgres/postgres.dart';
-import 'package:robocore/ethclient.dart';
 import 'package:robocore/database.dart';
 import 'package:robocore/util.dart';
 import 'package:web3dart/web3dart.dart';

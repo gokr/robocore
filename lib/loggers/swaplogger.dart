@@ -1,7 +1,6 @@
 import 'package:nyxx/nyxx.dart';
 import 'package:robocore/chat/robochannel.dart';
 import 'package:robocore/chat/robodiscord.dart';
-import 'package:robocore/ethclient.dart';
 import 'package:robocore/loggers/eventlogger.dart';
 import 'package:robocore/pair.dart';
 import 'package:robocore/robocore.dart';

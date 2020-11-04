@@ -1,4 +1,3 @@
-import 'package:robocore/ethclient.dart';
 import 'package:robocore/util.dart';
 import "package:test/test.dart";
 

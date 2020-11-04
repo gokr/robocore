@@ -53,7 +53,7 @@ class Holder {
   }
 
   Future<void> insert() async {
-    var result = await db.query(
+    await db.query(
         "INSERT INTO _holder (lge, created, address, units, contractUnits, deviation) VALUES (@lge, @created, @address, @units, @contractUnits, @deviation)",
         substitutionValues: {
           "lge": lge,
@@ -63,7 +63,6 @@ class Holder {
           "contractUnits": contractUnits.toString(),
           "deviation": deviation
         });
-    //print(result);
   }
 
   static Future<Holder?> findHolder(EthereumAddress address) async {

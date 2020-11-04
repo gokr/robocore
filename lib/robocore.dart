@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
-import 'package:logging/logging.dart';
 import 'package:neat_periodic_task/neat_periodic_task.dart';
 import 'package:nyxx/nyxx.dart';
+import 'package:robocore/blocklytics.dart';
 import 'package:robocore/chat/discordchannel.dart';
 import 'package:robocore/chat/robochannel.dart';
 import 'package:robocore/chat/robodiscord.dart';
@@ -28,9 +28,10 @@ import 'package:robocore/commands/statscommand.dart';
 import 'package:robocore/commands/tllcommand.dart';
 import 'package:robocore/ethclient.dart';
 import 'package:robocore/loggers/eventlogger.dart';
-import 'package:robocore/model/corebought.dart';
+import 'package:robocore/config.dart';
 import 'package:robocore/ethereum.dart';
 import 'package:robocore/model/swap.dart';
+import 'package:robocore/uniswap.dart';
 import 'package:robocore/util.dart';
 import 'package:robocore/model/poster.dart';
 import 'package:teledart/model.dart';
@@ -38,8 +39,6 @@ import 'package:teledart/teledart.dart';
 import 'package:teledart/telegram.dart';
 
 import 'database.dart';
-
-Logger log = Logger("Robocore");
 
 // Super users
 var gokr = RoboUser.both(124467899447508992, 1156133961);
@@ -117,10 +116,17 @@ class Robocore {
     ethClient = EthClient.randomKey(config['apiurl'], config['wsurl']);
     await ethClient.initialize();
 
+    // GraphQL wrappers
+    await Blocklytics().connect(config['thegraph']);
+    await Uniswap().connect(config['thegraph']);
+
+    // Create our Ethereum world
+    await Ethereum(ethClient).initialize();
+
+    await ethereum.CORE2ETH.fetchStats();
+
     // One initial update
     await updatePriceInfo(null);
-    var s = await CoreBought.getTotalSum();
-    print(s);
   }
 
   addLogger(EventLogger logger) {
@@ -144,6 +150,12 @@ class Robocore {
 
   /// Run contract queries
   background() async {
+    // Update pair stats
+    try {
+      ethereum.fetchStats();
+    } catch (e, s) {
+      log.warning("Exception during update of pair stats", e, s);
+    }
     // Update posters
     try {
       var posters = await Poster.getAll();

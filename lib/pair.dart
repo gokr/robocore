@@ -1,11 +1,13 @@
 import 'dart:math';
 
+import 'package:graphql/client.dart';
 import 'package:robocore/balancer.dart';
+import 'package:robocore/blocklytics.dart';
 import 'package:robocore/contract.dart';
 
 import 'package:robocore/ethclient.dart';
 import 'package:robocore/ethereum.dart';
-import 'package:robocore/robocore.dart';
+import 'package:robocore/uniswap.dart';
 import 'package:robocore/util.dart';
 
 class Pair extends Contract {
@@ -43,6 +45,9 @@ class Pair extends Contract {
   late num pool1, pool2, poolK;
   late num price1, price2, valueLP, priceLP;
   late num supplyLP;
+
+  // Stats indexed by x hours ago
+  Map<int, Map> stats = {};
 
   BalancerPool? balancer;
 
@@ -105,6 +110,22 @@ class Pair extends Contract {
           as BigInt;
       priceLP = raw18(eth);
     }
+  }
+
+  /// Load stats for this pair at 48h, 24h, 6h and 1h ago.
+  fetchStats() async {
+    for (var h in [1, 6, 24, 48]) {
+      var qr = await fetchStatsAgo(Duration(hours: h));
+      stats[h] = qr?.data['pair'];
+    }
+  }
+
+  Future<QueryResult?> fetchStatsAgo(Duration duration) async {
+    var blk = await blocklytics.blockAgo(duration);
+    if (blk != null) {
+      return await uniswap.pairStatsAtBlock(blk, address);
+    }
+    return null;
   }
 
   String priceString1([num amount = 1]) {

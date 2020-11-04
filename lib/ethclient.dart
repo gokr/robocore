@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:http/http.dart';
-import 'package:intl/intl.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:web_socket_channel/io.dart';
 
