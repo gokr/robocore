@@ -27,6 +27,24 @@ class Blocklytics extends GraphQLWrapper {
     return (num == 0) ? null : BlockNum.exact(num);
   }
 
+  Future<int?> latestBlockNumber() async {
+    try {
+      var options = QueryOptions(documentNode: gql(r'''
+  query LatestBlockNumber() {
+    blocks(first: 1, skip: 0, orderBy: number, orderDirection: desc, where: {number_gt: 9300000}) {
+      id
+      number
+      timestamp
+    }
+  }
+'''));
+      var result = await client.query(options);
+      return int.parse(result.data['blocks'].first['number']);
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<int?> blockNumberAt(int epoch) async {
     try {
       var epoch2 = epoch + 20; // add 20 seconds

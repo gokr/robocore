@@ -1,7 +1,7 @@
 import 'package:robocore/chat/robochannel.dart';
 import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/chat/robotelegram.dart';
-import 'package:robocore/chat/robouser.dart';
+import 'package:robocore/model/robouser.dart';
 import 'package:robocore/chat/telegramchannel.dart';
 import 'package:robocore/robocore.dart';
 import 'package:teledart/model.dart';
@@ -12,6 +12,8 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
   TeleDartMessage e;
   late String text, textLowerCase;
   late List<String> parts;
+
+  StringBuffer _answer = StringBuffer();
 
   RoboTelegramMessage(Robocore bot, this.e) : super(bot) {
     text = e.text;
@@ -56,4 +58,22 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
   @override
   bool isMention() =>
       text.contains("@robocore_bot") || text.contains("@robocoretest_bot");
+
+  @override
+  addField(String label, String content) {
+    _answer..writeln('<b>$label</b>')..writeln(content);
+  }
+
+  @override
+  addFooter(String content) {
+    _answer..writeln()..writeln(content);
+  }
+
+  @override
+  finish() {
+    // Nothing needed
+  }
+
+  @override
+  dynamic get answer => _answer.toString();
 }

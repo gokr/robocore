@@ -10,7 +10,7 @@ import 'package:robocore/chat/robodiscord.dart';
 import 'package:robocore/chat/robodiscordmessage.dart';
 import 'package:robocore/chat/robotelegram.dart';
 import 'package:robocore/chat/robotelegrammessage.dart';
-import 'package:robocore/chat/robouser.dart';
+import 'package:robocore/model/robouser.dart';
 import 'package:robocore/chat/telegramchannel.dart';
 import 'package:robocore/commands/admincommand.dart';
 import 'package:robocore/commands/command.dart';
@@ -21,6 +21,7 @@ import 'package:robocore/commands/idcommand.dart';
 import 'package:robocore/commands/lgecommand.dart';
 import 'package:robocore/commands/logcommand.dart';
 import 'package:robocore/commands/mentioncommand.dart';
+import 'package:robocore/commands/paircommand.dart';
 import 'package:robocore/commands/postercommand.dart';
 import 'package:robocore/commands/pricecommand.dart';
 import 'package:robocore/commands/startcommand.dart';
@@ -123,8 +124,6 @@ class Robocore {
     // Create our Ethereum world
     await Ethereum(ethClient).initialize();
 
-    await ethereum.CORE2ETH.fetchStats();
-
     // One initial update
     await updatePriceInfo(null);
   }
@@ -152,7 +151,7 @@ class Robocore {
   background() async {
     // Update pair stats
     try {
-      ethereum.fetchStats();
+      await ethereum.fetchStats();
     } catch (e, s) {
       log.warning("Exception during update of pair stats", e, s);
     }
@@ -415,6 +414,7 @@ class Robocore {
           robocoreDevelopmentChannel
         ])
       ..add(PriceCommand())
+      ..add(PairCommand())
       ..add(TLLCommand())
       ..add(IdCommand())
       ..add(AdminCommand()..users = [gokr])
@@ -443,6 +443,10 @@ class Robocore {
     // Create abstraction wrappers
     discord = RoboDiscord(this);
     telegram = RoboTelegram(this);
+
+    // GraphQL wrappers
+    await Blocklytics().connect(config['thegraph']);
+    await Uniswap().connect(config['thegraph']);
 
     // Create our interface with Ethereum
     ethClient = EthClient.randomKey(config['apiurl'], config['wsurl']);

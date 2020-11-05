@@ -19,7 +19,7 @@ class Ethereum {
 
   late Pair CORE2ETH;
   late Pair CORE2CBTC;
-  DateTime statsTimestamp = DateTime.now();
+  DateTime statsTimestamp = DateTime.now().subtract(Duration(minutes: 10));
 
   late Pair ETH2USDT;
   late Pair WBTC2USDT;

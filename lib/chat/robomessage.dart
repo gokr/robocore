@@ -1,5 +1,5 @@
 import 'package:robocore/chat/robochannel.dart';
-import 'package:robocore/chat/robouser.dart';
+import 'package:robocore/model/robouser.dart';
 import 'package:robocore/commands/command.dart';
 import 'package:robocore/config.dart';
 import 'package:robocore/robowrapper.dart';
@@ -76,6 +76,12 @@ mixin RoboMessage on RoboWrapper {
 
   /// Is this a Direct Chat (DM. PM)?
   bool get isDirectChat;
+
+  /// Answer construction
+  addField(String label, String content);
+  addFooter(String content);
+  finish();
+  dynamic answer;
 
   reply(dynamic answer,
       {bool disablePreview = true, bool markdown = false}) async {}

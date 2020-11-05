@@ -1,7 +1,7 @@
 import 'package:robocore/chat/robochannel.dart';
 import 'package:robocore/chat/robodiscordmessage.dart';
 import 'package:robocore/chat/robomessage.dart';
-import 'package:robocore/chat/robouser.dart';
+import 'package:robocore/model/robouser.dart';
 import 'package:robocore/robocore.dart';
 
 abstract class Command {

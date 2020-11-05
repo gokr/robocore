@@ -9,6 +9,7 @@ import 'package:robocore/ethclient.dart';
 import 'package:robocore/ethereum.dart';
 import 'package:robocore/uniswap.dart';
 import 'package:robocore/util.dart';
+import 'package:web3dart/web3dart.dart';
 
 class Pair extends Contract {
   int id;
@@ -112,12 +113,25 @@ class Pair extends Contract {
     }
   }
 
-  /// Load stats for this pair at 48h, 24h, 6h and 1h ago.
+  /// Load stats for this pair at 0h, 1h, 6h, 24h, 48h ago.
   fetchStats() async {
+    Map<int, Map> newStats = {};
+    var qr = await fetchLatestStats();
+    newStats[0] = qr?.data['pair'];
     for (var h in [1, 6, 24, 48]) {
       var qr = await fetchStatsAgo(Duration(hours: h));
-      stats[h] = qr?.data['pair'];
+      if (qr?.data == null) return;
+      newStats[h] = qr?.data['pair'];
     }
+    stats = newStats;
+  }
+
+  Future<QueryResult?> fetchLatestStats() async {
+    var num = await blocklytics.latestBlockNumber();
+    if (num != null) {
+      return await uniswap.pairStatsAtBlock(BlockNum.exact(num), address);
+    }
+    return null;
   }
 
   Future<QueryResult?> fetchStatsAgo(Duration duration) async {

@@ -2,7 +2,7 @@ import 'package:nyxx/nyxx.dart';
 import 'package:robocore/chat/discordchannel.dart';
 import 'package:robocore/chat/robochannel.dart';
 import 'package:robocore/chat/robomessage.dart';
-import 'package:robocore/chat/robouser.dart';
+import 'package:robocore/model/robouser.dart';
 import 'package:robocore/chat/robodiscord.dart';
 import 'package:robocore/robocore.dart';
 
@@ -12,6 +12,8 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
   MessageReceivedEvent e;
   late String text, textLowerCase;
   late List<String> parts;
+
+  EmbedBuilder? _answer;
 
   RoboDiscordMessage(Robocore bot, this.e) : super(bot) {
     text = e.message.content;
@@ -46,6 +48,29 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
   RoboUser get roboUser => RoboUser.discord(e.message.author.id.id);
   RoboChannel get roboChannel => DiscordChannel(e.message.channelId.id);
   bool get isDirectChat => e.message.channel.type == ChannelType.dm;
+
+  @override
+  addField(String label, String content) {
+    if (answer == null) _answer = EmbedBuilder();
+    answer?.addField(name: label, content: content);
+  }
+
+  @override
+  addFooter(String content) {
+    if (answer == null) _answer = EmbedBuilder();
+    answer?.addFooter((footer) {
+      footer.text = content;
+    });
+  }
+
+  @override
+  finish() {
+    answer?.timestamp = DateTime.now().toUtc();
+    answer?.color = color();
+  }
+
+  @override
+  dynamic get answer => _answer;
 
   reply(dynamic answer,
       {bool disablePreview = true, bool markdown = false}) async {
