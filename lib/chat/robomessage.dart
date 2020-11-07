@@ -9,6 +9,11 @@ mixin RoboMessage on RoboWrapper {
   /// Find a Command valid for this message and let it handle it
   runCommands() async {
     logMessage();
+    // Is it in our blacklist?
+    var c = textLowerCase.substring(1);
+    if (['ban', 'kill'].contains(c)) {
+      return;
+    }
     for (var cmd in bot.commands) {
       if (cmd.isValid(this)) {
         return await cmd.handleMessage(this);

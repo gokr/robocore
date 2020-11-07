@@ -82,10 +82,10 @@ class Ethereum {
 
     WBTC2USDT = Pair(
         4, client, "wbtc-usdt", '0x0de0fa91b6dbab8c8503aaa2d1dfa91a192cb149');
-    ETH2USDT
-      ..decimals1 = 18
+    WBTC2USDT
+      ..decimals1 = 8
       ..decimals2 = 6
-      ..token1name = "ETH"
+      ..token1name = "WBTC"
       ..token2name = "USDT";
     await addPair(WBTC2USDT);
 
@@ -135,8 +135,9 @@ class Ethereum {
     var limit = statsTimestamp.add(Duration(minutes: 1));
     if (DateTime.now().isAfter(limit)) {
       log.info("Fetching pair stats");
-      await CORE2ETH.fetchStats();
-      await CORE2CBTC.fetchStats();
+      var intervals = [1, 6, 24, 48];
+      await CORE2ETH.fetchStats(intervals);
+      await CORE2CBTC.fetchStats(intervals);
       log.info("Fetching pair stats, done.");
       statsTimestamp = DateTime.now();
     }

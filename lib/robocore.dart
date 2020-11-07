@@ -540,7 +540,7 @@ class Robocore {
     final scheduler = NeatPeriodicTaskScheduler(
       interval: Duration(seconds: 10),
       name: 'background',
-      timeout: Duration(seconds: 5),
+      timeout: Duration(seconds: 30),
       task: () async => background(),
       minCycle: Duration(seconds: 5),
     );

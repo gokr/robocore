@@ -113,12 +113,13 @@ class Pair extends Contract {
     }
   }
 
-  /// Load stats for this pair at 0h, 1h, 6h, 24h, 48h ago.
-  fetchStats() async {
+  /// Load stats for this pair at intervals ago, like [1,6,24,48] being
+  /// 1h, 6h, 24h and 48h ago.
+  fetchStats(List<int> intervals) async {
     Map<int, Map> newStats = {};
     var qr = await fetchLatestStats();
     newStats[0] = qr?.data['pair'];
-    for (var h in [1, 6, 24, 48]) {
+    for (var h in intervals) {
       var qr = await fetchStatsAgo(Duration(hours: h));
       if (qr?.data == null) return;
       newStats[h] = qr?.data['pair'];
@@ -140,6 +141,14 @@ class Pair extends Contract {
       return await uniswap.pairStatsAtBlock(blk, address);
     }
     return null;
+  }
+
+  List<num> statsArray(List<int> keys, String entity) {
+    var base = double.parse(stats[0]?[entity]);
+    var result =
+        keys.map((h) => base - double.parse(stats[h]?[entity])).toList();
+    result.insert(0, base);
+    return result;
   }
 
   String priceString1([num amount = 1]) {
