@@ -118,11 +118,16 @@ class Pair extends Contract {
   fetchStats(List<int> intervals) async {
     Map<int, Map> newStats = {};
     var qr = await fetchLatestStats();
-    newStats[0] = qr?.data['pair'];
+    if (qr == null || qr.data == null) {
+      throw "Failed to fetch latest stats";
+    }
+    newStats[0] = qr.data['pair'];
     for (var h in intervals) {
       var qr = await fetchStatsAgo(Duration(hours: h));
-      if (qr?.data == null) return;
-      newStats[h] = qr?.data['pair'];
+      if (qr == null || qr.data == null) {
+        throw "Failed to fetch stats ago $h";
+      }
+      newStats[h] = qr.data['pair'];
     }
     stats = newStats;
   }

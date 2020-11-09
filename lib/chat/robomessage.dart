@@ -9,17 +9,14 @@ mixin RoboMessage on RoboWrapper {
   /// Find a Command valid for this message and let it handle it
   runCommands() async {
     logMessage();
-    // Is it in our blacklist?
-    var c = textLowerCase.substring(1);
-    if (['ban', 'kill'].contains(c)) {
-      return;
-    }
+    // Do we have a command that wants to take it?
     for (var cmd in bot.commands) {
       if (cmd.isValid(this)) {
         return await cmd.handleMessage(this);
       }
     }
-    if (isCommand()) reply(randomDNU());
+    // Was it still a command? We don't reply on commands we don't recognize
+    // if (isCommand()) reply(randomDNU());
   }
 
   String randomDNU() {

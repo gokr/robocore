@@ -457,23 +457,33 @@ class Robocore {
 
     buildCommands();
 
+    // Standard setup
+
     // One initial update
     await updatePriceInfo(null);
 
     // We listen to all Swaps on COREETH
     subscription = ethereum.CORE2ETH.listenToEvent('Swap', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
-      var swap = Swap.from(ev, event, ethereum.CORE2ETH);
-      updatePriceInfo(swap);
-      performLogging(swap);
+      try {
+        var swap = Swap.from(ev, event, ethereum.CORE2ETH);
+        updatePriceInfo(swap);
+        performLogging(swap);
+      } catch (e) {
+        log.warning("Exception during swap handling: ${e.toString()}");
+      }
     });
 
     // We listen to all Swaps on CORE2CBTC
     subscription = ethereum.CORE2CBTC.listenToEvent('Swap', (ev, event) {
       //print("Topics: ${event.topics} data: ${event.data}");
-      var swap = Swap.from(ev, event, ethereum.CORE2CBTC);
-      updatePriceInfo(swap);
-      performLogging(swap);
+      try {
+        var swap = Swap.from(ev, event, ethereum.CORE2CBTC);
+        updatePriceInfo(swap);
+        performLogging(swap);
+      } catch (e) {
+        log.warning("Exception during swap handling: ${e.toString()}");
+      }
     });
 
     // When we are ready in Discord
@@ -485,7 +495,11 @@ class Robocore {
 
     // All Discord messages
     nyxx.onMessageReceived.listen((MessageReceivedEvent event) async {
-      RoboDiscordMessage(this, event).runCommands();
+      try {
+        RoboDiscordMessage(this, event).runCommands();
+      } catch (e) {
+        log.warning("Exception during runcommands: ${e.toString()}");
+      }
     });
 
     // When we are ready in Telegram
@@ -498,14 +512,22 @@ class Robocore {
     teledart
         .onMessage(entityType: 'bot_command')
         .listen((TeleDartMessage message) async {
-      RoboTelegramMessage(this, message).runCommands();
+      try {
+        RoboTelegramMessage(this, message).runCommands();
+      } catch (e) {
+        log.warning("Exception during runcommands: ${e.toString()}");
+      }
     });
 
     // All Telegram messages mentioning me
     teledart
         .onMessage(entityType: 'mention')
         .listen((TeleDartMessage message) async {
-      RoboTelegramMessage(this, message).runCommands();
+      try {
+        RoboTelegramMessage(this, message).runCommands();
+      } catch (e) {
+        log.warning("Exception during runcommands: ${e.toString()}");
+      }
     });
 
     /* NOT YET!
