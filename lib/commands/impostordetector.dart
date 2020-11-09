@@ -14,7 +14,7 @@ class ImpostorDetectorCommand extends Command {
   @override
   handleMessage(RoboMessage msg) async {
     var user = msg.roboUser;
-    if (user.id != user.knownId()) {
+    if (user.isImpostor(msg)) {
       await msg.reply("The user @${user} is an impostor.");
     }
   }

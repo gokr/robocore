@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:postgres/postgres.dart';
+import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/database.dart';
 
 class RoboUser {
@@ -23,6 +24,10 @@ class RoboUser {
     Map<String, dynamic> json = {};
     // json['xxx'] = start.toIso8601String();
     return json;
+  }
+
+  bool isImpostor(RoboMessage msg) {
+    return false; // TODO: Perform lookup and verify nick
   }
 
   readJson(Map json) {}
