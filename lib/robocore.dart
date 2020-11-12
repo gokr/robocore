@@ -153,7 +153,7 @@ class Robocore {
     try {
       await ethereum.fetchStats();
     } catch (e, s) {
-      log.warning("Exception during update of pair stats", e, s);
+      log.warning("Exception during update of pair stats $e, $s", e, s);
     }
     // Update posters
     try {
@@ -562,7 +562,7 @@ class Robocore {
     final scheduler = NeatPeriodicTaskScheduler(
       interval: Duration(seconds: 10),
       name: 'background',
-      timeout: Duration(seconds: 30),
+      timeout: Duration(seconds: 60),
       task: () async => background(),
       minCycle: Duration(seconds: 5),
     );

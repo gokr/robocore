@@ -119,13 +119,13 @@ class Pair extends Contract {
     Map<int, Map> newStats = {};
     var qr = await fetchLatestStats();
     if (qr == null || qr.data == null) {
-      throw "Failed to fetch latest stats";
+      throw Exception("Failed to fetch latest stats");
     }
     newStats[0] = qr.data['pair'];
     for (var h in intervals) {
       var qr = await fetchStatsAgo(Duration(hours: h));
       if (qr == null || qr.data == null) {
-        throw "Failed to fetch stats ago $h";
+        throw Exception("Failed to fetch stats ago $h");
       }
       newStats[h] = qr.data['pair'];
     }
@@ -133,11 +133,7 @@ class Pair extends Contract {
   }
 
   Future<QueryResult?> fetchLatestStats() async {
-    var num = await blocklytics.latestBlockNumber();
-    if (num != null) {
-      return await uniswap.pairStatsAtBlock(BlockNum.exact(num), address);
-    }
-    return null;
+    return await uniswap.pairStats(address);
   }
 
   Future<QueryResult?> fetchStatsAgo(Duration duration) async {

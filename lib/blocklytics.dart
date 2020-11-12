@@ -47,16 +47,16 @@ class Blocklytics extends GraphQLWrapper {
 
   Future<int?> blockNumberAt(int epoch) async {
     try {
-      var epoch2 = epoch + 20; // add 20 seconds
+      var epochbefore = epoch - 60; // Looking 60 seconds backwards
       var options = QueryOptions(documentNode: gql(r'''
-  query BlockNumberAt($epoch: Int!, $epoch2: Int!) {
-    blocks(first: 1, orderBy: timestamp, orderDirection: asc, where: {timestamp_gt: $epoch, timestamp_lt: $epoch2}) {
+  query BlockNumberAt($epoch: Int!, $epochbefore: Int!) {
+    blocks(first: 1, orderBy: timestamp, orderDirection: asc, where: {timestamp_gt: $epochbefore, timestamp_lt: $epoch}) {
       id
       number
       timestamp
     }
   }
-'''), variables: <String, dynamic>{'epoch': epoch, 'epoch2': epoch2});
+'''), variables: <String, dynamic>{'epoch': epoch, 'epochbefore': epochbefore});
       var result = await client.query(options);
       return int.parse(result.data['blocks'].first['number']);
     } catch (e) {

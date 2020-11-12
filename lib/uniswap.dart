@@ -16,6 +16,34 @@ class Uniswap extends GraphQLWrapper {
   }
 
   /// See https://uniswap.org/docs/v2/API/entities/
+  Future<QueryResult?> pairStats(EthereumAddress pair) async {
+    try {
+      var options = QueryOptions(documentNode: gql(r'''
+  query volumeStats($adr: String!) {
+    pair(id: $adr){
+      reserve0
+      reserve1
+      totalSupply
+      reserveETH
+      reserveUSD
+      trackedReserveETH
+      token0Price
+      token1Price
+      volumeToken0
+      volumeToken1
+      volumeUSD
+      txCount
+    }
+  }
+'''), variables: <String, dynamic>{'adr': pair.hex});
+      var result = await client.query(options);
+      return result;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// See https://uniswap.org/docs/v2/API/entities/
   Future<QueryResult?> pairStatsAtBlock(
       BlockNum block, EthereumAddress pair) async {
     try {

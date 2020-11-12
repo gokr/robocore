@@ -19,7 +19,7 @@ class Ethereum {
 
   late Pair CORE2ETH;
   late Pair CORE2CBTC;
-  DateTime statsTimestamp = DateTime.now().subtract(Duration(minutes: 10));
+  DateTime? statsTimestamp = DateTime.now().subtract(Duration(minutes: 10));
 
   late Pair ETH2USDT;
   late Pair WBTC2USDT;
@@ -132,14 +132,20 @@ class Ethereum {
 
   /// Fetch pair stats if older than 1 minute
   fetchStats() async {
-    var limit = statsTimestamp.add(Duration(minutes: 1));
-    if (DateTime.now().isAfter(limit)) {
-      log.info("Fetching pair stats");
-      var intervals = [1, 6, 24, 48];
-      await CORE2ETH.fetchStats(intervals);
-      await CORE2CBTC.fetchStats(intervals);
-      log.info("Fetching pair stats, done.");
-      statsTimestamp = DateTime.now();
+    if (statsTimestamp != null) {
+      var limit = statsTimestamp?.add(Duration(minutes: 1)) as DateTime;
+      if (DateTime.now().isAfter(limit)) {
+        try {
+          statsTimestamp = null; // Used as locking
+          log.info("Fetching pair stats");
+          var intervals = [1, 6, 24, 48];
+          await CORE2ETH.fetchStats(intervals);
+          await CORE2CBTC.fetchStats(intervals);
+          log.info("Fetching pair stats, done.");
+        } finally {
+          statsTimestamp = DateTime.now();
+        }
+      }
     }
   }
 }
