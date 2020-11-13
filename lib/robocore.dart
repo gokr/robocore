@@ -14,7 +14,6 @@ import 'package:robocore/model/robouser.dart';
 import 'package:robocore/chat/telegramchannel.dart';
 import 'package:robocore/commands/admincommand.dart';
 import 'package:robocore/commands/command.dart';
-import 'package:robocore/commands/contractscommand.dart';
 import 'package:robocore/commands/faqcommand.dart';
 import 'package:robocore/commands/helpcommand.dart';
 import 'package:robocore/commands/idcommand.dart';
@@ -402,7 +401,6 @@ class Robocore {
       ..add(StartCommand())
       ..add(StatsCommand())
       ..add(LGECommand())
-      ..add(ContractsCommand())
       ..add(LogCommand()
         ..validForAllInDM = true
         ..users = [gokr, CryptoXman, xRevert, X3]
