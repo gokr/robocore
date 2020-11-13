@@ -1,6 +1,5 @@
 import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/commands/command.dart';
-import 'package:robocore/util.dart';
 
 class ImpostorDetectorCommand extends Command {
   ImpostorDetectorCommand()
