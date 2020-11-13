@@ -12,11 +12,15 @@ class FAQCommand extends Command {
       "description":
           "CORE is an ERC20 currency token used for the CORE project\\. You can trade CORE on Uniswap in the [CORE\\-ETH](https://info.uniswap.org/pair/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b) pair and the [CORE\\-CBTC](https://info.uniswap.org/pair/0x6fad7d44640c5cd0120deec0301e8cf850becb68) pair\\. Supply is **fixed** at 10000 CORE, and all CORE are distributed\\. CORE is not locked in any way, you are free to buy, hodl and sell CORE like any currency\\. Every trade carries a 1% fee\\."
     },
-    "lp": {"name": "Liquidity Pool token", "description": "..."},
+    "lp": {
+      "name": "Liquidity Pool token",
+      "description":
+          "An LP token, or an LP for short, is a \"receipt\" token that you have added liquidity to either the CORE\\-ETH or the CORE\\-CBTC pair\\. You **can not** convert an LP token back to its underlying assets\\. But you can stake them on [cvault\.finance](https://cvault.finance) to farm rewards in CORE, or sell/buy them on balancer\\. CORE\\-ETH LP tokens are sometimes referred to as lp1\\. CORE\\-CBTC tokens, sometimes referred to as lp2, are measured in cmLPs which means centimilli LPs \\(5 decimal places\\)\\."
+    },
     "balancer": {
       "name": "Balancer exchange",
       "description":
-          "On [Balancer](https://balancer.exchange) you can trade CORE LP tokens\\. The price of LP tokens on balancer are driven by supply and demand and **can be cheaper** than minting/zapping your own LP tokens at [cvault\\.finance](https://cvault.finance)\\. If you use the price command you can see both balancer price and value \\(minting price\\)\\. Here is link to [trade CORE\\-ETH LP tokens](https://balancer.exchange/#/swap/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b/ether) and [to trade CORE\\-CBTC LP tokens](https://balancer.exchange/#/swap/0x6fad7d44640c5cd0120deec0301e8cf850becb68/ether)\\."
+          "On [Balancer](https://balancer.exchange) you can trade CORE LP tokens\\. The price of LP tokens on balancer are driven by supply and demand and can be cheaper than minting/zapping your own LP tokens at [cvault\\.finance](https://cvault.finance)\\. If you use the price command you can see both balancer price and value \\(minting price\\)\\. Here is link to [trade CORE\\-ETH LP tokens](https://balancer.exchange/#/swap/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b/ether) and [to trade CORE\\-CBTC LP tokens](https://balancer.exchange/#/swap/0x6fad7d44640c5cd0120deec0301e8cf850becb68/ether)\\."
     },
     "official": {
       "name": "Official links",
