@@ -583,7 +583,7 @@ packages:
       name: teledart
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.0.50"
+    version: "0.1.0"
   term_glyph:
     dependency: transitive
     description:

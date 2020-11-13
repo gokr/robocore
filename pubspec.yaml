@@ -21,7 +21,7 @@ dependencies:
   # Discord library
   nyxx: ^1.0.2
   # Telegram library
-  teledart: ^0.0.50
+  teledart: ^0.1.0
   
   # Ethereum library
   web3dart: ^2.0.0-dev.7
