@@ -1,3 +1,4 @@
+import 'package:markdown/markdown.dart';
 import 'package:robocore/chat/robochannel.dart';
 import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/chat/robotelegram.dart';
@@ -18,13 +19,13 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
   RoboTelegramMessage(Robocore bot, this.e) : super(bot) {
     text = e.text;
     textLowerCase = text.toLowerCase();
-    parts = splitMessage(text);
+    parts = splitMessage(textLowerCase);
   }
 
 /*
   // In Telegram all commands are valid
   bool validCommand(Command cmd) {
-    var text = e.text;
+    var text = e.text;p
     return text.startsWith(telegramPrefix + cmd.name) ||
         (cmd.short != "" && (text == telegramPrefix + cmd.short) ||
             text.startsWith(telegramPrefix + cmd.short + " "));
@@ -61,7 +62,7 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
 
   @override
   addField(String label, String content) {
-    _answer..writeln('<b>$label</b>')..writeln(content);
+    _answer..writeln('*$label*')..writeln(content);
   }
 
   @override

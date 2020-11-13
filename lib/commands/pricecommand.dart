@@ -52,9 +52,9 @@ class PriceCommand extends Command {
     }
     // Also coin given
     if (parts.length == 2) {
-      coin = parts[1].toLowerCase();
+      coin = parts[1];
     } else {
-      coin = parts[2].toLowerCase();
+      coin = parts[2];
       amountString = parts[1];
     }
     var validCoins = (bot.isDirectChat)

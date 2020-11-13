@@ -18,7 +18,7 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
   RoboDiscordMessage(Robocore bot, this.e) : super(bot) {
     text = e.message.content;
     textLowerCase = text.toLowerCase();
-    parts = splitMessage(text);
+    parts = splitMessage(textLowerCase);
   }
 
   String get prefix => discordPrefix;
