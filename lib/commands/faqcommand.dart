@@ -1,6 +1,5 @@
 import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/commands/command.dart';
-import 'package:markdown/markdown.dart';
 
 class FAQCommand extends Command {
   FAQCommand()
@@ -27,6 +26,8 @@ class FAQCommand extends Command {
     "links": {
       "name": "Additional links",
       "description": """
+[Core Farming](https://www.corefarming.info)
+[Core Charts](https://corecharts.info)
 [RoboCORE github](RoboCORE: https://github.com/gokr/robocore)
 """
     },

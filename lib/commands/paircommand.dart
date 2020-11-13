@@ -3,7 +3,6 @@ import 'package:robocore/commands/command.dart';
 import 'package:robocore/ethereum.dart';
 import 'package:robocore/pair.dart';
 import 'package:robocore/util.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 class PairCommand extends Command {
   PairCommand()

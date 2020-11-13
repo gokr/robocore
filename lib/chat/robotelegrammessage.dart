@@ -1,4 +1,3 @@
-import 'package:markdown/markdown.dart';
 import 'package:robocore/chat/robochannel.dart';
 import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/chat/robotelegram.dart';
