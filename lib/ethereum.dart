@@ -138,9 +138,9 @@ class Ethereum {
         try {
           statsTimestamp = null; // Used as locking
           log.info("Fetching pair stats");
-          var intervals = [1, 6, 24, 48];
-          await CORE2ETH.fetchStats(intervals);
-          await CORE2CBTC.fetchStats(intervals);
+          var intervals = [0, 1, 6, 24, 48];
+          await CORE2ETH.fetchDefaultStats(intervals);
+          await CORE2CBTC.fetchDefaultStats(intervals);
           log.info("Fetching pair stats, done.");
         } finally {
           statsTimestamp = DateTime.now();

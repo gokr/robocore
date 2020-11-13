@@ -21,6 +21,37 @@ extension RandomPick on List<String> {
   }
 }
 
+extension DiffList on List<num> {
+  /// Return a new List where each element is subtracted from base.
+  List<num> baseline(num base) {
+    return map((each) => base - each).toList();
+  }
+
+  /// Return a new List where each element is delta from the previous.
+  List<num> delta() {
+    final List<num> result = [];
+    num previous = 0;
+    for (var each in this) {
+      result.add(each - previous);
+      previous = each;
+    }
+    return result;
+  }
+
+  /// Return a List of Lists containing value, delta, deltaPercent.
+  List<List<num>> derived() {
+    final List<List<num>> result = [];
+    num previous = 0;
+    for (var each in this) {
+      var delta = each - previous;
+      var percent = (delta / previous) * 100;
+      result.add([each, delta, percent]);
+      previous = each;
+    }
+    return result;
+  }
+}
+
 // Hacky, but ok
 String trimQuotes(String s) {
   var trimmed = s;

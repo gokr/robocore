@@ -11,6 +11,16 @@ import 'package:robocore/uniswap.dart';
 import 'package:robocore/util.dart';
 import 'package:web3dart/web3dart.dart';
 
+class Entity {
+  late String label;
+  late Function format;
+  late String name;
+
+  Entity(this.name, this.label, this.format);
+
+  String toString() => name;
+}
+
 class Pair extends Contract {
   int id;
   String name;
@@ -48,11 +58,13 @@ class Pair extends Contract {
   late num supplyLP;
 
   // Stats indexed by x hours ago
-  Map<int, Map> stats = {};
+  Map<num, Map> stats = {};
 
   BalancerPool? balancer;
 
   num get liquidity => pool2 * 2;
+
+  List<Entity> entities = [];
 
   Pair(this.id, EthClient client, this.name, String addressHex)
       : super(client, 'UniswapPair.json', addressHex) {
@@ -63,12 +75,34 @@ class Pair extends Contract {
 
   initialize() async {
     await super.initialize();
+    initializeEntities();
     await update();
+  }
+
+  initializeEntities() {
+    entities
+      ..add(Entity("reserve0", "Reserve 0", (d) => dec2(d)))
+      ..add(Entity("reserve1", "Reserve 1", (d) => dec2(d)))
+      ..add(Entity("totalSupply", "Supply", (d) => dec2(d)))
+      ..add(Entity("token0Price", "Token 0 price", (d) => dec2(d)))
+      ..add(Entity("token1Price", "Token 1 price", (d) => dec2(d)))
+      ..add(Entity("volumeToken0", "Volume token 0", (d) => dec2(d)))
+      ..add(Entity("volumeToken1", "Volume token 1", (d) => dec2(d)))
+      ..add(Entity("volumeUSD", "Volume USD", (d) => usd0(d)))
+      ..add(Entity(
+          "txCount", "Txn count", (d) => "${(d.isFinite) ? d.truncate() : d}"));
   }
 
   bool operator ==(o) => o is Pair && name == o.name;
 
   int get hashCode => name.hashCode;
+
+  Entity? findEntity(String name) {
+    for (var e in entities) {
+      if (e.name.toLowerCase() == name) return e;
+    }
+    return null;
+  }
 
   Future<List<dynamic>> getReserves() async {
     return await callFunction('getReserves');
@@ -115,21 +149,23 @@ class Pair extends Contract {
 
   /// Load stats for this pair at intervals ago, like [1,6,24,48] being
   /// 1h, 6h, 24h and 48h ago.
-  fetchStats(List<int> intervals) async {
-    Map<int, Map> newStats = {};
-    var qr = await fetchLatestStats();
-    if (qr == null || qr.data == null) {
-      throw Exception("Failed to fetch latest stats");
-    }
-    newStats[0] = qr.data['pair'];
+  fetchDefaultStats(List<num> intervals) async {
+    stats = await fetchStats(intervals);
+  }
+
+  Future<Map<num, Map<dynamic, dynamic>>> fetchStats(
+      List<num> intervals) async {
+    Map<num, Map> newStats = {};
     for (var h in intervals) {
-      var qr = await fetchStatsAgo(Duration(hours: h));
+      var qr = (h == 0)
+          ? await fetchLatestStats()
+          : await fetchStatsAgo(Duration(seconds: (h * 3600).truncate()));
       if (qr == null || qr.data == null) {
         throw Exception("Failed to fetch stats ago $h");
       }
       newStats[h] = qr.data['pair'];
     }
-    stats = newStats;
+    return newStats;
   }
 
   Future<QueryResult?> fetchLatestStats() async {
@@ -144,11 +180,18 @@ class Pair extends Contract {
     return null;
   }
 
-  List<num> statsArray(List<int> keys, String entity) {
-    var base = double.parse(stats[0]?[entity]);
-    var result =
-        keys.map((h) => base - double.parse(stats[h]?[entity])).toList();
-    result.insert(0, base);
+  List<num> statsArray(List<num> keys, String entity) {
+    return extractArray(stats, keys, entity);
+  }
+
+  /// Extract a given entity at keys from the statistics map.
+  List<num> extractArray(Map<num, Map<dynamic, dynamic>> statistics,
+      List<num> keys, String entity) {
+    List<num> result = [];
+    for (var h in keys) {
+      var val = double.parse(statistics[h]?[entity]);
+      result.add(val);
+    }
     return result;
   }
 
