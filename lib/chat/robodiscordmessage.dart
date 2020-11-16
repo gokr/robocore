@@ -22,28 +22,7 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
   }
 
   String get prefix => discordPrefix;
-/*
-  // Is this command valid to execute for this message?
-  bool validCommand(Command cmd) {
-    // Some commands are valid for all in DM, or for select users with access
-    if (isDirectChat) {
-      return (cmd.validForAllInDM || cmd.validForUser(roboUser)) &&
-          matches(cmd);
-    } else {
-      // Otherwise we check whitelist/blacklist of channel ids && users with access
-      return cmd.validForChannel(roboChannel) &&
-          cmd.validForUser(roboUser) &&
-          matches(cmd);
-    }
-  }
 
-
-  bool matches(Command cmd) {
-    return (text.startsWith(discordPrefix + cmd.name) ||
-        (cmd.short != "" && (text == discordPrefix + cmd.short) ||
-            text.startsWith(discordPrefix + cmd.short + " ")));
-  }
-*/
   String get username => e.message.author.username;
   RoboUser get roboUser => RoboUser.discord(e.message.author.id.id);
   RoboChannel get roboChannel => DiscordChannel(e.message.channelId.id);

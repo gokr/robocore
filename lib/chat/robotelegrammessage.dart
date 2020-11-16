@@ -1,9 +1,11 @@
+import 'package:markdown/markdown.dart';
 import 'package:robocore/chat/robochannel.dart';
 import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/chat/robotelegram.dart';
 import 'package:robocore/model/robouser.dart';
 import 'package:robocore/chat/telegramchannel.dart';
 import 'package:robocore/robocore.dart';
+import 'package:robocore/util.dart';
 import 'package:teledart/model.dart';
 
 const telegramPrefix = "/";
@@ -59,7 +61,7 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
 
   @override
   addField(String label, String content) {
-    _answer..writeln('*$label*')..writeln(content);
+    _answer..writeln('<b>$label</b>')..writeln(content);
   }
 
   @override
@@ -73,5 +75,5 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
   }
 
   @override
-  dynamic get answer => _answer.toString();
+  dynamic get answer => _answer.toString().markdownToHTML();
 }

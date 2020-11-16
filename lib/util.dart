@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:intl/intl.dart';
+import 'package:markdown/markdown.dart';
 
 String makeRepeatedString(int n, String str, int maxLength) {
   var buf = StringBuffer();
@@ -12,6 +13,16 @@ String makeRepeatedString(int n, String str, int maxLength) {
     buf.write("...");
   }
   return buf.toString();
+}
+
+extension Markdown on String {
+  /// Hacked Telegram halfass Markdown
+  String markdownToHTML() {
+    var html = markdownToHtml(this);
+    html = html.replaceAll('<p>', '');
+    html = html.replaceAll('</p>', '');
+    return html;
+  }
 }
 
 extension RandomPick on List<String> {
