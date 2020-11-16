@@ -18,7 +18,8 @@ class Uniswap extends GraphQLWrapper {
   /// See https://uniswap.org/docs/v2/API/entities/
   Future<QueryResult?> pairStats(EthereumAddress pair) async {
     try {
-      var options = QueryOptions(documentNode: gql(r'''
+      var options = QueryOptions(
+          documentNode: gql(r'''
   query volumeStats($adr: String!) {
     pair(id: $adr){
       reserve0
@@ -35,7 +36,9 @@ class Uniswap extends GraphQLWrapper {
       txCount
     }
   }
-'''), variables: <String, dynamic>{'adr': pair.hex});
+'''),
+          fetchPolicy: FetchPolicy.networkOnly,
+          variables: <String, dynamic>{'adr': pair.hex});
       var result = await client.query(options);
       return result;
     } catch (e) {
@@ -64,7 +67,10 @@ class Uniswap extends GraphQLWrapper {
       txCount
     }
   }
-'''), variables: <String, dynamic>{'adr': pair.hex, 'block': block.blockNum});
+'''), fetchPolicy: FetchPolicy.cacheFirst, variables: <String, dynamic>{
+        'adr': pair.hex,
+        'block': block.blockNum
+      });
       var result = await client.query(options);
       return result;
     } catch (e) {

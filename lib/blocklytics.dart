@@ -31,13 +31,13 @@ class Blocklytics extends GraphQLWrapper {
     try {
       var options = QueryOptions(documentNode: gql(r'''
   query LatestBlockNumber() {
-    blocks(first: 1, skip: 0, orderBy: number, orderDirection: desc, where: {number_gt: 9300000}) {
+    blocks(first: 1, orderBy: timestamp, orderDirection: desc) {
       id
       number
       timestamp
     }
   }
-'''));
+'''), fetchPolicy: FetchPolicy.networkOnly);
       var result = await client.query(options);
       return int.parse(result.data['blocks'].first['number']);
     } catch (e) {
@@ -56,7 +56,10 @@ class Blocklytics extends GraphQLWrapper {
       timestamp
     }
   }
-'''), variables: <String, dynamic>{'epoch': epoch, 'epochbefore': epochbefore});
+'''), fetchPolicy: FetchPolicy.cacheFirst, variables: <String, dynamic>{
+        'epoch': epoch,
+        'epochbefore': epochbefore
+      });
       var result = await client.query(options);
       return int.parse(result.data['blocks'].first['number']);
     } catch (e) {
