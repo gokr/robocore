@@ -38,7 +38,7 @@ class FAQCommand extends Command {
     "audit": {
       "name": "Audits by Arcadia group",
       "description":
-          "CORE has been audited by Arcadia and is [available here](https://arcadiamgroup.com/audits/CoreFinal.pdf)\\."
+          "CORE has been audited by Arcadia and is [available here](https://arcadiamgroup.com/audits/CoreFinal.pdf) and there is also the [audit for ERC95](https://arcadiamgroup.com/audits/ERC95.pdf)\\."
     },
     "stats": {
       "name": "Statistics around CORE and farming",
