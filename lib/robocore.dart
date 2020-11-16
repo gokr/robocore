@@ -8,6 +8,7 @@ import 'package:robocore/chat/discordchannel.dart';
 import 'package:robocore/chat/robochannel.dart';
 import 'package:robocore/chat/robodiscord.dart';
 import 'package:robocore/chat/robodiscordmessage.dart';
+import 'package:robocore/chat/robofakemessage.dart';
 import 'package:robocore/chat/robotelegram.dart';
 import 'package:robocore/chat/robotelegrammessage.dart';
 import 'package:robocore/model/robouser.dart';
@@ -453,9 +454,28 @@ class Robocore {
     // Create our Ethereum world
     await Ethereum(ethClient).initialize();
 
+    // Add all commands
     buildCommands();
 
     // Standard setup
+    for (var cmd in [
+      "!l add core-eth price 5",
+      "!l add core-cbtc price 5",
+      "!l add core-eth whalebuy 10",
+      "!l add core-cbtc whalebuy 10"
+    ]) {
+      RoboFakeMessage(this, cmd, priceAndTradingChat, gokr).runCommands();
+    }
+    for (var cmd in [
+      "!l add core-eth price 5",
+      "!l add core-cbtc price 5",
+      "!l add core-eth whalebuy 10",
+      "!l add core-cbtc whalebuy 10",
+      "!l add core-eth whalesell 10",
+      "!l add core-cbtc whalesell 10"
+    ]) {
+      RoboFakeMessage(this, cmd, priceDiscussionChannel, gokr).runCommands();
+    }
 
     // One initial update
     await updatePriceInfo(null);
