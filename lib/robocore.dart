@@ -128,6 +128,10 @@ class Robocore {
     await updatePriceInfo(null);
   }
 
+  bool realRobo() {
+    return config['prod'];
+  }
+
   addLogger(EventLogger logger) {
     loggers.removeWhere((element) =>
         element.channel == logger.channel && element.name == logger.name);
@@ -457,24 +461,29 @@ class Robocore {
     // Add all commands
     buildCommands();
 
-    // Standard setup
-    for (var cmd in [
-      "!l add core-eth price 5",
-      "!l add core-cbtc price 5",
-      "!l add core-eth whalebuy 10",
-      "!l add core-cbtc whalebuy 10"
-    ]) {
-      RoboFakeMessage(this, cmd, priceAndTradingChat, gokr).runCommands();
-    }
-    for (var cmd in [
-      "!l add core-eth price 5",
-      "!l add core-cbtc price 5",
-      "!l add core-eth whalebuy 10",
-      "!l add core-cbtc whalebuy 10",
-      "!l add core-eth whalesell 10",
-      "!l add core-cbtc whalesell 10"
-    ]) {
-      RoboFakeMessage(this, cmd, priceDiscussionChannel, gokr).runCommands();
+    // Standard setup, if I am real RoboCORE
+    if (realRobo()) {
+      print("This is prod, performing standard setup");
+      for (var cmd in [
+        "!l add core-eth price 5",
+        "!l add core-cbtc price 5",
+        "!l add core-eth whalebuy 10",
+        "!l add core-cbtc whalebuy 10"
+      ]) {
+        RoboFakeMessage(this, cmd, priceAndTradingChat, gokr).runCommands();
+      }
+      for (var cmd in [
+        "!l add core-eth price 5",
+        "!l add core-cbtc price 5",
+        "!l add core-eth whalebuy 10",
+        "!l add core-cbtc whalebuy 10",
+        "!l add core-eth whalesell 10",
+        "!l add core-cbtc whalesell 10"
+      ]) {
+        RoboFakeMessage(this, cmd, priceDiscussionChannel, gokr).runCommands();
+      }
+    } else {
+      print("This is NOT prod");
     }
 
     // One initial update
