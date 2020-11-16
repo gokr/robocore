@@ -56,7 +56,7 @@ class Blocklytics extends GraphQLWrapper {
       timestamp
     }
   }
-'''), fetchPolicy: FetchPolicy.cacheFirst, variables: <String, dynamic>{
+'''), fetchPolicy: FetchPolicy.networkOnly, variables: <String, dynamic>{
         'epoch': epoch,
         'epochbefore': epochbefore
       });

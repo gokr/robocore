@@ -169,13 +169,13 @@ class Pair extends Contract {
   }
 
   Future<QueryResult?> fetchLatestStats() async {
-    var blk = await blocklytics.latestBlockNumber();
+    /*var blk = await blocklytics.latestBlockNumber();
     print("Latest block: $blk");
     if (blk != null) {
       return await uniswap.pairStatsAtBlock(BlockNum.exact(blk), address);
     }
-    return null;
-    //return await uniswap.pairStats(address);
+    return null;*/
+    return await uniswap.pairStats(address);
   }
 
   Future<QueryResult?> fetchStatsAgo(Duration duration) async {

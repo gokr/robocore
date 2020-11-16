@@ -67,7 +67,7 @@ class Uniswap extends GraphQLWrapper {
       txCount
     }
   }
-'''), fetchPolicy: FetchPolicy.cacheFirst, variables: <String, dynamic>{
+'''), fetchPolicy: FetchPolicy.networkOnly, variables: <String, dynamic>{
         'adr': pair.hex,
         'block': block.blockNum
       });
