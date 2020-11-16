@@ -10,7 +10,7 @@ class FAQCommand extends Command {
     "core": {
       "name": "CORE",
       "description":
-          "CORE is an ERC20 currency token used for the CORE project\\. You can trade CORE on Uniswap in the [CORE\\-ETH](https://info.uniswap.org/pair/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b) pair and the [CORE\\-CBTC](https://info.uniswap.org/pair/0x6fad7d44640c5cd0120deec0301e8cf850becb68) pair\\. Supply is **fixed** at 10000 CORE, and all CORE are distributed\\. CORE is not locked in any way, you are free to buy, hodl and sell CORE like any currency\\. Every trade carries a 1% fee\\."
+          "CORE is a token used for the CORE project\\. You can trade CORE on Uniswap in the [CORE\\-ETH](https://info.uniswap.org/pair/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b) pair and the [CORE\\-CBTC](https://info.uniswap.org/pair/0x6fad7d44640c5cd0120deec0301e8cf850becb68) pair\\. Supply is **fixed** at 10000 CORE, and all CORE are distributed\\. CORE is not locked in any way, you are free to buy, hodl and sell CORE\\. Every trade carries a 1% fee\\."
     },
     "lp": {
       "name": "Liquidity Pool token",
@@ -103,7 +103,7 @@ class FAQCommand extends Command {
       w
         ..addField(section['name'], section['description'])
         ..finish();
-      return await w.reply(w.answer, markdown: true);
+      return await w.reply(w.answer);
     } else {
       return await w.reply("Use $syntax");
     }
