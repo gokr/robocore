@@ -37,11 +37,9 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
   RoboChannel get roboChannel => TelegramChannel(e.chat.id);
   bool get isDirectChat => e.chat.type == "private";
 
-  reply(dynamic answer,
-      {bool disablePreview = true, bool markdown = false}) async {
+  reply(dynamic answer, {bool disablePreview = true}) async {
     await e.reply(answer,
-        parse_mode: (markdown ? 'MarkdownV2' : 'HTML'),
-        disable_web_page_preview: disablePreview);
+        parse_mode: 'HTML', disable_web_page_preview: disablePreview);
   }
 
   String buildHelp() {

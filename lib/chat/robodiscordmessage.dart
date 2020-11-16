@@ -72,8 +72,7 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
   @override
   dynamic get answer => _answer;
 
-  reply(dynamic answer,
-      {bool disablePreview = true, bool markdown = false}) async {
+  reply(dynamic answer, {bool disablePreview = true}) async {
     return channelSend(e.message.channel, answer);
   }
 

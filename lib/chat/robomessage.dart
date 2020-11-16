@@ -85,8 +85,7 @@ mixin RoboMessage on RoboWrapper {
   finish();
   dynamic answer;
 
-  reply(dynamic answer,
-      {bool disablePreview = true, bool markdown = false}) async {}
+  reply(dynamic answer, {bool disablePreview = true}) async {}
 
   dynamic buildHelp();
 }
