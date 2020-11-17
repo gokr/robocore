@@ -59,14 +59,14 @@ class WhaleSellLogger extends WhaleLogger {
                 name:
                     ":whale: Sold ${dec2(pair.raw1(swap.amount1))} ${pair.token1name} for ${dec2(pair.raw2(swap.amount1Out))} ${pair.token2name}!",
                 content:
-                    ":chart_with_downwards_trend: [address](https://etherscan.io/address/${swap.to}) [txn](https://etherscan.io/tx/${swap.tx})")
+                    ":chart_with_downwards_trend: [address](https://etherscan.io/address/${swap.sender}) [txn](https://etherscan.io/tx/${swap.tx})")
             ..addField(
                 name: "Price now ${pair.priceString1()}", content: hearts)
             ..timestamp = DateTime.now().toUtc();
         } else {
           var hearts = makeSorrys(core, 1024);
           answer = """
-🐳 <b>Sold ${dec2(pair.raw1(swap.amount1))} ${pair.token1name} for ${dec2(pair.raw2(swap.amount1Out))} ${pair.token2name}!</b> <a href=\"https://etherscan.io/address/${swap.to}\">address</a> <a href=\"https://etherscan.io/tx/${swap.tx}\">txn</a>
+🐳 <b>Sold ${dec2(pair.raw1(swap.amount1))} ${pair.token1name} for ${dec2(pair.raw2(swap.amount1Out))} ${pair.token2name}!</b> <a href=\"https://etherscan.io/address/${swap.sender}\">address</a> <a href=\"https://etherscan.io/tx/${swap.tx}\">txn</a>
 $hearts
 Price now ${pair.priceString1()}
 """;
