@@ -27,6 +27,7 @@ class Ethereum {
 
   late Contract LGE2;
   late CoreVault COREVAULT;
+  late Contract TRANSFERCHECKER;
 
   Ethereum(this.client) {
     ethereum = this;
@@ -39,6 +40,11 @@ class Ethereum {
     await LGE2.initialize();
     COREVAULT = CoreVault(client);
     await COREVAULT.initialize();
+    TRANSFERCHECKER = Contract(client, 'TransferChecker.json',
+        '0x2e2A33CECA9aeF101d679ed058368ac994118E7a');
+    await TRANSFERCHECKER.initialize();
+
+    // feePercentX100
 
     // Tokens
     CORE = Token.customAbi(

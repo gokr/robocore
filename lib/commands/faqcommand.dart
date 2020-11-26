@@ -1,5 +1,7 @@
+import 'package:mustache/mustache.dart';
 import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/commands/command.dart';
+import 'package:robocore/robocore.dart';
 
 class FAQCommand extends Command {
   FAQCommand()
@@ -83,6 +85,25 @@ class FAQCommand extends Command {
 [0xdec4f](https://twitter.com/0xdec4f)
 [Göran](https://twitter.com/gorankrampe)
 """
+    },
+    "slippage": {
+      "name": "Why can't I trade CORE on uniswap?",
+      "description": """
+You must raise the slippage of the trade to account for the FoT (Fee on Transfer) as well as any real slippage. Current FoT is {{fot}}%.
+When the fee is the normal 1%, unless your trade is large you will not have to change the setting.
+      """
+    },
+    "circuit": {
+      "name": "Circuit Breaker",
+      "description": """
+A mechanism employed for the first time in the run up to and including the LG3 event period. This mechanism dynamically raises the FoT and is intended to prevent price gaming and capital extraction that happened on the run up to and beginning of the LGE2 event. Currently FoT is {{fot}}%.
+      """
+    },
+    "fot": {
+      "name": "Fee on Transfer (FoT)",
+      "description": """
+A unique feature of the CORE ecosystem. This adjustable fee is used to determine the percentage of transfer and sell volume (not buy) that is paid back to the LP holders. It is currently {{fot}}%.
+"""
     }
   };
 
@@ -101,11 +122,17 @@ class FAQCommand extends Command {
       }
       var section = faq[topic];
       w
-        ..addField(section['name'], section['description'])
+        ..addField(section['name'], await merge(section['description'], w.bot))
         ..finish();
       return await w.reply(w.answer);
     } else {
       return await w.reply("Use $syntax");
     }
+  }
+
+  Future<String> merge(String description, Robocore bot) async {
+    var temp = Template(description,
+        name: 'test', lenient: false, htmlEscapeValues: false);
+    return temp.renderString({'fot': await bot.getFot()});
   }
 }

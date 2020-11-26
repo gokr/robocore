@@ -170,6 +170,12 @@ class Robocore {
     return await teledart.telegram.getChat(id);
   }
 
+  Future<double> getFot() async {
+    final result =
+        await ethereum.TRANSFERCHECKER.callFunction('feePercentX100');
+    return result.first.toDouble() / 10.0;
+  }
+
 /*
   updateLGE2Info() async {
     //lge2CORE = raw18(await core.lge2TotalCOREContributed());
@@ -201,7 +207,7 @@ class Robocore {
     var reserves = await ethereum.ETH2USDT.getReserves();
     priceETHinUSD = raw6(reserves[1]) / raw18(reserves[0]);
     reserves = await ethereum.WBTC2ETH.getReserves();
-    priceWBTCinETH = raw6(reserves[1]) / raw8(reserves[0]);
+    priceWBTCinETH = raw18(reserves[1]) / raw8(reserves[0]);
     priceWBTCinUSD = priceWBTCinETH * priceETHinUSD;
     //reserves = await ethereum.WBTC2USDT.getReserves();
     //priceWBTCinUSD = raw6(reserves[1]) / raw8(reserves[0]);
