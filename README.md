@@ -56,3 +56,48 @@ Use a systemd service file like this for `robocore`, and one for `roboserver`:
 
     [Install]
     WantedBy=multi-user.target
+
+## Docker
+I don't really like Docker but I decided to use it for Quickchart due to complicated dependencies.
+
+        sudo apt install docker.io
+        sudo systemctl start docker
+        sudo systemctl enable docker
+
+## QuickChart
+We run Quickchart server in Docker, due to making sure dependencies stay solid.
+
+We want to run in systemd so:
+
+        [Unit]
+        Description=Quickchart
+        After=docker.service
+        Requires=docker.service
+
+        [Service]
+        TimeoutStartSec=0
+        Restart=always
+        ExecStartPre=-/usr/bin/docker exec quickchart stop
+        ExecStartPre=-/usr/bin/docker rm quickchart
+        ExecStartPre=-/usr/bin/docker pull ianw/quickchart:v1.4.3
+        ExecStart=/usr/bin/docker run --rm --name quickchart -p 8089:3400  ianw/quickchart:v1.4.3
+
+        [Install]
+        WantedBy=default.target
+
+To start the service using systemd:
+
+        sudo systemctl daemon-reload
+        sudo systemctl start quickchart
+        sudo systemctl status quickchart
+
+Enable the systemd service so that quickchart starts at boot.
+
+        sudo systemctl enable quickchart.service
+
+
+See
+
+https://quickchart.io/documentation/
+
+https://github.com/typpo/quickchart
