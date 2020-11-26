@@ -31,7 +31,7 @@ class RoboDiscord extends RoboWrapper {
   Future<int> send(int channelId, dynamic content,
       {bool disablePreview = true, bool markdown = true}) async {
     var channel = await bot.getDiscordChannel(channelId);
-    dynamic message = channelSend(channel, content);
+    var message = await channelSend(channel, content);
     return message.id.id;
   }
 
@@ -40,7 +40,7 @@ class RoboDiscord extends RoboWrapper {
     message.pinMessage();
   }
 
-  Future<dynamic> channelSend(ITextChannel channel, dynamic content) async {
+  Future<Message> channelSend(ITextChannel channel, dynamic content) async {
     if (content is EmbedBuilder) {
       return await channel.send(embed: content);
     } else {

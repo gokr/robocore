@@ -180,7 +180,7 @@ class Pair extends Contract {
 
   Future<QueryResult?> fetchStatsAgo(Duration duration) async {
     var blk = await blocklytics.blockAgo(duration);
-    print("Duration: $duration block: $blk");
+    //print("Duration: $duration block: $blk");
     if (blk != null) {
       return await uniswap.pairStatsAtBlock(blk, address);
     }
