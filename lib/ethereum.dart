@@ -22,7 +22,7 @@ class Ethereum {
   DateTime? statsTimestamp = DateTime.now().subtract(Duration(minutes: 10));
 
   late Pair ETH2USDT;
-  late Pair WBTC2USDT;
+  //late Pair WBTC2USDT; No liquidity, can not be used
   late Pair WBTC2ETH;
 
   late Contract LGE2;
@@ -80,7 +80,7 @@ class Ethereum {
       ..token2name = "USDT";
     await addPair(ETH2USDT);
 
-    WBTC2USDT = Pair(
+    /*WBTC2USDT = Pair(
         4, client, "wbtc-usdt", '0x0de0fa91b6dbab8c8503aaa2d1dfa91a192cb149');
     WBTC2USDT
       ..decimals1 = 8
@@ -88,6 +88,7 @@ class Ethereum {
       ..token1name = "WBTC"
       ..token2name = "USDT";
     await addPair(WBTC2USDT);
+    */
 
     WBTC2ETH = Pair(
         5, client, "wbtc-eth", '0xbb2b8038a1640196fbe3e38816f3e67cba72d940');

@@ -83,6 +83,7 @@ class Robocore {
   List<Command> commands = [];
 
   late num priceETHinUSD,
+      priceWBTCinETH,
       priceWBTCinUSD,
       floorCOREinUSD,
       floorCOREinETH,
@@ -95,17 +96,6 @@ class Robocore {
       TLLinUSD,
       TVPLinUSD;
 
-/*  late num lge2COREBought,
-      lge2COREBoughtInUSD,
-      lge2COREBoughtLast24Hours,
-      lge2COREBoughtLast24HoursInUSD,
-      lge2CORE,
-      lge2WBTC,
-      lge2COREinUSD,
-      lge2WBTCinUSD,
-      lge2ETHContributedLastHour,
-      lge2ETHContributedLastHourInUSD;
-*/
   Robocore(this.config);
 
   // Just testing stuff
@@ -206,12 +196,15 @@ class Robocore {
     lge2WBTCinUSD = lge2WBTC * priceWBTCinUSD;
   }
 */
-  // Update base metrics
+  // Update base metrics to get ETH and WBTC in USD.
   updateBaseMetrics() async {
     var reserves = await ethereum.ETH2USDT.getReserves();
     priceETHinUSD = raw6(reserves[1]) / raw18(reserves[0]);
-    reserves = await ethereum.WBTC2USDT.getReserves();
-    priceWBTCinUSD = raw6(reserves[1]) / raw8(reserves[0]);
+    reserves = await ethereum.WBTC2ETH.getReserves();
+    priceWBTCinETH = raw6(reserves[1]) / raw8(reserves[0]);
+    priceWBTCinUSD = priceWBTCinETH * priceETHinUSD;
+    //reserves = await ethereum.WBTC2USDT.getReserves();
+    //priceWBTCinUSD = raw6(reserves[1]) / raw8(reserves[0]);
   }
 
   /// Update base metrics (USD prices), the affected pair and finally floor of CORE.

@@ -15,13 +15,14 @@ class PairCommand extends Command {
     // Only !pair
     if (parts.length == 1) {
       try {
+        w.bot.updateBaseMetrics();
         const intervals = [0, 1, 6, 24, 48];
         var vol1 = ethereum.CORE2ETH.statsArray(intervals, 'volumeUSD');
         vol1 = vol1.baseline(vol1.first);
         // We had to hack this one because Uniswap sends 0
         var vol2 = ethereum.CORE2CBTC.statsArray(intervals, 'volumeToken1');
         vol2 = vol2.baseline(vol2.first);
-        var priceWBTCinUSD = ethereum.WBTC2USDT.price1;
+        var priceWBTCinUSD = w.bot.priceWBTCinUSD;
         vol2 = vol2.map((btc) => btc * priceWBTCinUSD).toList();
         var txn1 = ethereum.CORE2ETH.statsArray(intervals, 'txCount');
         txn1 = txn1.baseline(txn1.first);
