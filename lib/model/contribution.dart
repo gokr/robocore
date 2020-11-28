@@ -94,7 +94,7 @@ class Contribution {
           "log": log,
           "deviation": deviation
         });
-    print(result);
+    //print(result);
   }
 
   static Future<List<Contribution>> getAll() async {
