@@ -67,6 +67,20 @@ class Roboserver {
       swap.save();
     });
 
+    // We listen to all Contributions on LGE3
+    subscription = ethereum.LGE3.listenToEvent('Contibution', (ev, event) {
+      //print("Topics: ${event.topics} data: ${event.data}");
+      var contrib = Contribution.from(3, ev, event);
+      contrib.insert();
+    });
+
+    // We listen to all COREBought on LGE3
+    subscription = ethereum.LGE3.listenToEvent('COREBought', (ev, event) {
+      //print("Topics: ${event.topics} data: ${event.data}");
+      var cb = CoreBought.from(3, ev, event);
+      cb.save();
+    });
+
     /*
     // We listen to all Contributions on LGE2
     subscription =

@@ -50,9 +50,9 @@ class CoreBought {
     return results;
   }
 
-  static Future<BigInt> getTotalSum() async {
-    List<List<dynamic>> results =
-        await db.query("select sum(coreamt) from \"_corebought\"");
+  static Future<BigInt> getTotalSum(int lge) async {
+    List<List<dynamic>> results = await db
+        .query("select sum(coreamt) from \"_corebought\" where lge = $lge");
     var res = results.first[0];
     if (res is String) {
       return BigInt.zero;

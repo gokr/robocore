@@ -13,12 +13,11 @@ late Ethereum ethereum;
 class Ethereum {
   EthClient client;
 
-  late Token CORE, WBTC, WETH;
+  late Token CORE, WBTC, WETH, DAI;
 
   Map<String, Pair> pairs = {};
 
-  late Pair CORE2ETH;
-  late Pair CORE2CBTC;
+  late Pair CORE2ETH, CORE2CBTC, DAI2ETH;
   DateTime? statsTimestamp = DateTime.now().subtract(Duration(minutes: 10));
 
   late Pair ETH2USDT;
@@ -26,6 +25,7 @@ class Ethereum {
   late Pair WBTC2ETH;
 
   late Contract LGE2;
+  late Contract LGE3;
   late CoreVault COREVAULT;
   late Contract TRANSFERCHECKER;
 
@@ -40,11 +40,17 @@ class Ethereum {
     await LGE2.initialize();
     COREVAULT = CoreVault(client);
     await COREVAULT.initialize();
+
+    LGE3 = Contract(client, 'CORE_LGE_3.json',
+        '0xaac50b95fbb13956d7c45511f24c3bf9e2a4a76b');
+    await LGE3.initialize();
+
+    COREVAULT = CoreVault(client);
+    await COREVAULT.initialize();
+
     TRANSFERCHECKER = Contract(client, 'TransferChecker.json',
         '0x2e2A33CECA9aeF101d679ed058368ac994118E7a');
     await TRANSFERCHECKER.initialize();
-
-    // feePercentX100
 
     // Tokens
     CORE = Token.customAbi(
@@ -54,6 +60,8 @@ class Ethereum {
     await WBTC.initialize();
     WETH = Token(client, '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2');
     await WETH.initialize();
+    DAI = Token(client, '0x6b175474e89094c44da98b954eedeac495271d0f');
+    await DAI.initialize();
 
     // Uniswap pairs
     CORE2ETH = Pair(
@@ -85,6 +93,13 @@ class Ethereum {
       ..token1name = "ETH"
       ..token2name = "USDT";
     await addPair(ETH2USDT);
+
+    DAI2ETH = Pair(
+        4, client, "dai-eth", '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11');
+    DAI2ETH
+      ..token1name = "DAI"
+      ..token2name = "ETH";
+    await addPair(DAI2ETH);
 
     /*WBTC2USDT = Pair(
         4, client, "wbtc-usdt", '0x0de0fa91b6dbab8c8503aaa2d1dfa91a192cb149');
