@@ -49,6 +49,7 @@ class Contribution {
     tx = fe.transactionHash;
     coreValue = decoded[0] as BigInt;
     sender = decoded[1] as EthereumAddress;
+    coin = 'core';
   }
 
   static Future<PostgreSQLResult> dropTable() async {
