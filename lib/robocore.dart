@@ -216,7 +216,7 @@ class Robocore {
     lge3DAI = raw18(await ethereum.DAI.balanceOf(ethereum.LGE3.address));
     lge3DAIinUSD = lge3DAI * priceDAIinUSD;
     lge3WETH = raw18(await ethereum.WETH.balanceOf(ethereum.LGE3.address));
-    lge3WETHinUSD = lge3DAI * priceDAIinUSD;
+    lge3WETHinUSD = lge3WETH * priceETHinUSD;
   }
 
 /*
