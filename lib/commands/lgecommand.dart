@@ -1,8 +1,6 @@
-//    uint256 public totalETHContributed;
-//    uint256 public totalCOREContributed;
-//    uint256 public totalWrapTokenContributed;
 import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/commands/command.dart';
+import 'package:robocore/util.dart';
 
 class LGECommand extends Command {
   LGECommand()
@@ -11,56 +9,24 @@ class LGECommand extends Command {
 
   @override
   handleMessage(RoboMessage w) async {
-    dynamic answer;
     var bot = w.bot;
-    // await bot.updateLGE2Info();
-    return await w.reply("There is no ongoing LGE right now");
-/*
-    if (w is RoboDiscordMessage) {
-      answer = EmbedBuilder()
-        ..addField(
-            name: "Total CORE in LGE now",
-            content: "${dec2(bot.lge2CORE)} CORE, (${usd2(bot.lge2COREinUSD)})")
-        ..addField(
-            name: "Total WBTC in LGE now",
-            content: "${dec2(bot.lge2WBTC)} WBTC, (${usd2(bot.lge2WBTCinUSD)})")
-        ..addField(
-            name: "Total liquidity",
-            content: "${usd2(bot.lge2WBTCinUSD + bot.lge2COREinUSD)}")
-        ..addField(
-            name: "Contributed ETH last hour",
-            content: "${usd2(bot.lge2ETHContributedLastHourInUSD)}")
-        ..addField(
-            name: "Market bought CORE so far",
-            content:
-                "${dec2(bot.lge2COREBought)} CORE, (${usd2(bot.lge2COREBoughtInUSD)})")
-        ..addField(
-            name: "Market bought CORE last 24 hours",
-            content:
-                "${dec2(bot.lge2COREBoughtLast24Hours)} CORE, (${usd2(bot.lge2COREBoughtLast24HoursInUSD)})")
-        ..addFooter((footer) {
-          footer.text = "Keep on swimming";
-          //footer.text = "LGE2 ends in ${bot.lge2TimeLeftString()}!";
-        })
-        ..timestamp = DateTime.now().toUtc()
-        ..color = w.color();
-    } else {
-      answer = """
-<b>Total CORE in LGE now</b>
-${dec2(bot.lge2CORE)} CORE, (${usd2(bot.lge2COREinUSD)})
-<b>Total WBTC in LGE now</b>
-${dec2(bot.lge2WBTC)} WBTC, (${usd2(bot.lge2WBTCinUSD)})
-<b>Total liquidity</b>
-${usd2(bot.lge2WBTCinUSD + bot.lge2COREinUSD)}
-<b>Contributed ETH last hour</b>
-${usd2(bot.lge2ETHContributedLastHourInUSD)}
-<b>Bought CORE so far</b>
-${dec2(bot.lge2COREBought)} CORE, (${usd2(bot.lge2COREBoughtInUSD)})
-<b>Bought CORE last 24 hours</b>
-${dec2(bot.lge2COREBoughtLast24Hours)} CORE, (${usd2(bot.lge2COREBoughtLast24HoursInUSD)})
-""";
-    }
-    return await w.reply(answer);
-    */
+    await bot.updateLGE3Info();
+    //return await w.reply("There is no ongoing LGE right now");
+    w
+      ..addField("Total CORE in LGE now",
+          "${dec2(bot.lge3CORE)} CORE, (${usd2(bot.lge3COREinUSD)})")
+      ..addField("Total DAI in LGE now",
+          "${dec2(bot.lge3DAI)} DAI, (${usd2(bot.lge3DAIinUSD)})")
+      ..addField(
+          "Total liquidity", "${usd2(bot.lge3DAIinUSD + bot.lge3COREinUSD)}")
+      ..addField("Contributed value in USD last hour",
+          "${usd2(bot.lge3COREContributedLastHourInUSD)}")
+      ..addField("Market bought CORE so far",
+          "${dec2(bot.lge3COREBought)} CORE, (${usd2(bot.lge3COREBoughtInUSD)})")
+      ..addField("Market bought CORE last 24 hours",
+          "${dec2(bot.lge3COREBoughtLast24Hours)} CORE, (${usd2(bot.lge3COREBoughtLast24HoursInUSD)})")
+      //..addFooter("LGE3 ends in ${bot.lge3TimeLeftString()}!")
+      ..finish();
+    return await w.reply(w.answer);
   }
 }

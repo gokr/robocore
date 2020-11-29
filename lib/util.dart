@@ -15,6 +15,17 @@ String makeRepeatedString(int n, String str, int maxLength) {
   return buf.toString();
 }
 
+// For Telegram
+String makeHearts(num eth, int limit) {
+  return makeRepeatedString(eth.round(), "💚", limit);
+}
+
+// For Discord
+String makeHappies(num core, int limit) {
+  var char = ["🦕", "🐉", "💚", "🍀", "🍏", "✅"].pickRandom();
+  return makeRepeatedString(core.round(), char, limit);
+}
+
 extension Markdown on String {
   /// Hacked Telegram halfass Markdown
   String markdownToHTML() {

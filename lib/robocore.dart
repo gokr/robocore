@@ -11,6 +11,9 @@ import 'package:robocore/chat/robodiscordmessage.dart';
 import 'package:robocore/chat/robofakemessage.dart';
 import 'package:robocore/chat/robotelegram.dart';
 import 'package:robocore/chat/robotelegrammessage.dart';
+import 'package:robocore/commands/fakecommand.dart';
+import 'package:robocore/model/contribution.dart';
+import 'package:robocore/model/corebought.dart';
 import 'package:robocore/model/robouser.dart';
 import 'package:robocore/chat/telegramchannel.dart';
 import 'package:robocore/commands/admincommand.dart';
@@ -49,6 +52,7 @@ var X3 = RoboUser.both(757109953910538341, 1358048057);
 
 var priceDiscussionChannel = DiscordChannel(759890072392302592);
 var priceAndTradingChat = TelegramChannel(-1001361865863);
+var officialChat = TelegramChannel(-1001195529102);
 var robocoreChannel = DiscordChannel(764120413507813417);
 var robocoreDevelopmentChannel = DiscordChannel(763138788297408552);
 
@@ -95,6 +99,19 @@ class Robocore {
       floorLiquidity2,
       TLLinUSD,
       TVPLinUSD;
+
+  late num lge3COREBought,
+      lge3COREBoughtInUSD,
+      lge3COREBoughtLast24Hours,
+      lge3COREBoughtLast24HoursInUSD,
+      lge3COREContributed,
+      lge3COREContributedInUSD,
+      lge3COREContributedLastHour,
+      lge3COREContributedLastHourInUSD,
+      lge3CORE,
+      lge3COREinUSD,
+      lge3DAI,
+      lge3DAIinUSD;
 
   Robocore(this.config);
 
@@ -174,6 +191,27 @@ class Robocore {
     final result =
         await ethereum.TRANSFERCHECKER.callFunction('feePercentX100');
     return result.first.toDouble() / 10.0;
+  }
+
+  updateLGE3Info() async {
+    lge3COREBought = raw18(await CoreBought.getTotalSum(3));
+    lge3COREBoughtInUSD = lge3COREBought * priceCOREinUSD;
+    lge3COREBoughtLast24Hours =
+        raw18(await CoreBought.getSumLast(Duration(hours: 24)));
+    lge3COREBoughtLast24HoursInUSD = lge3COREBoughtLast24Hours * priceCOREinUSD;
+
+    lge3COREContributedLastHour =
+        raw18(await Contribution.getSumLast(Duration(hours: 1)));
+    lge3COREContributedLastHourInUSD =
+        lge3COREContributedLastHour * priceCOREinUSD;
+
+    lge3COREContributed = raw18(await Contribution.getTotalSum(3));
+    lge3COREContributedInUSD = lge3COREContributed * priceCOREinUSD;
+
+    lge3CORE = raw18(await ethereum.CORE.balanceOf(ethereum.LGE3.address));
+    lge3COREinUSD = lge3CORE * priceCOREinUSD;
+    lge3DAI = raw8(await ethereum.DAI.balanceOf(ethereum.LGE3.address));
+    lge3DAIinUSD = lge3DAI * priceDAIinUSD;
   }
 
 /*
@@ -332,6 +370,8 @@ class Robocore {
   num get priceETHinCORE => ethereum.CORE2ETH.price2;
   num get priceCBTCinCORE => ethereum.CORE2CBTC.price2;
   num get priceCOREinUSD => priceCOREinETH * priceETHinUSD;
+  num get priceDAIinETH => ethereum.DAI2ETH.price1;
+  num get priceDAIinUSD => priceDAIinETH * priceETHinUSD;
   num get valueLPinETH => ethereum.CORE2ETH.valueLP;
   num get valueLPinUSD => valueLPinETH * priceETHinUSD;
   num get priceLPinETH => ethereum.CORE2ETH.priceLP;
@@ -400,11 +440,12 @@ class Robocore {
   buildCommands() {
     commands
       ..add(MentionCommand())
-      ..add(HelpCommand())
+      ..add(HelpCommand()..blacklist = [officialChat])
+      //..add(FakeCommand()..users = [gokr])
       ..add(FAQCommand())
-      ..add(StartCommand())
-      ..add(StatsCommand())
-      ..add(LGECommand())
+      ..add(StartCommand()..blacklist = [officialChat])
+      ..add(StatsCommand()..blacklist = [officialChat])
+      ..add(LGECommand()..blacklist = [officialChat])
       ..add(LogCommand()
         ..validForAllInDM = true
         ..users = [gokr, CryptoXman, xRevert, X3]
@@ -415,9 +456,9 @@ class Robocore {
           robocoreChannel,
           robocoreDevelopmentChannel
         ])
-      ..add(PriceCommand())
-      ..add(PairCommand())
-      ..add(TLLCommand())
+      ..add(PriceCommand()..blacklist = [officialChat])
+      ..add(PairCommand()..blacklist = [officialChat])
+      ..add(TLLCommand()..blacklist = [officialChat])
       ..add(IdCommand())
       ..add(AdminCommand()..users = [gokr])
       ..add(PosterCommand()..users = [gokr, CryptoXman, xRevert, X3]);
@@ -512,6 +553,21 @@ class Robocore {
       }
     });
 
+    // We listen to all Contributions on LGE3
+    subscription =
+        ethereum.LGE3.listenToEvent('Contibution', (ev, event) async {
+      //print("Topics: ${event.topics} data: ${event.data}");
+      var contrib = Contribution.from(3, ev, event);
+      await logContribution(contrib);
+    });
+
+    // We listen to all COREBought on LGE3
+    subscription = ethereum.LGE3.listenToEvent('COREBought', (ev, event) async {
+      //print("Topics: ${event.topics} data: ${event.data}");
+      var cb = CoreBought.from(3, ev, event);
+      await logCoreBought(cb);
+    });
+
     // When we are ready in Discord
     nyxx.onReady.listen((ReadyEvent e) async {
       log.info("Robocore in Discord is ready!");
@@ -596,5 +652,79 @@ class Robocore {
     scheduler.start();
     await ProcessSignal.sigterm.watch().first;
     await scheduler.stop();
+  }
+
+  logContribution(Contribution c) async {
+    await updateLGE3Info();
+    var core = raw18(c.coreValue);
+    var eth = core * priceCOREinETH;
+    var limit1kusd = 1000 / priceCOREinUSD;
+    if (core > limit1kusd) {
+      for (var channel in [priceDiscussionChannel, priceAndTradingChat]) {
+        //for (var channel in [robocoreTestChannel, robocoreTestGroup]) {
+        var wrapper = channel.getWrapperFromBot(this);
+        var answer;
+        if (wrapper is RoboDiscord) {
+          var happies = makeHappies(eth, 190);
+          answer = EmbedBuilder()
+            ..addField(
+                name:
+                    "Contribution ${dec4(core)} CORE value (${usd2(priceCOREinUSD * core)} or ${dec4(priceCOREinETH * core)} ETH)",
+                content: """
+[address](https://etherscan.io/address/${c.sender}) [txn](https://etherscan.io/tx/${c.tx})
+$happies""")
+            ..addField(
+                name: "Total contribution",
+                content:
+                    "${dec4(lge3COREContributed)} CORE value (${usd2(priceCOREinUSD * lge3COREContributed)} or ${dec4(priceCOREinETH * lge3COREContributed)} ETH)")
+            ..timestamp = DateTime.now().toUtc();
+        } else {
+          var hearts = makeHearts(eth, 1024);
+          answer = """
+<b>Contribution ${dec4(core)} CORE value  (${usd2(priceCOREinUSD * core)} or ${dec4(priceCOREinETH * core)} ETH)</b>
+<a href=\"https://etherscan.io/address/${c.sender}\">address</a> <a href="\https://etherscan.io/tx/${c.tx}\">tx</a>
+$hearts
+<b>Total contribution</b>
+${dec4(lge3COREContributed)} CORE value (${usd2(priceCOREinUSD * lge3COREContributed)} or ${dec4(priceCOREinETH * lge3COREContributed)} ETH)
+""";
+        }
+        wrapper.send(channel.id, answer, markdown: false, disablePreview: true);
+      }
+    }
+  }
+
+  logCoreBought(CoreBought c) {
+    for (var channel in [priceDiscussionChannel, priceAndTradingChat]) {
+      //for (var channel in [robocoreTestChannel, robocoreTestGroup]) {
+      var wrapper = channel.getWrapperFromBot(this);
+      var answer;
+      var core = raw18(c.coreAmt);
+      var eth = core * priceCOREinETH;
+      if (wrapper is RoboDiscord) {
+        var happies = makeHappies(eth, 190);
+        answer = EmbedBuilder()
+          ..addField(
+              name:
+                  "Market buy ${dec4(core)} CORE (${usd2(priceCOREinUSD * core)} or ${dec4(priceCOREinETH * core)} ETH)",
+              content: """
+[address](https://etherscan.io/address/${c.sender}) [txn](https://etherscan.io/tx/${c.tx})
+$happies""")
+          ..addField(
+              name: "Total market bought",
+              content:
+                  "${dec4(lge3COREBought)} CORE value (${usd2(priceCOREinUSD * lge3COREBought)} or ${dec4(priceCOREinETH * lge3COREBought)} ETH)")
+          ..timestamp = DateTime.now().toUtc();
+      } else {
+        var hearts = makeHearts(eth, 1024);
+        answer = """
+<b>Market buy ${dec4(core)} CORE (${usd2(priceCOREinUSD * core)} (${dec4(priceCOREinETH * core)} ETH)</b>
+<a href=\"https://etherscan.io/address/${c.sender}\">address</a> <a href="\https://etherscan.io/tx/${c.tx}\">tx</a>
+$hearts
+<b>Total market bought</b>
+${dec4(lge3COREBought)} CORE value (${usd2(priceCOREinUSD * lge3COREBought)} or ${dec4(priceCOREinETH * lge3COREBought)} ETH)
+""";
+      }
+      wrapper.send(channel.id, answer, markdown: false, disablePreview: true);
+    }
   }
 }
