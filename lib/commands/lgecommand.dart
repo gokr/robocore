@@ -17,8 +17,10 @@ class LGECommand extends Command {
           "${dec2(bot.lge3CORE)} CORE, (${usd2(bot.lge3COREinUSD)})")
       ..addField("Total DAI in LGE now",
           "${dec2(bot.lge3DAI)} DAI, (${usd2(bot.lge3DAIinUSD)})")
-      ..addField(
-          "Total liquidity", "${usd2(bot.lge3DAIinUSD + bot.lge3COREinUSD)}")
+      ..addField("Total WETH in LGE now",
+          "${dec2(bot.lge3WETH)} WETH, (${usd2(bot.lge3WETHinUSD)})")
+      ..addField("Total liquidity",
+          "${usd2(bot.lge3DAIinUSD + bot.lge3COREinUSD + bot.lge3WETHinUSD)}")
       ..addField("Contributed value in USD last hour",
           "${usd2(bot.lge3COREContributedLastHourInUSD)}")
       ..addField("Market bought CORE so far",

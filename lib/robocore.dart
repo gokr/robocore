@@ -112,7 +112,9 @@ class Robocore {
       lge3CORE,
       lge3COREinUSD,
       lge3DAI,
-      lge3DAIinUSD;
+      lge3DAIinUSD,
+      lge3WETH,
+      lge3WETHinUSD;
 
   Robocore(this.config);
 
@@ -206,13 +208,15 @@ class Robocore {
     lge3COREContributedLastHourInUSD =
         lge3COREContributedLastHour * priceCOREinUSD;
 
-    lge3COREContributed = raw18(await Contribution.getTotalSum(3));
-    lge3COREContributedInUSD = lge3COREContributed * priceCOREinUSD;
+    //lge3COREContributed = raw18(await Contribution.getTotalSum(3));
+    //lge3COREContributedInUSD = lge3COREContributed * priceCOREinUSD;
 
     lge3CORE = raw18(await ethereum.CORE.balanceOf(ethereum.LGE3.address));
     lge3COREinUSD = lge3CORE * priceCOREinUSD;
     lge3DAI = raw18(await ethereum.DAI.balanceOf(ethereum.LGE3.address));
     lge3DAIinUSD = lge3DAI * priceDAIinUSD;
+    lge3WETH = raw18(await ethereum.WETH.balanceOf(ethereum.LGE3.address));
+    lge3WETHinUSD = lge3DAI * priceDAIinUSD;
   }
 
 /*
@@ -681,7 +685,7 @@ $happies""")
             ..addField(
                 name: "Total contribution",
                 content:
-                    "${dec4(lge3COREContributed)} CORE value (${usd2(priceCOREinUSD * lge3COREContributed)} or ${dec4(priceCOREinETH * lge3COREContributed)} ETH)")
+                    "${dec4(lge3CORE)} CORE, ${dec4(lge3DAI)} DAI, ${dec4(lge3WETH)} WETH (${usd2(lge3COREinUSD + lge3WETHinUSD + lge3DAIinUSD)})")
             ..timestamp = DateTime.now().toUtc();
         } else {
           var hearts = makeHearts(eth, 1024);
@@ -690,7 +694,7 @@ $happies""")
 <a href=\"https://etherscan.io/address/${c.sender}\">address</a> <a href="\https://etherscan.io/tx/${c.tx}\">tx</a>
 $hearts
 <b>Total contribution</b>
-${dec4(lge3COREContributed)} CORE value (${usd2(priceCOREinUSD * lge3COREContributed)} or ${dec4(priceCOREinETH * lge3COREContributed)} ETH)
+${dec4(lge3CORE)} CORE, ${dec4(lge3DAI)} DAI, ${dec4(lge3WETH)} WETH (${usd2(lge3COREinUSD + lge3WETHinUSD + lge3DAIinUSD)})
 """;
         }
         wrapper.send(channel.id, answer, markdown: false, disablePreview: true);
