@@ -58,7 +58,8 @@ class Ethereum {
     await CORE.initialize();
     WBTC = Token(client, '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599');
     await WBTC.initialize();
-    WETH = Token(client, '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2');
+    WETH = Token.customAbi(
+        client, 'WETH.json', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2');
     await WETH.initialize();
     DAI = Token(client, '0x6b175474e89094c44da98b954eedeac495271d0f');
     await DAI.initialize();
