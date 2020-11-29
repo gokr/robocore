@@ -50,9 +50,10 @@ var CryptoXman = RoboUser.both(298396371789152258, 1179513113);
 var xRevert = RoboUser.both(751362716962390086, 1118664380);
 var X3 = RoboUser.both(757109953910538341, 1358048057);
 
-var priceDiscussionChannel = DiscordChannel(759890072392302592);
-var priceAndTradingChat = TelegramChannel(-1001361865863);
 var officialChat = TelegramChannel(-1001195529102);
+var priceAndTradingChat = TelegramChannel(-1001361865863);
+var coreLPTradingChat = TelegramChannel(-1001443117633);
+var priceDiscussionChannel = DiscordChannel(759890072392302592);
 var robocoreChannel = DiscordChannel(764120413507813417);
 var robocoreDevelopmentChannel = DiscordChannel(763138788297408552);
 
@@ -210,7 +211,7 @@ class Robocore {
 
     lge3CORE = raw18(await ethereum.CORE.balanceOf(ethereum.LGE3.address));
     lge3COREinUSD = lge3CORE * priceCOREinUSD;
-    lge3DAI = raw8(await ethereum.DAI.balanceOf(ethereum.LGE3.address));
+    lge3DAI = raw18(await ethereum.DAI.balanceOf(ethereum.LGE3.address));
     lge3DAIinUSD = lge3DAI * priceDAIinUSD;
   }
 
@@ -556,14 +557,14 @@ class Robocore {
     // We listen to all Contributions on LGE3
     subscription =
         ethereum.LGE3.listenToEvent('Contibution', (ev, event) async {
-      //print("Topics: ${event.topics} data: ${event.data}");
+      print("Topics: ${event.topics} data: ${event.data}");
       var contrib = Contribution.from(3, ev, event);
       await logContribution(contrib);
     });
 
     // We listen to all COREBought on LGE3
     subscription = ethereum.LGE3.listenToEvent('COREBought', (ev, event) async {
-      //print("Topics: ${event.topics} data: ${event.data}");
+      print("Topics: ${event.topics} data: ${event.data}");
       var cb = CoreBought.from(3, ev, event);
       await logCoreBought(cb);
     });
