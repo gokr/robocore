@@ -661,7 +661,11 @@ class Robocore {
     var eth = core * priceCOREinETH;
     var limit1kusd = 1000 / priceCOREinUSD;
     if (core > limit1kusd) {
-      for (var channel in [priceDiscussionChannel, priceAndTradingChat]) {
+      for (var channel in [
+        priceDiscussionChannel,
+        priceAndTradingChat,
+        officialChat
+      ]) {
         //for (var channel in [robocoreTestChannel, robocoreTestGroup]) {
         var wrapper = channel.getWrapperFromBot(this);
         var answer;
@@ -695,7 +699,11 @@ ${dec4(lge3COREContributed)} CORE value (${usd2(priceCOREinUSD * lge3COREContrib
   }
 
   logCoreBought(CoreBought c) {
-    for (var channel in [priceDiscussionChannel, priceAndTradingChat]) {
+    for (var channel in [
+      priceDiscussionChannel,
+      priceAndTradingChat,
+      officialChat
+    ]) {
       //for (var channel in [robocoreTestChannel, robocoreTestGroup]) {
       var wrapper = channel.getWrapperFromBot(this);
       var answer;
