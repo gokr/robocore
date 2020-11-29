@@ -49,7 +49,11 @@ class Contribution {
     tx = fe.transactionHash;
     coreValue = decoded[0] as BigInt;
     sender = decoded[1] as EthereumAddress;
-    coin = 'core';
+    coin = 'CORE';
+  }
+
+  Contribution.fromWETHDeposit(this.lge, this.tx, this.coreValue, this.sender) {
+    coin = 'WETH';
   }
 
   static Future<PostgreSQLResult> dropTable() async {

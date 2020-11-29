@@ -41,6 +41,7 @@ import 'package:robocore/model/poster.dart';
 import 'package:teledart/model.dart';
 import 'package:teledart/teledart.dart';
 import 'package:teledart/telegram.dart';
+import 'package:web3dart/web3dart.dart';
 
 import 'database.dart';
 
@@ -564,6 +565,23 @@ class Robocore {
       print("Topics: ${event.topics} data: ${event.data}");
       var contrib = Contribution.from(3, ev, event);
       await logContribution(contrib);
+    });
+
+    // We listen to all WETH Contributions on LGE3 using a special trick
+    subscription = ethereum.WETH.listenToEvent('Deposit', (ev, event) async {
+      // print("Topics: ${event.topics} data: ${event.data}");
+      // If destination is LGE3, then this is a WETH Contribution to LGE3
+      final decoded = ev.decodeResults(event.topics, event.data);
+      var dest = decoded[0] as EthereumAddress;
+      if (dest == ethereum.LGE3.address) {
+        var tx = event.transactionHash;
+        var rec = await ethClient.web3Client.getTransactionReceipt(tx);
+        var sender = rec.from;
+        var coreValue = BigInt.from(
+            (raw18(decoded[1] as BigInt) / priceCOREinETH) * pow(10, 18));
+        var contrib = Contribution.fromWETHDeposit(3, tx, coreValue, sender);
+        await logContribution(contrib);
+      }
     });
 
     // We listen to all COREBought on LGE3
