@@ -33,7 +33,7 @@ class CoreBought {
         "create table IF NOT EXISTS _corebought (id integer GENERATED ALWAYS AS IDENTITY, PRIMARY KEY(id), lge integer, created timestamp, sender text, tx text, coreAmt numeric);");
   }
 
-  Future<void> save() async {
+  Future<void> insert() async {
     await db.query(
         "INSERT INTO _corebought (lge, created, sender, tx, coreAmt) VALUES (@lge, @created, @sender, @tx, @coreAmt)",
         substitutionValues: {

@@ -587,7 +587,12 @@ class Robocore {
     // We listen to all COREBought on LGE3
     subscription = ethereum.LGE3.listenToEvent('COREBought', (ev, event) async {
       print("Topics: ${event.topics} data: ${event.data}");
-      var cb = CoreBought.from(3, ev, event);
+      final decoded = ev.decodeResults(event.topics, event.data);
+      var tx = event.transactionHash;
+      var rec = await ethClient.web3Client.getTransactionReceipt(tx);
+      var sender = rec.from;
+      var coreAmt = decoded[0] as BigInt;
+      var cb = CoreBought(0, 3, coreAmt, sender, tx);
       await logCoreBought(cb);
     });
 

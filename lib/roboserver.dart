@@ -92,15 +92,20 @@ class Roboserver {
             (raw18(decoded[1] as BigInt) / ethereum.CORE2ETH.price1) *
                 pow(10, 18));
         var contrib = Contribution.fromWETHDeposit(3, tx, coreValue, sender);
-        contrib.insert();
+        await contrib.insert();
       }
     });
 
     // We listen to all COREBought on LGE3
-    subscription = ethereum.LGE3.listenToEvent('COREBought', (ev, event) {
-      //print("Topics: ${event.topics} data: ${event.data}");
-      var cb = CoreBought.from(3, ev, event);
-      cb.save();
+    subscription = ethereum.LGE3.listenToEvent('COREBought', (ev, event) async {
+      print("Topics: ${event.topics} data: ${event.data}");
+      final decoded = ev.decodeResults(event.topics, event.data);
+      var tx = event.transactionHash;
+      var rec = await ethClient.web3Client.getTransactionReceipt(tx);
+      var sender = rec.from;
+      var coreAmt = decoded[0] as BigInt;
+      var cb = CoreBought(0, 3, coreAmt, sender, tx);
+      await cb.insert();
     });
 
     /*
