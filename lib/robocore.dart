@@ -450,7 +450,7 @@ class Robocore {
       ..add(FAQCommand())
       ..add(StartCommand()..blacklist = [officialChat])
       ..add(StatsCommand()..blacklist = [officialChat])
-      ..add(LGECommand()..blacklist = [officialChat])
+      ..add(LGECommand())
       ..add(LogCommand()
         ..validForAllInDM = true
         ..users = [gokr, CryptoXman, xRevert, X3]
