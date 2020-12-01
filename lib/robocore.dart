@@ -447,7 +447,7 @@ class Robocore {
     commands
       ..add(MentionCommand())
       ..add(HelpCommand()..blacklist = [officialChat])
-      //..add(FakeCommand()..users = [gokr])
+      ..add(FakeCommand()..users = [gokr])
       ..add(FAQCommand())
       ..add(StartCommand()..blacklist = [officialChat])
       ..add(StatsCommand()..blacklist = [officialChat])
@@ -606,7 +606,9 @@ class Robocore {
     // All Discord messages
     nyxx.onMessageReceived.listen((MessageReceivedEvent event) async {
       try {
-        RoboDiscordMessage(this, event).runCommands();
+        RoboDiscordMessage(this, event)
+          //..resolveUser()
+          ..runCommands();
       } catch (e) {
         log.warning("Exception during runcommands: ${e.toString()}");
       }
