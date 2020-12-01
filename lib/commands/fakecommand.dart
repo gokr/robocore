@@ -16,21 +16,27 @@ class FakeCommand extends Command {
     var bot = w.bot;
     await bot.updateLGE3Info();
     var parts = w.parts;
-    var tx = parts[1];
-    var sender = parts[2];
-    var amount = parts[3];
-    var coreValue = BigInt.from(
-        (raw18(BigInt.parse(amount)) / bot.priceCOREinETH) * pow(10, 18));
-    var contrib = Contribution.fromWETHDeposit(
-        3, tx, coreValue, EthereumAddress.fromHex(sender));
-    await bot.logContribution(contrib);
-
-//    var c = Contribution(99, 3, DateTime.now(), ethereum.CORE.address, "tx",
-//        BigInt.from(amount) * pow18, 'CORE', BigInt.from(0), null, "log", 0);
-//    bot.logContribution(c);
-    //var c = CoreBought(
-    //    99, 3, BigInt.from(amount) * pow18, ethereum.CORE.address, "tx");
-    //bot.logCoreBought(c);
+    var contrib = parts[3];
+    if (contrib == "contrib") {
+      var tx = parts[2];
+      var sender = parts[3];
+      var amount = parts[4];
+      var coreValue = BigInt.from(
+          (raw18(BigInt.parse(amount)) / bot.priceCOREinETH) * pow(10, 18));
+      var contrib = Contribution.fromWETHDeposit(
+          3, tx, coreValue, EthereumAddress.fromHex(sender));
+      await bot.logContribution(contrib);
+      await contrib.insert();
+    } else {
+      var tx = parts[2];
+      var sender = parts[3];
+      var amount = parts[4];
+      var coreValue = BigInt.parse(amount);
+      var cb =
+          CoreBought(99, 3, coreValue, EthereumAddress.fromHex(sender), tx);
+      await bot.logCoreBought(cb);
+      await cb.insert();
+    }
     return await w.reply("done");
   }
 }
