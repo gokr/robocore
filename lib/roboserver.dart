@@ -72,18 +72,18 @@ class Roboserver {
 
     // We listen to all Contributions on LGE3
     subscription = ethereum.LGE3.listenToEvent('Contibution', (ev, event) {
-      //print("Topics: ${event.topics} data: ${event.data}");
+      print("Topics: ${event.topics} data: ${event.data}");
       var contrib = Contribution.from(3, ev, event);
       contrib.insert();
     });
 
     // We listen to all WETH Contributions on LGE3 using a special trick
     subscription = ethereum.WETH.listenToEvent('Deposit', (ev, event) async {
-      // print("Topics: ${event.topics} data: ${event.data}");
       // If destination is LGE3, then this is a WETH Contribution to LGE3
       final decoded = ev.decodeResults(event.topics, event.data);
       var dest = decoded[0] as EthereumAddress;
       if (dest == ethereum.LGE3.address) {
+        print("Topics: ${event.topics} data: ${event.data}");
         var tx = event.transactionHash;
         var rec = await ethClient.web3Client.getTransactionReceipt(tx);
         var sender = rec.from;
