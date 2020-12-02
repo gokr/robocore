@@ -35,7 +35,7 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
   String get prefix => telegramPrefix;
 
   String get username => e.from.username ?? "(you have no username!)";
-  RoboUser get roboUser => RoboUser.telegram(e.from.id);
+  RoboUser get roboUser => RoboUser.telegram(e.from.id.toString());
   RoboChannel get roboChannel => TelegramChannel(e.chat.id);
   bool get isDirectChat => e.chat.type == "private";
 

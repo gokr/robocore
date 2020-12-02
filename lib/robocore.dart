@@ -46,10 +46,11 @@ import 'package:web3dart/web3dart.dart';
 import 'database.dart';
 
 // Super users
-var gokr = RoboUser.both(124467899447508992, 1156133961);
-var CryptoXman = RoboUser.both(298396371789152258, 1179513113);
-var xRevert = RoboUser.both(751362716962390086, 1118664380);
-var X3 = RoboUser.both(757109953910538341, 1358048057);
+var gokr = RoboUser.both("124467899447508992", "1156133961", "gokr");
+var CryptoXman =
+    RoboUser.both("298396371789152258", "1179513113", "CryptoXman");
+var xRevert = RoboUser.both("751362716962390086", "1118664380", "0xRevert");
+var X3 = RoboUser.both("757109953910538341", "1358048057", "X 3");
 
 var officialChat = TelegramChannel(-1001195529102);
 var priceAndTradingChat = TelegramChannel(-1001361865863);
@@ -57,6 +58,7 @@ var coreLPTradingChat = TelegramChannel(-1001443117633);
 var priceDiscussionChannel = DiscordChannel(759890072392302592);
 var robocoreChannel = DiscordChannel(764120413507813417);
 var robocoreDevelopmentChannel = DiscordChannel(763138788297408552);
+var moderatorChannel = DiscordChannel(762398011074412605);
 
 // For tests
 var robocoreTestGroup = TelegramChannel(-440184090);
@@ -562,18 +564,20 @@ class Robocore {
     // We listen to all Contributions on LGE3
     subscription =
         ethereum.LGE3.listenToEvent('Contibution', (ev, event) async {
-      print("Topics: ${event.topics} data: ${event.data}");
+      print("Contibution: ${event.topics} data: ${event.data}");
       var contrib = Contribution.from(3, ev, event);
       await logContribution(contrib);
     });
 
     // We listen to all WETH Contributions on LGE3 using a special trick
     subscription = ethereum.WETH.listenToEvent('Deposit', (ev, event) async {
-      // print("Topics: ${event.topics} data: ${event.data}");
+      print("Deposit: ${event.topics} data: ${event.data}");
       // If destination is LGE3, then this is a WETH Contribution to LGE3
       final decoded = ev.decodeResults(event.topics, event.data);
       var dest = decoded[0] as EthereumAddress;
+      print("Dest: $dest");
       if (dest == ethereum.LGE3.address) {
+        print("LOGGING ETH");
         var tx = event.transactionHash;
         var rec = await ethClient.web3Client.getTransactionReceipt(tx);
         var sender = rec.from;
@@ -586,7 +590,7 @@ class Robocore {
 
     // We listen to all COREBought on LGE3
     subscription = ethereum.LGE3.listenToEvent('COREBought', (ev, event) async {
-      print("Topics: ${event.topics} data: ${event.data}");
+      print("COREBought: ${event.topics} data: ${event.data}");
       final decoded = ev.decodeResults(event.topics, event.data);
       var tx = event.transactionHash;
       var rec = await ethClient.web3Client.getTransactionReceipt(tx);
@@ -603,12 +607,19 @@ class Robocore {
       await updateUsername();
     });
 
+    // May be interesting
+    nyxx.onUserUpdate.listen((UserUpdateEvent event) async {
+      print(event.user.tag);
+      discord.send(robocoreTestChannel.id, "User updated: ${event.user.tag}",
+          markdown: false);
+    });
+
     // All Discord messages
     nyxx.onMessageReceived.listen((MessageReceivedEvent event) async {
       try {
-        RoboDiscordMessage(this, event)
-          //..resolveUser()
-          ..runCommands();
+        var msg = RoboDiscordMessage(this, event);
+        await msg.resolveUser();
+        await msg.runCommands();
       } catch (e) {
         log.warning("Exception during runcommands: ${e.toString()}");
       }
@@ -689,7 +700,9 @@ class Robocore {
     var core = raw18(c.coreValue);
     var eth = core * priceCOREinETH;
     var limit1kusd = 1000 / priceCOREinUSD;
+    print("LOGGING CONTRIB: $core $limit1kusd");
     if (core > limit1kusd) {
+      print("OK, more than 1k");
       for (var channel in [
         priceDiscussionChannel,
         priceAndTradingChat,

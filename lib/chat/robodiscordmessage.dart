@@ -10,6 +10,7 @@ const discordPrefix = "!";
 
 class RoboDiscordMessage extends RoboDiscord with RoboMessage {
   MessageReceivedEvent e;
+  late RoboUser _roboUser;
   late String text, textLowerCase;
   late List<String> parts;
 
@@ -24,7 +25,16 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
   String get prefix => discordPrefix;
 
   String get username => e.message.author.username;
-  RoboUser get roboUser => RoboUser.discord(e.message.author.id.id);
+
+  //RoboUser get roboUser => RoboUser.discord(e.message.author.id.id);
+  RoboUser get roboUser => _roboUser;
+
+  resolveUser() async {
+    _roboUser = await RoboUser.findOrCreateUser(
+        discordId: e.message.author.id.toString(),
+        username: e.message.author.username);
+  }
+
   RoboChannel get roboChannel => DiscordChannel(e.message.channelId.id);
   bool get isDirectChat => e.message.channel.type == ChannelType.dm;
 

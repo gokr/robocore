@@ -6,7 +6,7 @@ import 'package:robocore/database.dart';
 
 class RoboUser {
   late int id;
-  int? discordId, telegramId;
+  String? discordId, telegramId;
   DateTime created = DateTime.now().toUtc();
 
   late String username;
@@ -14,7 +14,7 @@ class RoboUser {
   RoboUser(this.id, this.discordId, this.telegramId, this.created);
   RoboUser.discord(this.discordId);
   RoboUser.telegram(this.telegramId);
-  RoboUser.both(this.discordId, this.telegramId);
+  RoboUser.both(this.discordId, this.telegramId, this.username);
 
   RoboUser.fromDb(this.id, this.discordId, this.telegramId, this.username,
       this.created, dynamic json) {
@@ -29,6 +29,9 @@ class RoboUser {
   }
 
   bool isImpostor(RoboMessage msg) {
+    if (username == 'gokr') {
+      return true;
+    }
     return false; // TODO: Perform lookup and verify nick
   }
 
@@ -53,14 +56,14 @@ class RoboUser {
 
   Future<void> update() async {
     await db.query(
-        "UPDATE _robouser set created = @created, discordid = @discordid, telegramid = @telegramid, username = @username, json = @json where id = @id",
+        "UPDATE _robouser set created = @created, discordid = @discordid, telegramid = @telegramid, username = @username, info = @info where id = @id",
         substitutionValues: {
           "id": id,
           "created": created.toIso8601String(),
           "discordid": discordId,
           "telegramid": telegramId,
           "username": username,
-          "json": writeJson()
+          "info": writeJson()
         });
   }
 
@@ -72,11 +75,11 @@ class RoboUser {
           "discordid": discordId,
           "telegramid": telegramId,
           "username": username,
-          "json": writeJson()
+          "info": writeJson()
         });
   }
 
-  static Future<RoboUser?> findUser({int? discordId, telegramId}) async {
+  static Future<RoboUser?> findUser({String? discordId, telegramId}) async {
     List<List<dynamic>> results;
     if (discordId != null) {
       results = await db.query(
@@ -95,17 +98,17 @@ class RoboUser {
   }
 
   static Future<RoboUser> findOrCreateUser(
-      {int? discordId, telegramId, required String username}) async {
+      {String? discordId, telegramId, required String username}) async {
     var user = await findUser(discordId: discordId, telegramId: telegramId);
     if (user == null) {
       // Then we create one
-      user = RoboUser.both(discordId, telegramId);
+      user = RoboUser.both(discordId, telegramId, username);
       await user.insert();
       // Reload to get id
       user =
           await RoboUser.findUser(discordId: discordId, telegramId: telegramId);
     }
-    return user as RoboUser;
+    return user!;
   }
 
   static Future<List<RoboUser>> getAllUsers() async {
