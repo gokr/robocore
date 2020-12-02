@@ -58,21 +58,21 @@ class Roboserver {
 
     // We listen to all Swaps on COREETH
     subscription = ethereum.CORE2ETH.listenToEvent('Swap', (ev, event) {
-      print("Topics: ${event.topics} data: ${event.data}");
+      print("Swap: ${event.topics} data: ${event.data}");
       var swap = Swap.from(ev, event, ethereum.CORE2ETH);
       swap.save();
     });
 
     // We listen to all Swaps on CORE2CBTC
     subscription = ethereum.CORE2CBTC.listenToEvent('Swap', (ev, event) {
-      print("Topics: ${event.topics} data: ${event.data}");
+      print("Swap: ${event.topics} data: ${event.data}");
       var swap = Swap.from(ev, event, ethereum.CORE2CBTC);
       swap.save();
     });
 
     // We listen to all Contributions on LGE3
     subscription = ethereum.LGE3.listenToEvent('Contibution', (ev, event) {
-      print("Topics: ${event.topics} data: ${event.data}");
+      print("Contibution: ${event.topics} data: ${event.data}");
       var contrib = Contribution.from(3, ev, event);
       contrib.insert();
     });
@@ -83,7 +83,7 @@ class Roboserver {
       final decoded = ev.decodeResults(event.topics, event.data);
       var dest = decoded[0] as EthereumAddress;
       if (dest == ethereum.LGE3.address) {
-        print("Topics: ${event.topics} data: ${event.data}");
+        print("Deposit to LGE3: ${event.topics} data: ${event.data}");
         var tx = event.transactionHash;
         var rec = await ethClient.web3Client.getTransactionReceipt(tx);
         var sender = rec.from;
@@ -98,7 +98,7 @@ class Roboserver {
 
     // We listen to all COREBought on LGE3
     subscription = ethereum.LGE3.listenToEvent('COREBought', (ev, event) async {
-      print("Topics: ${event.topics} data: ${event.data}");
+      print("CoreBOUGHT: ${event.topics} data: ${event.data}");
       final decoded = ev.decodeResults(event.topics, event.data);
       var tx = event.transactionHash;
       var rec = await ethClient.web3Client.getTransactionReceipt(tx);
