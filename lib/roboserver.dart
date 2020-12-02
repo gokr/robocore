@@ -6,6 +6,7 @@ import 'package:robocore/ethclient.dart';
 import 'package:robocore/model/contribution.dart';
 import 'package:robocore/model/corebought.dart';
 import 'package:robocore/ethereum.dart';
+import 'package:robocore/model/robouser.dart';
 import 'package:robocore/model/swap.dart';
 import 'package:robocore/model/poster.dart';
 import 'package:robocore/util.dart';
@@ -43,6 +44,7 @@ class Roboserver {
       await Contribution.createTable();
       await CoreBought.createTable();
       await Poster.createTable();
+      await RoboUser.createTable();
       log.info("Created tables");
     } catch (e) {
       log.warning(e);
