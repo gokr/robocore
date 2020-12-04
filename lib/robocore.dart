@@ -484,6 +484,7 @@ class Robocore {
   }
 
   start() async {
+    hierarchicalLoggingEnabled = true;
     await openDatabase(config);
     log.info("Postgres opened: ${db.databaseName}");
 
@@ -571,11 +572,11 @@ class Robocore {
 
     // We listen to all WETH Contributions on LGE3 using a special trick
     subscription = ethereum.WETH.listenToEvent('Deposit', (ev, event) async {
-      print("Deposit: ${event.topics} data: ${event.data}");
+      //print("Deposit: ${event.topics} data: ${event.data}");
       // If destination is LGE3, then this is a WETH Contribution to LGE3
       final decoded = ev.decodeResults(event.topics, event.data);
       var dest = decoded[0] as EthereumAddress;
-      print("Dest: $dest");
+      //print("Dest: $dest");
       if (dest == ethereum.LGE3.address) {
         print("LOGGING ETH");
         var tx = event.transactionHash;
@@ -690,6 +691,8 @@ class Robocore {
       minCycle: Duration(seconds: 5),
     );
 
+    // Force this to be less chatty
+    Logger('neat_periodic_task').level = Level.WARNING;
     scheduler.start();
     await ProcessSignal.sigterm.watch().first;
     await scheduler.stop();
