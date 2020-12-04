@@ -8,20 +8,20 @@ class ImpostorDetectorCommand extends Command {
       : super(
             "impostor", "", "impostor", "List potential impostors, only admin");
 
-  // I am valid for all messages, because I check ids of users
-  bool isValid(RoboMessage bot) {
-    return true;
-  }
-
   @override
   handleMessage(RoboMessage msg) async {
-    var user = msg.roboUser;
-    /*List<RoboUser> fuzzyMatches = user.fuzzyMatch(msg);
-    if (fuzzyMatches.isNotEmpty) {
-      await msg.bot.discord.send(moderatorChannel.id,
-          "The user ${user.username} is a likely impostor matching $fuzzyMatches.",
-          markdown: false);
-    }*/
+    var parts = msg.parts;
+    // Only !impostor
+    if (parts.length == 1) {
+      //TODO: List?
+    }
+    if (parts.length == 2) {
+      var name = parts[1];
+      List<RoboUser> fuzzyMatches = await RoboUser.findFuzzyUsers(name);
+      if (fuzzyMatches.isNotEmpty) {
+        await msg.reply("$fuzzyMatches");
+      }
+    }
   }
 
   @override

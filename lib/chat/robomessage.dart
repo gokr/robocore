@@ -9,10 +9,10 @@ mixin RoboMessage on RoboWrapper {
   /// Find a Command valid for this message and let it handle it
   runCommands() async {
     logMessage();
-    // Do we have a command that wants to take it?
+    // Let all commands valid handle the message (may be more than one)
     for (var cmd in bot.commands) {
       if (cmd.isValid(this)) {
-        return await cmd.handleMessage(this);
+        await cmd.handleMessage(this);
       }
     }
     // Was it still a command? We don't reply on commands we don't recognize
