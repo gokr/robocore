@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+import 'package:logging/logging.dart';
 import 'package:neat_periodic_task/neat_periodic_task.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:robocore/blocklytics.dart';
@@ -12,6 +13,7 @@ import 'package:robocore/chat/robofakemessage.dart';
 import 'package:robocore/chat/robotelegram.dart';
 import 'package:robocore/chat/robotelegrammessage.dart';
 import 'package:robocore/commands/fakecommand.dart';
+import 'package:robocore/commands/impostordetector.dart';
 import 'package:robocore/model/contribution.dart';
 import 'package:robocore/model/corebought.dart';
 import 'package:robocore/model/robouser.dart';
@@ -46,11 +48,12 @@ import 'package:web3dart/web3dart.dart';
 import 'database.dart';
 
 // Super users
-var gokr = RoboUser.both("124467899447508992", "1156133961", "gokr");
+var gokr = RoboUser.both("124467899447508992", "1156133961", "gokr", null);
 var CryptoXman =
-    RoboUser.both("298396371789152258", "1179513113", "CryptoXman");
-var xRevert = RoboUser.both("751362716962390086", "1118664380", "0xRevert");
-var X3 = RoboUser.both("757109953910538341", "1358048057", "X 3");
+    RoboUser.both("298396371789152258", "1179513113", "CryptoXman", null);
+var xRevert =
+    RoboUser.both("751362716962390086", "1118664380", "0xRevert", null);
+var X3 = RoboUser.both("757109953910538341", "1358048057", "X 3", null);
 
 var officialChat = TelegramChannel(-1001195529102);
 var priceAndTradingChat = TelegramChannel(-1001361865863);
@@ -450,6 +453,7 @@ class Robocore {
       ..add(MentionCommand())
       ..add(HelpCommand()..blacklist = [officialChat])
       ..add(FakeCommand()..users = [gokr])
+      ..add(ImpostorDetectorCommand()..users = [gokr])
       ..add(FAQCommand())
       ..add(StartCommand()..blacklist = [officialChat])
       ..add(StatsCommand()..blacklist = [officialChat])
@@ -483,10 +487,20 @@ class Robocore {
     }
   }
 
+  createExtensions() async {
+    await db.query("CREATE EXTENSION fuzzystrmatch;");
+  }
+
+  sendModerators(String message) async {
+    await discord.send(moderatorChannel.id, message, markdown: false);
+  }
+
   start() async {
     hierarchicalLoggingEnabled = true;
     await openDatabase(config);
     log.info("Postgres opened: ${db.databaseName}");
+
+    //await createExtensions();
 
     // Create our two bots
     nyxx = Nyxx(config['nyxx'], useDefaultLogger: false);
@@ -609,10 +623,41 @@ class Robocore {
     });
 
     // May be interesting
+    nyxx.onGuildMemberAdd.listen((GuildMemberAddEvent event) async {
+      var member = event.member!;
+      print(
+          "New member ${member.id} username: ${member.username} tag: ${member.tag} nickname: ${member.nickname}");
+      if (member.nickname != null) {
+        var matches = await RoboUser.findFuzzyUsers(member.nickname!);
+        if (matches.isNotEmpty) {
+          await sendModerators("Fuzzy matches nickname: $matches");
+        }
+      }
+      var matches = await RoboUser.findFuzzyUsers(member.username);
+      if (matches.isNotEmpty) {
+        await sendModerators("Fuzzy matches username: $matches");
+      }
+    });
+
+    // May be interesting
+    nyxx.onGuildMemberUpdate.listen((GuildMemberUpdateEvent event) async {
+      if (event.member is CacheMember) {
+        var member = event.member as CacheMember;
+        print(
+            "CacheMember ${member.id} updated: ${member.tag} nickname: ${member.nickname}");
+        var matches =
+            await RoboUser.findFuzzyUsers(member.nickname ?? member.username);
+        if (matches.isNotEmpty) {
+          print("Fuzzy matches: $matches");
+        }
+      } else {
+        print("Member ${event.member?.id} updated: ${event.member?.tag}");
+      }
+    });
+
     nyxx.onUserUpdate.listen((UserUpdateEvent event) async {
-      print(event.user.tag);
-      discord.send(robocoreTestChannel.id, "User updated: ${event.user.tag}",
-          markdown: false);
+      await sendModerators(
+          "User ${event.user.id} updated: ${event.user.tag} username: ${event.user.username}");
     });
 
     // All Discord messages

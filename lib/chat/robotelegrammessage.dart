@@ -44,13 +44,15 @@ class RoboTelegramMessage extends RoboTelegram with RoboMessage {
         parse_mode: 'HTML', disable_web_page_preview: disablePreview);
   }
 
-  String buildHelp() {
+  String buildHelp(RoboUser user) {
     StringBuffer buf = StringBuffer();
     for (var cmd in bot.commands) {
-      buf.writeln("<b>${cmd.name}</b>");
-      buf.writeln("Syntax: <code>${cmd.syntax}</code>");
-      buf.writeln("${cmd.help}");
-      buf.writeln("");
+      if (cmd.validForUser(user)) {
+        buf.writeln("<b>${cmd.name}</b>");
+        buf.writeln("Syntax: <code>${cmd.syntax}</code>");
+        buf.writeln("${cmd.help}");
+        buf.writeln("");
+      }
     }
     return buf.toString();
   }

@@ -7,6 +7,6 @@ class HelpCommand extends Command {
 
   @override
   handleMessage(RoboMessage bot) async {
-    return await bot.reply(bot.buildHelp());
+    return await bot.reply(bot.buildHelp(bot.roboUser));
   }
 }

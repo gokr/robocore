@@ -65,7 +65,7 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
     return channelSend(e.message.channel, answer);
   }
 
-  EmbedBuilder buildHelp() {
+  EmbedBuilder buildHelp(RoboUser user) {
     final embed = EmbedBuilder()
       ..addAuthor((author) {
         author
@@ -73,7 +73,9 @@ class RoboDiscordMessage extends RoboDiscord with RoboMessage {
           ..iconUrl = bot.nyxx.self.avatarURL();
       });
     for (var cmd in bot.commands) {
-      embed.addField(name: cmd.syntax, content: cmd.help);
+      if (cmd.validForUser(user)) {
+        embed.addField(name: cmd.syntax, content: cmd.help);
+      }
     }
     return embed;
   }

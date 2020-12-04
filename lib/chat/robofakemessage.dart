@@ -45,7 +45,7 @@ class RoboFakeMessage extends RoboWrapper with RoboMessage {
   }
 
   @override
-  buildHelp() {
+  buildHelp(RoboUser user) {
     // TODO: implement buildHelp
     throw UnimplementedError();
   }

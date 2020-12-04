@@ -29,7 +29,10 @@ mixin RoboMessage on RoboWrapper {
   }
 
   logMessage() {
-    log.info("$roboChannel ($username): $text");
+    var did = roboUser.discordId;
+    var tid = roboUser.telegramId;
+    var nick = roboUser.nickname;
+    log.info("$roboChannel ($username<$did,$tid>, $nick): $text");
   }
 
   bool isCommand() {
@@ -87,5 +90,5 @@ mixin RoboMessage on RoboWrapper {
 
   reply(dynamic answer, {bool disablePreview = true}) async {}
 
-  dynamic buildHelp();
+  dynamic buildHelp(RoboUser roboUser);
 }

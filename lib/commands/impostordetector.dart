@@ -5,7 +5,8 @@ import 'package:robocore/robocore.dart';
 
 class ImpostorDetectorCommand extends Command {
   ImpostorDetectorCommand()
-      : super("impostor", "", "impostor", "List potential impostors");
+      : super(
+            "impostor", "", "impostor", "List potential impostors, only admin");
 
   // I am valid for all messages, because I check ids of users
   bool isValid(RoboMessage bot) {
@@ -15,11 +16,12 @@ class ImpostorDetectorCommand extends Command {
   @override
   handleMessage(RoboMessage msg) async {
     var user = msg.roboUser;
-    if (user.isImpostor(msg)) {
+    /*List<RoboUser> fuzzyMatches = user.fuzzyMatch(msg);
+    if (fuzzyMatches.isNotEmpty) {
       await msg.bot.discord.send(moderatorChannel.id,
-          "The user ${user.username} is a likely impostor.",
+          "The user ${user.username} is a likely impostor matching $fuzzyMatches.",
           markdown: false);
-    }
+    }*/
   }
 
   @override
