@@ -36,6 +36,14 @@ class StatsCommand extends Command {
             content:
                 "${usd0(ethereum.CORE2CBTC.liquidity * bot.priceWBTCinUSD)}")
         ..addField(
+            name: "Pooled CORE-FANNY",
+            content:
+                "${dec0(ethereum.CORE2FANNY.pool1)} CORE, ${dec0(ethereum.CORE2FANNY.pool2)} FANNY")
+        ..addField(
+            name: "Liquidity CORE-FANNY",
+            content:
+                "${usd0(ethereum.CORE2FANNY.liquidity * bot.priceFANNYinUSD)}")
+        ..addField(
             name: "Total issued CORE-CBTC cmLP",
             content: "${dec0(centimilli(ethereum.CORE2CBTC.supplyLP))}")
         ..addFooter((footer) {
@@ -55,6 +63,10 @@ ${dec0(ethereum.CORE2ETH.supplyLP)}
 ${dec0(ethereum.CORE2CBTC.pool1)} CORE, ${dec0(ethereum.CORE2CBTC.pool2)} CBTC
 <b>Liquidity CORE-CBTC</b>
 ${usd0(ethereum.CORE2CBTC.liquidity * bot.priceWBTCinUSD)}
+<b>Pooled CORE-FANNY</b>
+${dec0(ethereum.CORE2FANNY.pool1)} CORE, ${dec0(ethereum.CORE2FANNY.pool2)} FANNY
+<b>Liquidity CORE-FANNY</b>
+${usd0(ethereum.CORE2FANNY.liquidity * bot.priceFANNYinUSD)}
 <b>Total issued CORE-CBTC cmLP</b>
 ${dec0(centimilli(ethereum.CORE2CBTC.supplyLP))}
 

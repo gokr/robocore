@@ -2,6 +2,7 @@ import 'package:robocore/balancer.dart';
 import 'package:robocore/contract.dart';
 import 'package:robocore/corevault.dart';
 import 'package:robocore/ethclient.dart';
+import 'package:robocore/fannyvault.dart';
 import 'package:robocore/pair.dart';
 import 'package:robocore/token.dart';
 
@@ -13,21 +14,23 @@ late Ethereum ethereum;
 class Ethereum {
   EthClient client;
 
-  late Token CORE, WBTC, WETH, DAI;
+  late Token CORE, WBTC, WETH, DAI, FANNY;
 
   Map<String, Pair> pairs = {};
 
-  late Pair CORE2ETH, CORE2CBTC, DAI2ETH;
+  // CORE pairs
+  late Pair CORE2ETH, CORE2CBTC, CORE2FANNY;
+
+  // Other pairs
+  late Pair DAI2ETH, ETH2USDT, WBTC2ETH;
+  //late Pair WBTC2USDT; No liquidity, can not be used
+
   DateTime? statsTimestamp = DateTime.now().subtract(Duration(minutes: 10));
 
-  late Pair ETH2USDT;
-  //late Pair WBTC2USDT; No liquidity, can not be used
-  late Pair WBTC2ETH;
+  late Contract LGE2, LGE3, COREBURN, TRANSFERCHECKER;
 
-  late Contract LGE2;
-  late Contract LGE3;
   late CoreVault COREVAULT;
-  late Contract TRANSFERCHECKER;
+  late FannyVault FANNYVAULT;
 
   Ethereum(this.client) {
     ethereum = this;
@@ -45,8 +48,15 @@ class Ethereum {
         '0xaac50b95fbb13956d7c45511f24c3bf9e2a4a76b');
     await LGE3.initialize();
 
+    COREBURN = Contract(
+        client, 'COREBurn.json', '0x0f199137f96EF9269897EDEF4157940a4d4AA475');
+    await COREBURN.initialize();
+
     COREVAULT = CoreVault(client);
     await COREVAULT.initialize();
+
+    FANNYVAULT = FannyVault(client);
+    await FANNYVAULT.initialize();
 
     TRANSFERCHECKER = Contract(client, 'TransferChecker.json',
         '0x2e2A33CECA9aeF101d679ed058368ac994118E7a');
@@ -63,6 +73,8 @@ class Ethereum {
     await WETH.initialize();
     DAI = Token(client, '0x6b175474e89094c44da98b954eedeac495271d0f');
     await DAI.initialize();
+    FANNY = Token(client, '0x8ad66f7e0e3e3dc331d3dbf2c662d7ae293c1fe0');
+    await FANNY.initialize();
 
     // Uniswap pairs
     CORE2ETH = Pair(
@@ -86,6 +98,17 @@ class Ethereum {
       ..token2name = "CBTC"
       ..balancer = bal;
     await addPair(CORE2CBTC);
+
+    CORE2FANNY = Pair(
+        6, client, "core-fanny", '0x85d9DCCe9Ea06C2621795889Be650A8c3Ad844BB');
+    //bal = BalancerPool(client, '0x85d9DCCe9Ea06C2621795889Be650A8c3Ad844BB');
+    //await bal.initialize();
+    CORE2CBTC
+      ..decimals2 = 8
+      ..token1name = "CORE"
+      ..token2name = "FANNY";
+    //  ..balancer = bal;
+    await addPair(CORE2FANNY);
 
     ETH2USDT = Pair(
         3, client, "eth-usdt", '0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852');

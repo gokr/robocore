@@ -5,8 +5,8 @@ import 'package:robocore/robocore.dart';
 
 class ImpostorDetectorCommand extends Command {
   ImpostorDetectorCommand()
-      : super(
-            "impostor", "", "impostor", "List potential impostors, only admin");
+      : super("impostor", "", "impostor",
+            "List fuzzy matches of existing users, only admin");
 
   @override
   handleMessage(RoboMessage msg) async {
@@ -15,9 +15,10 @@ class ImpostorDetectorCommand extends Command {
     if (parts.length == 1) {
       //TODO: List?
     }
-    if (parts.length == 2) {
+    if (parts.length == 3) {
       var name = parts[1];
-      List<RoboUser> fuzzyMatches = await RoboUser.findFuzzyUsers(name);
+      var leven = int.parse(parts[2]);
+      List<RoboUser> fuzzyMatches = await RoboUser.findFuzzyUsers(name, leven);
       if (fuzzyMatches.isNotEmpty) {
         await msg.reply("$fuzzyMatches");
       }

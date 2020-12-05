@@ -211,4 +211,10 @@ class Pair extends Contract {
   }
 
   String toString() => name;
+
+  // Return floor value given q, in currency of token 2.
+  floor(double q) {
+    return (pool1 * pool2) /
+        ((pool1 + 0.997 * (q * pool1)) * (pool1 + q * pool1));
+  }
 }

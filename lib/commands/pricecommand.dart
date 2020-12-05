@@ -5,7 +5,10 @@ import 'package:robocore/commands/command.dart';
 
 class PriceCommand extends Command {
   PriceCommand()
-      : super("price", "p", "price|p [[\"amount\"] eth|core|btc|lp1|lp2]",
+      : super(
+            "price",
+            "p",
+            "price|p [[\"amount\"] eth|fanny|dai|core|btc|lp1|lp2]",
             "Show prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use an amount like \"!p 10 core\".");
 
   @override
@@ -20,12 +23,10 @@ class PriceCommand extends Command {
       if (bot is RoboDiscordMessage) {
         answer = EmbedBuilder()
           ..addAuthor((author) {
-            author.name = "Prices fresh from contracts";
+            author.name = "Direct from contracts";
             //author.iconUrl = e.message.author.avatarURL();
           })
-          ..addField(name: "CORE", content: bot.bot.priceStringCORE())
-          ..addField(name: "ETH", content: bot.bot.priceStringETH())
-          ..addField(name: "WBTC", content: bot.bot.priceStringWBTC())
+          ..addField(name: "Prices", content: bot.bot.prices())
           ..addField(
               name: "CORE-ETH LP value", content: bot.bot.valueStringLP1())
           ..addField(
@@ -39,9 +40,8 @@ class PriceCommand extends Command {
           ..color = bot.color();
       } else {
         answer = """
-<b>CORE:</b> ${bot.bot.priceStringCORE()}
-<b>ETH:</b> ${bot.bot.priceStringETH()}
-<b>WBTC:</b> ${bot.bot.priceStringWBTC()}
+<b>Prices</b>
+${bot.bot.prices()}
 <b>CORE-ETH LP value:</b> ${bot.bot.valueStringLP1()}
 <b>CORE-ETH LP balancer:</b> ${bot.bot.priceStringLP1()}
 <b>CORE-CBTC LP value:</b> ${bot.bot.valueStringLP2()}
@@ -60,6 +60,8 @@ class PriceCommand extends Command {
     var validCoins = (bot.isDirectChat)
         ? [
             "core",
+            "fanny",
+            "dai",
             "eth",
             "btc",
             "lp",
@@ -72,6 +74,8 @@ class PriceCommand extends Command {
           ]
         : [
             "core",
+            "fanny",
+            "dai",
             "eth",
             "btc",
             "lp",
@@ -82,8 +86,8 @@ class PriceCommand extends Command {
     // Check valid coins
     if (!validCoins.contains(coin)) {
       return await bot.reply((bot.isDirectChat)
-          ? "Coin can be core, eth, btc, lp (or lp1), lp2 (or cmlp), fcore, flp1 or flp2 - not \"$coin\""
-          : "Coin can be core, eth, btc, lp (or lp1) or lp2 (or cmlp) - not \"$coin\"");
+          ? "Coin can be core, fanny, dai, eth, btc, lp (or lp1), lp2 (or cmlp), fcore, flp1, flp2 - not \"$coin\""
+          : "Coin can be core, fanny, dai, eth, btc, lp (or lp1) or lp2 (or cmlp) - not \"$coin\"");
     }
     // Parse amount as num
     if (amountString != null) {
@@ -98,6 +102,12 @@ class PriceCommand extends Command {
     switch (coin) {
       case "core":
         await bot.reply(bot.bot.priceStringCORE(amount));
+        break;
+      case "fanny":
+        await bot.reply(bot.bot.priceStringFANNY(amount));
+        break;
+      case "dai":
+        await bot.reply(bot.bot.priceStringDAI(amount));
         break;
       case "eth":
         await bot.reply(bot.bot.priceStringETH(amount));

@@ -102,8 +102,11 @@ class Robocore {
       floorLPinETH,
       floorLP2inUSD,
       floorLP2inWBTC,
-      floorLiquidity,
-      floorLiquidity2,
+      floorLP3inUSD,
+      floorLP3inFANNY,
+      floorLiquidityETH,
+      floorLiquidityWBTC,
+      floorLiquidityFANNY,
       TLLinUSD,
       TVPLinUSD;
 
@@ -269,13 +272,63 @@ class Robocore {
       swap.pair.update();
     } else {
       ethereum.CORE2ETH.update();
+      ethereum.CORE2FANNY.update();
       ethereum.CORE2CBTC.update();
     }
-    updateFloorPrice();
+    await updateFloorPrice();
+  }
+
+  // Update floor price of CORE. We now use q-formula.
+  updateFloorPrice() async {
+    // First we find total supply of CORE: 10000 - burned
+    var burned =
+        raw18(await ethereum.CORE.balanceOf(ethereum.COREBURN.address));
+    var supply = 10000 - burned;
+    // Then we find all pooled CORE
+    var p1 = ethereum.CORE2ETH;
+    var p2 = ethereum.CORE2CBTC;
+    var p3 = ethereum.CORE2FANNY;
+    var poolCORE = p1.pool1 + p2.pool1 + p3.pool1;
+    // And we can find q
+    var q = (supply - poolCORE) / poolCORE;
+    // Floor for each pair
+    var f1 = p1.floor(q);
+    var f2 = p2.floor(q);
+    var f3 = p3.floor(q);
+
+    // Take average of all floors, in ETH
+    floorCOREinETH = (f1 + (f2 * priceWBTCinETH) + (f3 * priceFANNYinETH)) / 3;
+    floorCOREinUSD = floorCOREinETH * priceETHinUSD;
+
+    // And then we can also calculate floor of LPs
+    // The liquidity is simply twice newPoolXXX
+    var newPoolETH = p1.poolK / (p1.pool1 + (p1.pool1 * q));
+    floorLiquidityETH = newPoolETH * 2;
+    floorLPinETH = floorLiquidityETH / p1.supplyLP;
+    floorLPinUSD = floorLPinETH * priceETHinUSD;
+
+    var newPoolWBTC = p2.poolK / (p2.pool1 + (p2.pool1 * q));
+    floorLiquidityWBTC = newPoolWBTC * 2;
+    floorLP2inWBTC = floorLiquidityWBTC / p2.supplyLP;
+    floorLP2inUSD = floorLP2inWBTC * priceWBTCinUSD;
+
+    var newPoolFANNY = p3.poolK / (p3.pool1 + (p3.pool1 * q));
+    floorLiquidityFANNY = newPoolFANNY * 2;
+    floorLP3inFANNY = floorLiquidityFANNY / p3.supplyLP;
+    floorLP3inUSD = floorLP3inFANNY * priceFANNYinUSD;
+
+    // TLL - Total Liquidity Locked
+    TLLinUSD = ethereum.CORE2CBTC.liquidity * priceWBTCinUSD;
+    TLLinUSD += ethereum.CORE2ETH.liquidity * priceETHinUSD;
+    TLLinUSD += ethereum.CORE2FANNY.liquidity * priceFANNYinUSD;
+    // TVPL - Total Value Permanently Locked
+    TVPLinUSD = floorLiquidityETH * priceETHinUSD;
+    TVPLinUSD += floorLiquidityWBTC * priceWBTCinUSD;
+    TVPLinUSD += floorLiquidityFANNY * priceFANNYinUSD;
   }
 
   // Update Floor price of CORE, in ETH.
-  updateFloorPrice() async {
+  updateFloorPriceOld() async {
     // Selling CORE2ETH back into pair1 and the rest into pair2:
     //
     // var newPoolETH = poolK / (poolCORE + (CORE2ETH * 0.997));
@@ -293,6 +346,9 @@ class Robocore {
     //
     // And replacing with single letter variables (to make Symbolab happy):
     // (k / (c + (x * 0.997))) / (c + x) = (l / (d + (10000 - d - c - x) * 0.997)) / (10000 - c - x) * z
+    var burned =
+        raw18(await ethereum.CORE.balanceOf(ethereum.COREBURN.address));
+    var supply = 10000 - burned;
     var p1 = ethereum.CORE2ETH;
     var p2 = ethereum.CORE2CBTC;
     var pool1CORE = p1.pool1;
@@ -321,29 +377,31 @@ class Robocore {
     // gives lowest price.
     double candidate = double.maxFinite;
     var newPoolWBTC, newPoolETH;
-    if (x1 < (10000 - pool1CORE)) {
+    if (x1 < (supply - pool1CORE)) {
       // x1 needs to be less than available CORE
       newPoolETH = k / (pool1CORE + (x1 * 0.997));
       var p1 = newPoolETH / (pool1CORE + x1);
       print("poolK: $k, newPoolK: ${newPoolETH * (pool1CORE + x1)}");
-      newPoolWBTC = l / (d + (10000 - d - pool1CORE - x1) * 0.997);
-      var p2 = (newPoolWBTC / (10000 - pool1CORE - x1)) * z;
-      print("poolK2: $l, newPoolK2: ${newPoolWBTC * (10000 - pool1CORE - x1)}");
+      newPoolWBTC = l / (d + (supply - d - pool1CORE - x1) * 0.997);
+      var p2 = (newPoolWBTC / (supply - pool1CORE - x1)) * z;
+      print(
+          "poolK2: $l, newPoolK2: ${newPoolWBTC * (supply - pool1CORE - x1)}");
       print("pool1CORE: ${pool1CORE + x1}, pool1ETH: $newPoolETH");
-      print("pool2CORE: ${10000 - pool1CORE - x1}, pool2WBTC: $newPoolWBTC");
+      print("pool2CORE: ${supply - pool1CORE - x1}, pool2WBTC: $newPoolWBTC");
       print("Price 1 of CORE-ETH: $p1, CORE-WBTC: $p2");
       candidate = p1;
     }
-    if (x2 < (10000 - pool1CORE)) {
+    if (x2 < (supply - pool1CORE)) {
       // x2 needs to be low enough
       var newPoolETH2 = k / (pool1CORE + (x2 * 0.997));
       var p1 = newPoolETH2 / (pool1CORE + x2);
       print("poolK: $k, newPoolK: ${newPoolETH2 * (pool1CORE + x2)}");
-      var newPoolWBTC2 = l / (d + (10000 - d - pool1CORE - x2) * 0.997);
-      var p2 = (newPoolWBTC2 / (10000 - pool1CORE - x2)) * z;
-      print("poolK2: $l, newPoolK: ${newPoolWBTC2 * (10000 - pool1CORE - x2)}");
+      var newPoolWBTC2 = l / (d + (supply - d - pool1CORE - x2) * 0.997);
+      var p2 = (newPoolWBTC2 / (supply - pool1CORE - x2)) * z;
+      print(
+          "poolK2: $l, newPoolK: ${newPoolWBTC2 * (supply - pool1CORE - x2)}");
       print("pool1CORE: ${pool1CORE + x2}, pool1ETH: $newPoolETH2");
-      print("pool2CORE: ${10000 - pool1CORE - x2}, pool2WBTC: $newPoolWBTC2");
+      print("pool2CORE: ${supply - pool1CORE - x2}, pool2WBTC: $newPoolWBTC2");
       print("Price 2 of CORE-ETH: $p1, CORE-WBTC: $p2");
       // Was this the less?
       if (p1 < candidate) {
@@ -357,32 +415,33 @@ class Robocore {
 
     // And then we can also calculate floor of LPs
     // The liquidity is simply twice newPoolXXX
-    floorLiquidity = newPoolETH * 2;
-    floorLPinETH = floorLiquidity / p1.supplyLP;
+    floorLiquidityETH = newPoolETH * 2;
+    floorLPinETH = floorLiquidityETH / p1.supplyLP;
     floorLPinUSD = floorLPinETH * priceETHinUSD;
-    floorLiquidity2 = newPoolWBTC * 2;
-    floorLP2inWBTC = floorLiquidity2 / p2.supplyLP;
+    floorLiquidityWBTC = newPoolWBTC * 2;
+    floorLP2inWBTC = floorLiquidityWBTC / p2.supplyLP;
     floorLP2inUSD = floorLP2inWBTC * priceWBTCinUSD;
 
     // TLL - Total Liquidity Locked
     TLLinUSD = ethereum.CORE2CBTC.liquidity * priceWBTCinUSD;
     TLLinUSD += ethereum.CORE2ETH.liquidity * priceETHinUSD;
     // TVPL - Total Value Permanently Locked
-    TVPLinUSD = floorLiquidity * priceETHinUSD;
-    TVPLinUSD += floorLiquidity2 * priceWBTCinUSD;
-
-    // Calculating floor and TLL/TVPL using q
-    //var q = (10000 - )
+    TVPLinUSD = floorLiquidityETH * priceETHinUSD;
+    TVPLinUSD += floorLiquidityWBTC * priceWBTCinUSD;
   }
 
   // Shortcuts for readability
   num get priceCOREinETH => ethereum.CORE2ETH.price1;
+  num get priceFANNYinCORE => ethereum.CORE2FANNY.price2;
   num get priceCOREinCBTC => ethereum.CORE2CBTC.price1;
   num get priceETHinCORE => ethereum.CORE2ETH.price2;
   num get priceCBTCinCORE => ethereum.CORE2CBTC.price2;
   num get priceCOREinUSD => priceCOREinETH * priceETHinUSD;
+  num get priceFANNYinUSD => priceFANNYinCORE * priceCOREinUSD;
+  num get priceFANNYinETH => priceFANNYinCORE * priceCOREinETH;
   num get priceDAIinETH => ethereum.DAI2ETH.price1;
   num get priceDAIinUSD => priceDAIinETH * priceETHinUSD;
+  num get priceDAIinCORE => priceDAIinETH * priceETHinCORE;
   num get valueLPinETH => ethereum.CORE2ETH.valueLP;
   num get valueLPinUSD => valueLPinETH * priceETHinUSD;
   num get priceLPinETH => ethereum.CORE2ETH.priceLP;
@@ -394,6 +453,10 @@ class Robocore {
 
   String priceStringCORE([num amount = 1]) {
     return "$amount CORE = ${usd2(priceCOREinUSD * amount)} (${dec4(priceCOREinETH * amount)} ETH)";
+  }
+
+  String priceStringFANNY([num amount = 1]) {
+    return "$amount FANNY = ${usd2(priceFANNYinUSD * amount)} (${dec4(priceFANNYinCORE * amount)} CORE)";
   }
 
   String floorStringCORE([num amount = 1]) {
@@ -428,8 +491,21 @@ class Robocore {
     return "$amount ETH = ${usd2(priceETHinUSD * amount)} (${dec4(priceETHinCORE * amount)} CORE)";
   }
 
+  String priceStringDAI([num amount = 1]) {
+    return "$amount DAI = ${usd2(priceDAIinUSD * amount)} (${dec4(priceDAIinCORE * amount)} CORE)";
+  }
+
   String priceStringWBTC([num amount = 1]) {
     return "$amount WBTC = ${usd2(priceWBTCinUSD * amount)} (${dec4(priceCBTCinCORE * amount)} CORE)";
+  }
+
+  String prices() {
+    return """
+${priceStringCORE()}
+${priceStringFANNY()}
+${priceStringETH()}
+${priceStringDAI()}
+${priceStringWBTC()}""";
   }
 
   updateUsername() async {
@@ -576,6 +652,18 @@ class Robocore {
       }
     });
 
+    // We listen to all Swaps on CORE2FANNY
+    subscription = ethereum.CORE2FANNY.listenToEvent('Swap', (ev, event) {
+      //print("Topics: ${event.topics} data: ${event.data}");
+      try {
+        var swap = Swap.from(ev, event, ethereum.CORE2FANNY);
+        updatePriceInfo(swap);
+        performLogging(swap);
+      } catch (e) {
+        log.warning("Exception during swap handling: ${e.toString()}");
+      }
+    });
+
     // We listen to all Contributions on LGE3
     subscription =
         ethereum.LGE3.listenToEvent('Contibution', (ev, event) async {
@@ -628,12 +716,12 @@ class Robocore {
       print(
           "New member ${member.id} username: ${member.username} tag: ${member.tag} nickname: ${member.nickname}");
       if (member.nickname != null) {
-        var matches = await RoboUser.findFuzzyUsers(member.nickname!);
+        var matches = await RoboUser.findFuzzyUsers(member.nickname!, 2);
         if (matches.isNotEmpty) {
           await sendModerators("Fuzzy matches nickname: $matches");
         }
       }
-      var matches = await RoboUser.findFuzzyUsers(member.username);
+      var matches = await RoboUser.findFuzzyUsers(member.username, 2);
       if (matches.isNotEmpty) {
         await sendModerators("Fuzzy matches username: $matches");
       }
@@ -645,8 +733,8 @@ class Robocore {
         var member = event.member as CacheMember;
         print(
             "CacheMember ${member.id} updated: ${member.tag} nickname: ${member.nickname}");
-        var matches =
-            await RoboUser.findFuzzyUsers(member.nickname ?? member.username);
+        var matches = await RoboUser.findFuzzyUsers(
+            member.nickname ?? member.username, 2);
         if (matches.isNotEmpty) {
           print("Fuzzy matches: $matches");
         }

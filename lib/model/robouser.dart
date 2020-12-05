@@ -120,13 +120,13 @@ class RoboUser {
     }).toList();
   }
 
-  static Future<List<RoboUser>> findFuzzyUsers(String name) async {
-    var query =
-        "SELECT id, discordId, telegramId, username, nickname, created, info  FROM _robouser where levenshtein(@attribute, @value) <= 3 ORDER BY levenshtein(@attribute, @value) LIMIT 10";
-    var results = await db.query(query,
-        substitutionValues: {"attribute": "username", "value": name});
+  static Future<List<RoboUser>> findFuzzyUsers(String name, int leven) async {
+    var results = await db.query(
+        "SELECT id, discordId, telegramId, username, nickname, created, info  FROM _robouser where levenshtein(username, @value) <= $leven ORDER BY levenshtein(username, @value) LIMIT 10",
+        substitutionValues: {"value": name});
     var users1 = usersFromResults(results);
-    results = await db.query(query,
+    results = await db.query(
+        "SELECT id, discordId, telegramId, username, nickname, created, info  FROM _robouser where levenshtein(nickname, @value) <= $leven ORDER BY levenshtein(nickname, @value) LIMIT 10",
         substitutionValues: {"attribute": "nickname", "value": name});
     var users2 = usersFromResults(results);
     return users1 + users2;
