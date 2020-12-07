@@ -59,7 +59,10 @@ class FAQCommand extends Command {
 [CORE-ETH pair on Uniswap](https://uniswap.info/pair/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b)
 [CORE-ETH pair on Etherscan](https://etherscan.io/address/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b)
 [CORE-CBTC pair on Uniswap](https://uniswap.info/pair/0x6fad7d44640c5cd0120deec0301e8cf850becb68)
-[CORE-CBTC pair on Etherscan](https://etherscan.io/address/0x6fad7d44640c5cd0120deec0301e8cf850becb68)"""
+[CORE-CBTC pair on Etherscan](https://etherscan.io/address/0x6fad7d44640c5cd0120deec0301e8cf850becb68)
+[CORE-FANNY pair on Uniswap](https://uniswap.info/pair/0x85d9DCCe9Ea06C2621795889Be650A8c3Ad844BB)
+[CORE-FANNY pair on Etherscan](https://etherscan.io/address/0x85d9DCCe9Ea06C2621795889Be650A8c3Ad844BB)
+"""
     },
     "website": {
       "name": "Website URLs",
