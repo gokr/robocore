@@ -96,6 +96,8 @@ class Robocore {
   late num priceETHinUSD,
       priceWBTCinETH,
       priceWBTCinUSD,
+      COREburned,
+      COREsupply,
       floorCOREinUSD,
       floorCOREinETH,
       floorLPinUSD,
@@ -281,16 +283,16 @@ class Robocore {
   // Update floor price of CORE. We now use q-formula.
   updateFloorPrice() async {
     // First we find total supply of CORE: 10000 - burned
-    var burned =
+    COREburned =
         raw18(await ethereum.CORE.balanceOf(ethereum.COREBURN.address));
-    var supply = 10000 - burned;
+    COREsupply = 10000 - COREburned;
     // Then we find all pooled CORE
     var p1 = ethereum.CORE2ETH;
     var p2 = ethereum.CORE2CBTC;
     var p3 = ethereum.CORE2FANNY;
     var poolCORE = p1.pool1 + p2.pool1 + p3.pool1;
     // And we can find q
-    var q = (supply - poolCORE) / poolCORE;
+    var q = (COREsupply - poolCORE) / poolCORE;
     // Floor for each pair
     var f1 = p1.floor(q);
     var f2 = p2.floor(q);
