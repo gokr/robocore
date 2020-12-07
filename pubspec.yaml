@@ -45,6 +45,9 @@ dependencies:
   # Not used yet
   json_annotation: ^3.0.0
 
+  # For server API
+  json_rpc_2: ^2.2.2
+
   postgres: ^2.2.0
 
 dev_dependencies:
