@@ -246,6 +246,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.12.2"
+  http_methods:
+    dependency: transitive
+    description:
+      name: http_methods
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0"
   http_multi_server:
     dependency: transitive
     description:
@@ -296,7 +303,7 @@ packages:
     source: hosted
     version: "3.1.0"
   json_rpc_2:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: json_rpc_2
       url: "https://pub.dartlang.org"
@@ -491,6 +498,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.0"
+  shelf_router:
+    dependency: "direct main"
+    description:
+      name: shelf_router
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.7.3"
   shelf_static:
     dependency: transitive
     description:
