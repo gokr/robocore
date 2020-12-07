@@ -44,7 +44,6 @@ class Roboserver {
       await Contribution.createTable();
       await CoreBought.createTable();
       await Poster.createTable();
-      await RoboUser.dropTable();
       await RoboUser.createTable();
       log.info("Created tables");
     } catch (e) {
