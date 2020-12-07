@@ -846,6 +846,11 @@ ${priceStringWBTC()}""";
   startAPI() async {
     var app = Router();
 
+    var headers = {
+      HttpHeaders.contentTypeHeader: "application/json",
+      "Access-Control-Allow-Origin": "*"
+    };
+
     app.get('/hello', (Request request) {
       return Response.ok('RoboCORE here, hi!');
     });
@@ -868,7 +873,7 @@ ${priceStringWBTC()}""";
             'floorLiquidityWBTC': floorLiquidityWBTC,
             'floorLiquidityFANNY': floorLiquidityFANNY
           }),
-          headers: {HttpHeaders.contentTypeHeader: "application/json"});
+          headers: headers);
     });
 
     app.get('/price', (Request request) async {
@@ -898,7 +903,7 @@ ${priceStringWBTC()}""";
             'priceLP2inETH': priceLP2inETH,
             'priceLP2inUSD': priceLP2inUSD
           }),
-          headers: {HttpHeaders.contentTypeHeader: "application/json"});
+          headers: headers);
     });
 
     server = await io.serve(app.handler, 'localhost', 10099);
