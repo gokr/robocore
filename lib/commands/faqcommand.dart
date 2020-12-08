@@ -47,21 +47,26 @@ class FAQCommand extends Command {
       "description":
           "Both [Core Farming](https://www.corefarming.info) and [Core Charts](https://corecharts.info) have useful information. You can also try */stats* command with RoboCORE."
     },
-    "contracts": {
-      "name": "Contracts in CORE",
+    "etherscan": {
+      "name": "Etherscan",
+      "description":
+          """[CORE vault on Etherscan](https://etherscan.io/address/0xc5cacb708425961594b63ec171f4df27a9c0d8c9)
+[CORE token on Etherscan](https://etherscan.io/address/0x62359ed7505efc61ff1d56fef82158ccaffa23d7)
+[CBTC token on Etherscan](https://etherscan.io/address/0x7b5982dcab054c377517759d0d2a3a5d02615ab8)
+[CORE-ETH pair on Etherscan](https://etherscan.io/address/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b)
+[CORE-CBTC pair on Etherscan](https://etherscan.io/address/0x6fad7d44640c5cd0120deec0301e8cf850becb68)
+[CORE-FANNY pair on Etherscan](https://etherscan.io/address/0x85d9DCCe9Ea06C2621795889Be650A8c3Ad844BB)
+"""
+    },
+    "uniswap": {
+      "name": "Uniswap",
       "description":
           """[Buy CORE on Uniswap](https://app.uniswap.org/#/swap?inputCurrency=0x62359ed7505efc61ff1d56fef82158ccaffa23d7&outputCurrency=ETH)
-[CORE vault on Etherscan](https://etherscan.io/address/0xc5cacb708425961594b63ec171f4df27a9c0d8c9)
 [CORE token on Uniswap](https://uniswap.info/token/0x62359ed7505efc61ff1d56fef82158ccaffa23d7)
-[CORE token on Etherscan](https://etherscan.io/address/0x62359ed7505efc61ff1d56fef82158ccaffa23d7)
 [CBTC token on Uniswap](https://info.uniswap.org/token/0x7b5982dcab054c377517759d0d2a3a5d02615ab8)
-[CBTC token on Etherscan](https://etherscan.io/address/0x7b5982dcab054c377517759d0d2a3a5d02615ab8)
 [CORE-ETH pair on Uniswap](https://uniswap.info/pair/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b)
-[CORE-ETH pair on Etherscan](https://etherscan.io/address/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b)
 [CORE-CBTC pair on Uniswap](https://uniswap.info/pair/0x6fad7d44640c5cd0120deec0301e8cf850becb68)
-[CORE-CBTC pair on Etherscan](https://etherscan.io/address/0x6fad7d44640c5cd0120deec0301e8cf850becb68)
 [CORE-FANNY pair on Uniswap](https://uniswap.info/pair/0x85d9DCCe9Ea06C2621795889Be650A8c3Ad844BB)
-[CORE-FANNY pair on Etherscan](https://etherscan.io/address/0x85d9DCCe9Ea06C2621795889Be650A8c3Ad844BB)
 """
     },
     "website": {
