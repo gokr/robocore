@@ -675,7 +675,7 @@ ${priceStringWBTC()}""";
     });
 
     // We listen to all Contributions on LGE3
-    subscription =
+    /*subscription =
         ethereum.LGE3.listenToEvent('Contibution', (ev, event) async {
       print("Contibution: ${event.topics} data: ${event.data}");
       var contrib = Contribution.from(3, ev, event);
@@ -712,7 +712,7 @@ ${priceStringWBTC()}""";
       var cb = CoreBought(0, 3, coreAmt, sender, tx);
       await logCoreBought(cb);
     });
-
+*/
     // When we are ready in Discord
     nyxx.onReady.listen((ReadyEvent e) async {
       log.info("Robocore in Discord is ready!");
