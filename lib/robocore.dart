@@ -852,6 +852,7 @@ ${priceStringWBTC()}""";
   }
 
   updateCache() async {
+    print("Updating API cache");
     await updatePriceInfo(null);
     stamp = DateTime.now().add(Duration(minutes: 2));
     tvplCached = jsonEncode({
