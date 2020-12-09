@@ -1,5 +1,3 @@
-import 'package:nyxx/nyxx.dart';
-import 'package:robocore/chat/robodiscordmessage.dart';
 import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/commands/command.dart';
 
@@ -8,47 +6,27 @@ class PriceCommand extends Command {
       : super(
             "price",
             "p",
-            "price|p [[\"amount\"] eth|fanny|dai|core|btc|lp1|lp2]",
+            "price|p [[\"amount\"] eth|fanny|dai|core|btc|lp1|lp2|lp3]",
             "Show prices, straight from Ethereum. \"!p core\" shows only price for CORE. You can also use an amount like \"!p 10 core\".");
 
   @override
-  handleMessage(RoboMessage bot) async {
-    await bot.bot.updatePriceInfo(null);
-    var parts = bot.parts;
+  handleMessage(RoboMessage w) async {
+    await w.bot.updatePriceInfo(null);
+    var parts = w.parts;
     String? coin, amountString;
     num amount = 1;
     // Only !p or !price
     if (parts.length == 1) {
-      dynamic answer;
-      if (bot is RoboDiscordMessage) {
-        answer = EmbedBuilder()
-          ..addAuthor((author) {
-            author.name = "Direct from contracts";
-            //author.iconUrl = e.message.author.avatarURL();
-          })
-          ..addField(name: "Prices", content: bot.bot.prices())
-          ..addField(
-              name: "CORE-ETH LP value", content: bot.bot.valueStringLP1())
-          ..addField(
-              name: "CORE-ETH LP balancer", content: bot.bot.priceStringLP1())
-          ..addField(
-              name: "CORE-CBTC cmLP value", content: bot.bot.valueStringLP2())
-          ..addField(
-              name: "CORE-CBTC cmLP balancer",
-              content: bot.bot.priceStringLP2())
-          ..timestamp = DateTime.now().toUtc()
-          ..color = bot.color();
-      } else {
-        answer = """
-<b>Prices</b>
-${bot.bot.prices()}
-<b>CORE-ETH LP value:</b> ${bot.bot.valueStringLP1()}
-<b>CORE-ETH LP balancer:</b> ${bot.bot.priceStringLP1()}
-<b>CORE-CBTC LP value:</b> ${bot.bot.valueStringLP2()}
-<b>CORE-CBTC LP balancer:</b> ${bot.bot.priceStringLP2()}
-""";
-      }
-      return await bot.reply(answer);
+      w
+        ..addField("Prices", w.bot.prices())
+        ..addField("CORE-ETH LP value", w.bot.valueStringLP1())
+        ..addField("CORE-ETH LP balancer", w.bot.priceStringLP1())
+        ..addField("CORE-CBTC cmLP value", w.bot.valueStringLP2())
+        ..addField("CORE-CBTC cmLP balancer", w.bot.priceStringLP2())
+        ..addField("coreDAI-wCORE LP value", w.bot.valueStringLP3())
+        //..addField("coreDAI-wCORE LP balancer", w.bot.priceStringLP3())
+        ..finish();
+      return await w.reply(w.answer);
     }
     // Also coin given
     if (parts.length == 2) {
@@ -57,7 +35,7 @@ ${bot.bot.prices()}
       coin = parts[2];
       amountString = parts[1];
     }
-    var validCoins = (bot.isDirectChat)
+    var validCoins = (w.isDirectChat)
         ? [
             "core",
             "fanny",
@@ -67,9 +45,11 @@ ${bot.bot.prices()}
             "lp",
             "lp1",
             "lp2",
+            "lp3",
             "cmlp",
             "flp1",
             "flp2",
+            "flp3",
             "fcore"
           ]
         : [
@@ -81,60 +61,70 @@ ${bot.bot.prices()}
             "lp",
             "lp1",
             "lp2",
+            "lp3",
             "cmlp",
           ];
     // Check valid coins
     if (!validCoins.contains(coin)) {
-      return await bot.reply((bot.isDirectChat)
-          ? "Coin can be core, fanny, dai, eth, btc, lp (or lp1), lp2 (or cmlp), fcore, flp1, flp2 - not \"$coin\""
-          : "Coin can be core, fanny, dai, eth, btc, lp (or lp1) or lp2 (or cmlp) - not \"$coin\"");
+      return await w.reply((w.isDirectChat)
+          ? "Coin can be core, fanny, dai, eth, btc, lp (or lp1), lp2 (or cmlp), lp3, fcore, flp1, flp2, flp3 - not \"$coin\""
+          : "Coin can be core, fanny, dai, eth, btc, lp (or lp1) or lp2 (or cmlp), lp3 - not \"$coin\"");
     }
     // Parse amount as num
     if (amountString != null) {
       try {
         amount = num.parse(amountString);
       } catch (ex) {
-        return await bot.reply(
+        return await w.reply(
             "Amount \"${parts[2]}\" is not a number, use for example \"!p 10 core\"");
       }
     }
     // Time to answer
     switch (coin) {
       case "core":
-        await bot.reply(bot.bot.priceStringCORE(amount));
+        await w.reply(w.bot.priceStringCORE(amount));
         break;
       case "fanny":
-        await bot.reply(bot.bot.priceStringFANNY(amount));
+        await w.reply(w.bot.priceStringFANNY(amount));
         break;
       case "dai":
-        await bot.reply(bot.bot.priceStringDAI(amount));
+        await w.reply(w.bot.priceStringDAI(amount));
         break;
       case "eth":
-        await bot.reply(bot.bot.priceStringETH(amount));
+        await w.reply(w.bot.priceStringETH(amount));
         break;
       case "btc":
-        await bot.reply(bot.bot.priceStringWBTC(amount));
+        await w.reply(w.bot.priceStringWBTC(amount));
         break;
       case "lp1":
       case "lp":
-        await bot.reply(bot.bot.valueStringLP1(amount) +
+        await w.reply(w.bot.valueStringLP1(amount) +
             ' balancer: ' +
-            bot.bot.priceStringLP1(amount));
+            w.bot.priceStringLP1(amount));
         break;
       case "lp2":
       case "cmlp":
-        await bot.reply(bot.bot.valueStringLP2(amount) +
+        await w.reply(w.bot.valueStringLP2(amount) +
             ' balancer: ' +
-            bot.bot.priceStringLP2(amount));
+            w.bot.priceStringLP2(amount));
+        break;
+      case "lp3":
+        await w.reply(w.bot.valueStringLP3(amount));
+        /*await w.reply(w.bot.valueStringLP3(amount) +
+            ' balancer: ' +
+            w.bot.priceStringLP3(amount));*/
         break;
       case "fcore":
-        await bot.reply(bot.bot.floorStringCORE(amount));
+        await w.reply(w.bot.floorStringCORE(amount));
         break;
       case "flp1":
-        await bot.reply(bot.bot.floorStringLP1(amount));
+        await w.reply(w.bot.floorStringLP1(amount));
         break;
       case "flp2":
-        await bot.reply(bot.bot.floorStringLP2(amount));
+        await w.reply(w.bot.floorStringLP2(amount));
+        break;
+      case "flp3":
+        await w.reply(w.bot.floorStringLP3(amount));
         break;
     }
     return;

@@ -62,6 +62,7 @@ class Pair extends Contract {
 
   BalancerPool? balancer;
 
+  /// Return liquidity in currency token 2
   num get liquidity => pool2 * 2;
 
   List<Entity> entities = [];
@@ -213,8 +214,14 @@ class Pair extends Contract {
   String toString() => name;
 
   // Return floor value given q, in currency of token 2.
-  floor(double q) {
+  floor2(double q) {
     return (pool1 * pool2) /
         ((pool1 + 0.997 * (q * pool1)) * (pool1 + q * pool1));
+  }
+
+  // Return floor value given q, in currency of token 1.
+  floor1(double q) {
+    return (pool1 * pool2) /
+        ((pool2 + 0.997 * (q * pool2)) * (pool2 + q * pool2));
   }
 }

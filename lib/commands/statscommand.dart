@@ -1,5 +1,3 @@
-import 'package:nyxx/nyxx.dart';
-import 'package:robocore/chat/robodiscordmessage.dart';
 import 'package:robocore/chat/robomessage.dart';
 import 'package:robocore/commands/command.dart';
 import 'package:robocore/ethereum.dart';
@@ -12,67 +10,23 @@ class StatsCommand extends Command {
 
   @override
   handleMessage(RoboMessage w) async {
-    dynamic answer;
     var bot = w.bot;
     await bot.updatePriceInfo(null);
-    if (w is RoboDiscordMessage) {
-      answer = EmbedBuilder()
-        ..addField(
-            name: "Pooled CORE-ETH",
-            content:
-                "${dec0(ethereum.CORE2ETH.pool1)} CORE, ${dec0(ethereum.CORE2ETH.pool2)} ETH")
-        ..addField(
-            name: "Liquidity CORE-ETH",
-            content: "${usd0(ethereum.CORE2ETH.liquidity * bot.priceETHinUSD)}")
-        ..addField(
-            name: "Total issued CORE-ETH LP",
-            content: "${dec0(ethereum.CORE2ETH.supplyLP)}")
-        ..addField(
-            name: "Pooled CORE-CBTC",
-            content:
-                "${dec0(ethereum.CORE2CBTC.pool1)} CORE, ${dec0(ethereum.CORE2CBTC.pool2)} CBTC")
-        ..addField(
-            name: "Liquidity CORE-CBTC",
-            content:
-                "${usd0(ethereum.CORE2CBTC.liquidity * bot.priceWBTCinUSD)}")
-        ..addField(
-            name: "Total issued CORE-CBTC cmLP",
-            content: "${dec0(centimilli(ethereum.CORE2CBTC.supplyLP))}")
-        ..addField(
-            name: "Pooled CORE-FANNY",
-            content:
-                "${dec0(ethereum.CORE2FANNY.pool1)} CORE, ${dec0(ethereum.CORE2FANNY.pool2)} FANNY")
-        ..addField(
-            name: "Liquidity CORE-FANNY",
-            content:
-                "${usd0(ethereum.CORE2FANNY.liquidity * bot.priceFANNYinUSD)}")
-        ..addFooter((footer) {
-          footer.text = "Stay CORE and keep HODLING!";
-        })
-        ..timestamp = DateTime.now().toUtc()
-        ..color = w.color();
-    } else {
-      answer = """
-<b>Pooled CORE-ETH</b>
-${dec0(ethereum.CORE2ETH.pool1)} CORE, ${dec0(ethereum.CORE2ETH.pool2)} ETH
-<b>Liquidity CORE-ETH</b>
-${usd0(ethereum.CORE2ETH.liquidity * bot.priceETHinUSD)}
-<b>Total issued CORE-ETH LP</b>
-${dec0(ethereum.CORE2ETH.supplyLP)}
-<b>Pooled CORE-CBTC</b>
-${dec0(ethereum.CORE2CBTC.pool1)} CORE, ${dec0(ethereum.CORE2CBTC.pool2)} CBTC
-<b>Liquidity CORE-CBTC</b>
-${usd0(ethereum.CORE2CBTC.liquidity * bot.priceWBTCinUSD)}
-<b>Total issued CORE-CBTC cmLP</b>
-${dec0(centimilli(ethereum.CORE2CBTC.supplyLP))}
-<b>Pooled CORE-FANNY</b>
-${dec0(ethereum.CORE2FANNY.pool1)} CORE, ${dec0(ethereum.CORE2FANNY.pool2)} FANNY
-<b>Liquidity CORE-FANNY</b>
-${usd0(ethereum.CORE2FANNY.liquidity * bot.priceFANNYinUSD)}
+    w
+      ..addField("CORE-ETH pair",
+          """${dec0(ethereum.CORE2ETH.pool1)} CORE, ${dec0(ethereum.CORE2ETH.pool2)} ETH
+${usd0(ethereum.CORE2ETH.liquidity * bot.priceETHinUSD)} (${dec0(ethereum.CORE2ETH.supplyLP)} LP)""")
+      ..addField("CORE-CBTC pair",
+          """${dec0(ethereum.CORE2CBTC.pool1)} CORE, ${dec0(ethereum.CORE2CBTC.pool2)} CBTC
+${usd0(ethereum.CORE2CBTC.liquidity * bot.priceWBTCinUSD)} (${dec0(centimilli(ethereum.CORE2CBTC.supplyLP))} cmLP)""")
+      ..addField("coreDAI-wCORE pair",
+          """${dec0(ethereum.COREDAI2WCORE.pool1)} coreDAI, ${dec0(ethereum.COREDAI2WCORE.pool2)} wCORE
+${usd0(ethereum.COREDAI2WCORE.liquidity * bot.priceCOREinUSD)} (${dec0(ethereum.COREDAI2WCORE.supplyLP)} LP3)""")
+      ..addField("CORE-FANNY pair",
+          """${dec0(ethereum.CORE2FANNY.pool1)} CORE, ${dec0(ethereum.CORE2FANNY.pool2)} FANNY
+${usd0(ethereum.CORE2FANNY.liquidity * bot.priceFANNYinUSD)}""")
+      ..finish();
 
-Stay CORE and keep HODLING!
-""";
-    }
-    return await w.reply(answer);
+    return await w.reply(w.answer);
   }
 }

@@ -14,12 +14,12 @@ late Ethereum ethereum;
 class Ethereum {
   EthClient client;
 
-  late Token CORE, WBTC, WETH, DAI, FANNY;
+  late Token CORE, WBTC, WETH, DAI, FANNY, COREDAI, WCORE;
 
   Map<String, Pair> pairs = {};
 
   // CORE pairs
-  late Pair CORE2ETH, CORE2CBTC, CORE2FANNY;
+  late Pair CORE2ETH, CORE2CBTC, CORE2FANNY, COREDAI2WCORE;
 
   // Other pairs
   late Pair DAI2ETH, ETH2USDT, WBTC2ETH;
@@ -109,6 +109,16 @@ class Ethereum {
       ..token2name = "FANNY";
     //  ..balancer = bal;
     await addPair(CORE2FANNY);
+
+    COREDAI2WCORE = Pair(7, client, "coredai-wcore",
+        '0x01ac08e821185b6d87e68c67f9dc79a8988688eb');
+    //bal = BalancerPool(client, '0x01ac08e821185b6d87e68c67f9dc79a8988688eb');
+    //await bal.initialize();
+    COREDAI2WCORE
+      ..token1name = "coreDAI"
+      ..token2name = "WCORE";
+    //  ..balancer = bal;
+    await addPair(COREDAI2WCORE);
 
     ETH2USDT = Pair(
         3, client, "eth-usdt", '0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852');

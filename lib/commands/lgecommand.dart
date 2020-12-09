@@ -11,8 +11,8 @@ class LGECommand extends Command {
   handleMessage(RoboMessage w) async {
     var bot = w.bot;
     await bot.updateLGE3Info();
-    //return await w.reply("There is no ongoing LGE right now");
-    w
+    return await w.reply("There is no ongoing LGE right now, lGE3 is finished");
+    /*w
       ..addField("Total CORE in LGE now",
           "${dec2(bot.lge3CORE)} CORE, (${usd2(bot.lge3COREinUSD)})")
       ..addField("Total DAI in LGE now",
@@ -29,6 +29,6 @@ class LGECommand extends Command {
           "${dec2(bot.lge3COREBoughtLast24Hours)} CORE, (${usd2(bot.lge3COREBoughtLast24HoursInUSD)})")
       //..addFooter("LGE3 ends in ${bot.lge3TimeLeftString()}!")
       ..finish();
-    return await w.reply(w.answer);
+    return await w.reply(w.answer);*/
   }
 }

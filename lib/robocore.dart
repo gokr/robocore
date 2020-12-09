@@ -112,11 +112,14 @@ class Robocore {
       floorLPinETH,
       floorLP2inUSD,
       floorLP2inWBTC,
+      floorLPFANNYinUSD,
+      floorLPFANNYinFANNY,
       floorLP3inUSD,
-      floorLP3inFANNY,
+      floorLP3inDAI,
       floorLiquidityETH,
       floorLiquidityWBTC,
       floorLiquidityFANNY,
+      floorLiquidityDAI,
       TLLinUSD,
       TVPLinUSD;
 
@@ -298,16 +301,22 @@ class Robocore {
     var p1 = ethereum.CORE2ETH;
     var p2 = ethereum.CORE2CBTC;
     var p3 = ethereum.CORE2FANNY;
-    var poolCORE = p1.pool1 + p2.pool1 + p3.pool1;
+    var p4 = ethereum.COREDAI2WCORE;
+    var poolCORE = p1.pool1 + p2.pool1 + p3.pool1 + p4.pool2;
     // And we can find q
     var q = (COREsupply - poolCORE) / poolCORE;
-    // Floor for each pair
-    var f1 = p1.floor(q);
-    var f2 = p2.floor(q);
-    var f3 = p3.floor(q);
+    // Floor for each pair, in the non CORE token
+    var f1 = p1.floor2(q);
+    var f2 = p2.floor2(q);
+    var f3 = p3.floor2(q);
+    var f4 = p4.floor1(q);
 
     // Take average of all floors, in ETH
-    floorCOREinETH = (f1 + (f2 * priceWBTCinETH) + (f3 * priceFANNYinETH)) / 3;
+    floorCOREinETH = (f1 +
+            (f2 * priceWBTCinETH) +
+            (f3 * priceFANNYinETH) +
+            (f4 * priceDAIinETH)) /
+        4;
     floorCOREinUSD = floorCOREinETH * priceETHinUSD;
 
     // And then we can also calculate floor of LPs
@@ -324,17 +333,24 @@ class Robocore {
 
     var newPoolFANNY = p3.poolK / (p3.pool1 + (p3.pool1 * q));
     floorLiquidityFANNY = newPoolFANNY * 2;
-    floorLP3inFANNY = floorLiquidityFANNY / p3.supplyLP;
-    floorLP3inUSD = floorLP3inFANNY * priceFANNYinUSD;
+    floorLPFANNYinFANNY = floorLiquidityFANNY / p3.supplyLP;
+    floorLPFANNYinUSD = floorLPFANNYinFANNY * priceFANNYinUSD;
+
+    var newPoolDAI = p4.poolK / (p4.pool2 + (p4.pool2 * q));
+    floorLiquidityDAI = newPoolDAI * 2;
+    floorLP3inDAI = floorLiquidityDAI / p4.supplyLP;
+    floorLP3inUSD = floorLP3inDAI * priceDAIinUSD;
 
     // TLL - Total Liquidity Locked
     TLLinUSD = ethereum.CORE2CBTC.liquidity * priceWBTCinUSD;
     TLLinUSD += ethereum.CORE2ETH.liquidity * priceETHinUSD;
     TLLinUSD += ethereum.CORE2FANNY.liquidity * priceFANNYinUSD;
+    TLLinUSD += ethereum.COREDAI2WCORE.liquidity * priceCOREinUSD;
     // TVPL - Total Value Permanently Locked
     TVPLinUSD = floorLiquidityETH * priceETHinUSD;
     TVPLinUSD += floorLiquidityWBTC * priceWBTCinUSD;
     TVPLinUSD += floorLiquidityFANNY * priceFANNYinUSD;
+    TVPLinUSD += floorLiquidityDAI * priceDAIinUSD;
   }
 
   // Update Floor price of CORE, in ETH.
@@ -442,16 +458,17 @@ class Robocore {
 
   // Shortcuts for readability
   num get priceCOREinETH => ethereum.CORE2ETH.price1;
+  num get priceCOREinDAI => ethereum.COREDAI2WCORE.price2;
   num get priceFANNYinCORE => ethereum.CORE2FANNY.price2;
   num get priceCOREinCBTC => ethereum.CORE2CBTC.price1;
   num get priceETHinCORE => ethereum.CORE2ETH.price2;
+  num get priceDAIinCORE => ethereum.COREDAI2WCORE.price1;
   num get priceCBTCinCORE => ethereum.CORE2CBTC.price2;
   num get priceCOREinUSD => priceCOREinETH * priceETHinUSD;
   num get priceFANNYinUSD => priceFANNYinCORE * priceCOREinUSD;
   num get priceFANNYinETH => priceFANNYinCORE * priceCOREinETH;
   num get priceDAIinETH => ethereum.DAI2ETH.price1;
   num get priceDAIinUSD => priceDAIinETH * priceETHinUSD;
-  num get priceDAIinCORE => priceDAIinETH * priceETHinCORE;
   num get valueLPinETH => ethereum.CORE2ETH.valueLP;
   num get valueLPinUSD => valueLPinETH * priceETHinUSD;
   num get priceLPinETH => ethereum.CORE2ETH.priceLP;
@@ -460,9 +477,13 @@ class Robocore {
   num get valueLP2inUSD => valueLP2inCBTC * priceWBTCinUSD;
   num get priceLP2inETH => ethereum.CORE2CBTC.priceLP;
   num get priceLP2inUSD => priceLP2inETH * priceETHinUSD;
+  num get valueLP3inCORE => ethereum.COREDAI2WCORE.valueLP;
+  num get valueLP3inUSD => valueLP3inCORE * priceCOREinUSD;
+  //num get priceLP3inETH => ethereum.COREDAI2WCORE.priceLP;
+  //num get priceLP3inUSD => priceLP3inETH * priceETHinUSD;
 
   String priceStringCORE([num amount = 1]) {
-    return "$amount CORE = ${usd2(priceCOREinUSD * amount)} (${dec4(priceCOREinETH * amount)} ETH)";
+    return "$amount CORE = ${usd2(priceCOREinUSD * amount)} (${dec4(priceCOREinETH * amount)} ETH, ${dec4(priceCOREinDAI * amount)} DAI,  ${dec4(priceCOREinCBTC * amount)} CBTC)";
   }
 
   String priceStringFANNY([num amount = 1]) {
@@ -481,12 +502,16 @@ class Robocore {
     return "$amount FLOOR cmLP = ${usd2(floorLP2inUSD * toCentimilli(amount))} (${dec4(floorLP2inWBTC * toCentimilli(amount))} CBTC)";
   }
 
+  String floorStringLP3([num amount = 1]) {
+    return "$amount FLOOR LP3 = ${usd2(floorLP3inUSD * amount)} (${dec4(floorLP3inDAI * amount)} DAI)";
+  }
+
   String priceStringLP1([num amount = 1]) {
-    return "$amount LP = ${usd2(priceLPinUSD * amount)} (${dec4(priceLPinETH * amount)} ETH)";
+    return "$amount LP1 = ${usd2(priceLPinUSD * amount)} (${dec4(priceLPinETH * amount)} ETH)";
   }
 
   String valueStringLP1([num amount = 1]) {
-    return "$amount LP = ${usd2(valueLPinUSD * amount)} (${dec4(valueLPinETH * amount)} ETH)";
+    return "$amount LP1 = ${usd2(valueLPinUSD * amount)} (${dec4(valueLPinETH * amount)} ETH)";
   }
 
   String priceStringLP2([num amount = 1]) {
@@ -495,6 +520,14 @@ class Robocore {
 
   String valueStringLP2([num amount = 1]) {
     return "$amount cmLP = ${usd2(valueLP2inUSD * toCentimilli(amount))} (${dec4(valueLP2inCBTC * toCentimilli(amount))} CBTC)";
+  }
+
+  /*String priceStringLP3([num amount = 1]) {
+    return "$amount LP3 = ${usd2(priceLP3inUSD * amount)} (${dec4(priceLP3inETH * amount)} ETH)";
+  }*/
+
+  String valueStringLP3([num amount = 1]) {
+    return "$amount LP3 = ${usd2(valueLP3inUSD * amount)} (${dec4(valueLP3inCORE * amount)} CORE)";
   }
 
   String priceStringETH([num amount = 1]) {
@@ -728,12 +761,14 @@ ${priceStringWBTC()}""";
       if (member.nickname != null) {
         var matches = await RoboUser.findFuzzyUsers(member.nickname!, 2);
         if (matches.isNotEmpty) {
-          await sendModerators("Fuzzy matches nickname: $matches");
+          await sendModerators(
+              "Fuzzy matches ${member.nickname} nickname with: $matches");
         }
       }
       var matches = await RoboUser.findFuzzyUsers(member.username, 2);
       if (matches.isNotEmpty) {
-        await sendModerators("Fuzzy matches username: $matches");
+        await sendModerators(
+            "Fuzzy matches ${member.username} username with: $matches");
       }
     });
 
@@ -746,7 +781,8 @@ ${priceStringWBTC()}""";
         var matches = await RoboUser.findFuzzyUsers(
             member.nickname ?? member.username, 2);
         if (matches.isNotEmpty) {
-          print("Fuzzy matches: $matches");
+          print(
+              "Fuzzy matches ${member.nickname ?? member.username} with: $matches");
         }
       } else {
         print("Member ${event.member?.id} updated: ${event.member?.tag}");
@@ -863,11 +899,14 @@ ${priceStringWBTC()}""";
       'floorLPinETH': floorLPinETH,
       'floorLP2inUSD': floorLP2inUSD,
       'floorLP2inWBTC': floorLP2inWBTC,
+      'floorLPFANNYinUSD': floorLPFANNYinUSD,
+      'floorLPFANNYinFANNY': floorLPFANNYinFANNY,
       'floorLP3inUSD': floorLP3inUSD,
-      'floorLP3inFANNY': floorLP3inFANNY,
+      'floorLP3inDAI': floorLP3inDAI,
       'floorLiquidityETH': floorLiquidityETH,
       'floorLiquidityWBTC': floorLiquidityWBTC,
-      'floorLiquidityFANNY': floorLiquidityFANNY
+      'floorLiquidityFANNY': floorLiquidityFANNY,
+      'floorLiquidityDAI': floorLiquidityDAI
     });
     priceCached = jsonEncode({
       'priceWBTCinETH': priceWBTCinETH,
@@ -891,7 +930,11 @@ ${priceStringWBTC()}""";
       'valueLP2inCBTC': valueLP2inCBTC,
       'valueLP2inUSD': valueLP2inUSD,
       'priceLP2inETH': priceLP2inETH,
-      'priceLP2inUSD': priceLP2inUSD
+      'priceLP2inUSD': priceLP2inUSD,
+      'valueLP3inCORE': valueLP3inCORE,
+      'valueLP3inUSD': valueLP3inUSD,
+      // 'priceLP3inETH': priceLP3inETH,
+      // 'priceLP3inUSD': priceLP3inUSD
     });
   }
 
