@@ -843,6 +843,58 @@ ${priceStringWBTC()}""";
     await scheduler.stop();
   }
 
+  DateTime stamp = DateTime.now();
+
+  String? priceCached, tvplCached;
+
+  bool validCache() {
+    return stamp.isAfter(DateTime.now());
+  }
+
+  updateCache() async {
+    await updatePriceInfo(null);
+    stamp = DateTime.now().add(Duration(minutes: 2));
+    tvplCached = jsonEncode({
+      'TLLinUSD': TLLinUSD,
+      'TVPLinUSD': TVPLinUSD,
+      'floorCOREinUSD': floorCOREinUSD,
+      'floorCOREinETH': floorCOREinETH,
+      'floorLPinUSD': floorLPinUSD,
+      'floorLPinETH': floorLPinETH,
+      'floorLP2inUSD': floorLP2inUSD,
+      'floorLP2inWBTC': floorLP2inWBTC,
+      'floorLP3inUSD': floorLP3inUSD,
+      'floorLP3inFANNY': floorLP3inFANNY,
+      'floorLiquidityETH': floorLiquidityETH,
+      'floorLiquidityWBTC': floorLiquidityWBTC,
+      'floorLiquidityFANNY': floorLiquidityFANNY
+    });
+    priceCached = jsonEncode({
+      'priceWBTCinETH': priceWBTCinETH,
+      'priceWBTCinUSD': priceWBTCinUSD,
+      'priceETHinUSD': priceETHinUSD,
+      'priceCOREinETH': priceCOREinETH,
+      'priceFANNYinCORE': priceFANNYinCORE,
+      'priceCOREinCBTC': priceCOREinCBTC,
+      'priceETHinCORE': priceETHinCORE,
+      'priceCBTCinCORE': priceCBTCinCORE,
+      'priceCOREinUSD': priceCOREinUSD,
+      'priceFANNYinUSD': priceFANNYinUSD,
+      'priceFANNYinETH': priceFANNYinETH,
+      'priceDAIinETH': priceDAIinETH,
+      'priceDAIinUSD': priceDAIinUSD,
+      'priceDAIinCORE': priceDAIinCORE,
+      'valueLPinETH': valueLPinETH,
+      'valueLPinUSD': valueLPinUSD,
+      'priceLPinETH': priceLPinETH,
+      'priceLPinUSD': priceLPinUSD,
+      'valueLP2inCBTC': valueLP2inCBTC,
+      'valueLP2inUSD': valueLP2inUSD,
+      'priceLP2inETH': priceLP2inETH,
+      'priceLP2inUSD': priceLP2inUSD
+    });
+  }
+
   startAPI() async {
     var app = Router();
 
@@ -856,54 +908,17 @@ ${priceStringWBTC()}""";
     });
 
     app.get('/tvpl', (Request request) async {
-      await updatePriceInfo(null);
-      return Response.ok(
-          jsonEncode({
-            'TLLinUSD': TLLinUSD,
-            'TVPLinUSD': TVPLinUSD,
-            'floorCOREinUSD': floorCOREinUSD,
-            'floorCOREinETH': floorCOREinETH,
-            'floorLPinUSD': floorLPinUSD,
-            'floorLPinETH': floorLPinETH,
-            'floorLP2inUSD': floorLP2inUSD,
-            'floorLP2inWBTC': floorLP2inWBTC,
-            'floorLP3inUSD': floorLP3inUSD,
-            'floorLP3inFANNY': floorLP3inFANNY,
-            'floorLiquidityETH': floorLiquidityETH,
-            'floorLiquidityWBTC': floorLiquidityWBTC,
-            'floorLiquidityFANNY': floorLiquidityFANNY
-          }),
-          headers: headers);
+      if (!validCache()) {
+        await updateCache();
+      }
+      return Response.ok(tvplCached, headers: headers);
     });
 
     app.get('/price', (Request request) async {
-      await updatePriceInfo(null);
-      return Response.ok(
-          jsonEncode({
-            'priceWBTCinETH': priceWBTCinETH,
-            'priceWBTCinUSD': priceWBTCinUSD,
-            'priceETHinUSD': priceETHinUSD,
-            'priceCOREinETH': priceCOREinETH,
-            'priceFANNYinCORE': priceFANNYinCORE,
-            'priceCOREinCBTC': priceCOREinCBTC,
-            'priceETHinCORE': priceETHinCORE,
-            'priceCBTCinCORE': priceCBTCinCORE,
-            'priceCOREinUSD': priceCOREinUSD,
-            'priceFANNYinUSD': priceFANNYinUSD,
-            'priceFANNYinETH': priceFANNYinETH,
-            'priceDAIinETH': priceDAIinETH,
-            'priceDAIinUSD': priceDAIinUSD,
-            'priceDAIinCORE': priceDAIinCORE,
-            'valueLPinETH': valueLPinETH,
-            'valueLPinUSD': valueLPinUSD,
-            'priceLPinETH': priceLPinETH,
-            'priceLPinUSD': priceLPinUSD,
-            'valueLP2inCBTC': valueLP2inCBTC,
-            'valueLP2inUSD': valueLP2inUSD,
-            'priceLP2inETH': priceLP2inETH,
-            'priceLP2inUSD': priceLP2inUSD
-          }),
-          headers: headers);
+      if (!validCache()) {
+        await updateCache();
+      }
+      return Response.ok(priceCached, headers: headers);
     });
 
     server = await io.serve(app.handler, 'localhost', 10099);
