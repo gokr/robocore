@@ -854,7 +854,6 @@ ${priceStringWBTC()}""";
   updateCache() async {
     print("Updating API cache");
     await updatePriceInfo(null);
-    stamp = DateTime.now().add(Duration(minutes: 2));
     tvplCached = jsonEncode({
       'TLLinUSD': TLLinUSD,
       'TVPLinUSD': TVPLinUSD,
@@ -910,6 +909,7 @@ ${priceStringWBTC()}""";
 
     app.get('/tvpl', (Request request) async {
       if (!validCache()) {
+        stamp = DateTime.now().add(Duration(minutes: 2));
         await updateCache();
       }
       return Response.ok(tvplCached, headers: headers);
@@ -917,6 +917,7 @@ ${priceStringWBTC()}""";
 
     app.get('/price', (Request request) async {
       if (!validCache()) {
+        stamp = DateTime.now().add(Duration(minutes: 2));
         await updateCache();
       }
       return Response.ok(priceCached, headers: headers);
