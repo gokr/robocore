@@ -535,7 +535,7 @@ class Robocore {
   }
 
   String priceStringDAI([num amount = 1]) {
-    return "$amount DAI = ${usd2(priceDAIinUSD * amount)} (${dec4(priceDAIinCORE * amount)} CORE)";
+    return "$amount DAI = ${usd2(priceDAIinUSD * amount)} (${dec6(priceDAIinCORE * amount)} CORE)";
   }
 
   String priceStringWBTC([num amount = 1]) {
