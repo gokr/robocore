@@ -98,19 +98,14 @@ class FAQCommand extends Command {
       "name": "Why can't I trade CORE on uniswap?",
       "description": """
 You must raise the slippage of the trade to account for the FoT (Fee on Transfer) as well as any real slippage. Current FoT is {{fot}}%.
-When the fee is the normal 1%, unless your trade is large you will not have to change the setting.
-      """
-    },
-    "circuit": {
-      "name": "Circuit Breaker",
-      "description": """
-A mechanism employed for the first time in the run up to and including the LG3 event period. This mechanism dynamically raises the FoT and is intended to prevent price gaming and capital extraction that happened on the run up to and beginning of the LGE2 event. Currently FoT is {{fot}}%.
+When the fee is the normal 1%, unless your trade is large you will not have to change the setting. To account for FoT slippage needs to be set higher because Uniswap calculates slippage \"backwards\". For the current FoT you should need slippage around {{slippage}}%, which is calculated as `slippage = FoT / (100 - FoT)`.
+Do realize that this means you lose {{fot}}% of any sell or transfer of CORE. This includes transfer to another wallet.
       """
     },
     "fot": {
       "name": "Fee on Transfer (FoT)",
       "description": """
-A unique feature of the CORE ecosystem. This adjustable fee is used to determine the percentage of transfer and sell volume (not buy) that is paid back to the LP holders. It is currently {{fot}}%.
+A unique feature of the CORE ecosystem. This adjustable fee is used to determine the percentage of transfer and sell volume (not buy) that is paid back to the LP holders. It is currently {{fot}}%. Do realize that this means you lose {{fot}}% of any sell or transfer of CORE. This includes transfer to another wallet.
 """
     }
   };
@@ -141,6 +136,8 @@ A unique feature of the CORE ecosystem. This adjustable fee is used to determine
   Future<String> merge(String description, Robocore bot) async {
     var temp = Template(description,
         name: 'test', lenient: false, htmlEscapeValues: false);
-    return temp.renderString({'fot': await bot.getFot()});
+    var fot = await bot.getFot();
+    var slippage = ((fot / (100 - fot)) * 100).round();
+    return temp.renderString({'fot': fot, 'slippage': slippage});
   }
 }
