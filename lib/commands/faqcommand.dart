@@ -19,11 +19,6 @@ class FAQCommand extends Command {
       "description":
           "An LP token, or an LP for short, is a \"receipt\" token that you have added liquidity to either the CORE-ETH or the CORE-CBTC pair. You **can not** convert an LP token back to its underlying assets. But you can stake them on [cvault\.finance](https://cvault.finance) to farm rewards in CORE, or sell/buy them on balancer. CORE-ETH LP tokens are sometimes referred to as lp1. CORE-CBTC tokens, sometimes referred to as lp2, are measured in cmLPs which means centimilli LPs (5 decimal places)."
     },
-    "balancer": {
-      "name": "Balancer exchange",
-      "description":
-          "On [Balancer](https://balancer.exchange) you can trade CORE LP tokens. The price of LP tokens on balancer are driven by supply and demand and can be cheaper than minting/zapping your own LP tokens at [cvault.finance](https://cvault.finance). If you use the price command you can see both balancer price and value (minting price). Here is link to [trade CORE-ETH LP tokens](https://balancer.exchange/#/swap/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b/ether) and [to trade CORE-CBTC LP tokens](https://balancer.exchange/#/swap/0x6fad7d44640c5cd0120deec0301e8cf850becb68/ether)."
-    },
     "official": {
       "name": "Official links",
       "description":
@@ -59,6 +54,15 @@ class FAQCommand extends Command {
 [CORE-CBTC pair on Etherscan](https://etherscan.io/address/0x6fad7d44640c5cd0120deec0301e8cf850becb68)
 [CORE-FANNY pair on Etherscan](https://etherscan.io/address/0x85d9DCCe9Ea06C2621795889Be650A8c3Ad844BB)
 [coreDAI-wCORE pair on Etherscan](https://etherscan.io/address/0x01ac08e821185b6d87e68c67f9dc79a8988688eb)
+"""
+    },
+    "balancer": {
+      "name": "Balancer",
+      "description":
+          """On [Balancer](https://balancer.exchange) you can trade CORE LP tokens. The price of LP tokens on balancer are driven by supply and demand and can be cheaper than minting/zapping your own LP tokens at [cvault.finance](https://cvault.finance). If you use the price command you can see both balancer price and value (minting price).
+[CORE-ETH LP tokens](https://balancer.exchange/#/swap/0x32ce7e48debdccbfe0cd037cc89526e4382cb81b/ether)
+[CORE-CBTC LP tokens](https://balancer.exchange/#/swap/0x6fad7d44640c5cd0120deec0301e8cf850becb68/ether)
+[coreDAI-wCORE LP tokens](https://balancer.exchange/#/swap/0x01ac08e821185b6d87e68c67f9dc79a8988688eb/ether)
 """
     },
     "uniswap": {

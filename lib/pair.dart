@@ -142,9 +142,13 @@ class Pair extends Contract {
 
     // Also pick out current balancer spot price in ETH
     if (balancer != null) {
-      var eth = await balancer?.getSpotPrice(ethereum.WETH.address, address)
-          as BigInt;
-      priceLP = raw18(eth);
+      try {
+        var eth = await balancer?.getSpotPrice(ethereum.WETH.address, address)
+            as BigInt;
+        priceLP = raw18(eth);
+      } catch (e) {
+        priceLP = 0;
+      }
     }
   }
 

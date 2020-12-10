@@ -285,6 +285,7 @@ class Robocore {
       swap.pair.update();
     } else {
       ethereum.CORE2ETH.update();
+      ethereum.COREDAI2WCORE.update();
       ethereum.CORE2FANNY.update();
       ethereum.CORE2CBTC.update();
     }
@@ -479,8 +480,8 @@ class Robocore {
   num get priceLP2inUSD => priceLP2inETH * priceETHinUSD;
   num get valueLP3inCORE => ethereum.COREDAI2WCORE.valueLP;
   num get valueLP3inUSD => valueLP3inCORE * priceCOREinUSD;
-  //num get priceLP3inETH => ethereum.COREDAI2WCORE.priceLP;
-  //num get priceLP3inUSD => priceLP3inETH * priceETHinUSD;
+  num get priceLP3inETH => ethereum.COREDAI2WCORE.priceLP;
+  num get priceLP3inUSD => priceLP3inETH * priceETHinUSD;
 
   String priceStringCORE([num amount = 1]) {
     return "$amount CORE = ${usd2(priceCOREinUSD * amount)} (${dec4(priceCOREinETH * amount)} ETH, ${dec4(priceCOREinDAI * amount)} DAI,  ${dec4(priceCOREinCBTC * amount)} CBTC)";
@@ -522,9 +523,9 @@ class Robocore {
     return "$amount cmLP = ${usd2(valueLP2inUSD * toCentimilli(amount))} (${dec4(valueLP2inCBTC * toCentimilli(amount))} CBTC)";
   }
 
-  /*String priceStringLP3([num amount = 1]) {
+  String priceStringLP3([num amount = 1]) {
     return "$amount LP3 = ${usd2(priceLP3inUSD * amount)} (${dec4(priceLP3inETH * amount)} ETH)";
-  }*/
+  }
 
   String valueStringLP3([num amount = 1]) {
     return "$amount LP3 = ${usd2(valueLP3inUSD * amount)} (${dec4(valueLP3inCORE * amount)} CORE)";

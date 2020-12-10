@@ -24,7 +24,7 @@ class PriceCommand extends Command {
         ..addField("CORE-CBTC cmLP value", w.bot.valueStringLP2())
         ..addField("CORE-CBTC cmLP balancer", w.bot.priceStringLP2())
         ..addField("coreDAI-wCORE LP value", w.bot.valueStringLP3())
-        //..addField("coreDAI-wCORE LP balancer", w.bot.priceStringLP3())
+        ..addField("coreDAI-wCORE LP balancer", w.bot.priceStringLP3())
         ..finish();
       return await w.reply(w.answer);
     }
