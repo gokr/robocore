@@ -103,7 +103,7 @@ class Ethereum {
         6, client, "core-fanny", '0x85d9DCCe9Ea06C2621795889Be650A8c3Ad844BB');
     //bal = BalancerPool(client, '0x85d9DCCe9Ea06C2621795889Be650A8c3Ad844BB');
     //await bal.initialize();
-    CORE2CBTC
+    CORE2FANNY
       ..decimals2 = 8
       ..token1name = "CORE"
       ..token2name = "FANNY";
