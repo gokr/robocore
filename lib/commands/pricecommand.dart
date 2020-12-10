@@ -109,10 +109,10 @@ class PriceCommand extends Command {
             w.bot.priceStringLP2(amount));
         break;
       case "lp3":
-        await w.reply(w.bot.valueStringLP3(amount));
-        /*await w.reply(w.bot.valueStringLP3(amount) +
+        //await w.reply(w.bot.valueStringLP3(amount));
+        await w.reply(w.bot.valueStringLP3(amount) +
             ' balancer: ' +
-            w.bot.priceStringLP3(amount));*/
+            w.bot.priceStringLP3(amount));
         break;
       case "fcore":
         await w.reply(w.bot.floorStringCORE(amount));
