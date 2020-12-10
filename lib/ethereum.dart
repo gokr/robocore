@@ -104,7 +104,6 @@ class Ethereum {
     //bal = BalancerPool(client, '0x85d9DCCe9Ea06C2621795889Be650A8c3Ad844BB');
     //await bal.initialize();
     CORE2FANNY
-      ..decimals2 = 8
       ..token1name = "CORE"
       ..token2name = "FANNY";
     //  ..balancer = bal;
@@ -197,6 +196,8 @@ class Ethereum {
           var intervals = [0, 1, 6, 24, 48];
           await CORE2ETH.fetchDefaultStats(intervals);
           await CORE2CBTC.fetchDefaultStats(intervals);
+          //await CORE2FANNY.fetchDefaultStats(intervals);
+          //await CORE2CBTC.fetchDefaultStats(intervals);
           log.info("Fetching pair stats, done.");
         } finally {
           statsTimestamp = DateTime.now();
