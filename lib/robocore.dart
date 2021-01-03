@@ -269,6 +269,7 @@ class Robocore {
 */
   // Update base metrics to get ETH and WBTC in USD.
   updateBaseMetrics() async {
+    await ethereum.DAI2ETH.getReserves();
     var reserves = await ethereum.ETH2USDT.getReserves();
     priceETHinUSD = raw6(reserves[1]) / raw18(reserves[0]);
     reserves = await ethereum.WBTC2ETH.getReserves();
@@ -701,6 +702,18 @@ ${priceStringWBTC()}""";
       //print("Topics: ${event.topics} data: ${event.data}");
       try {
         var swap = Swap.from(ev, event, ethereum.CORE2FANNY);
+        updatePriceInfo(swap);
+        performLogging(swap);
+      } catch (e) {
+        log.warning("Exception during swap handling: ${e.toString()}");
+      }
+    });
+
+    // We listen to all Swaps on COREDAI2WCORE
+    subscription = ethereum.COREDAI2WCORE.listenToEvent('Swap', (ev, event) {
+      //print("Topics: ${event.topics} data: ${event.data}");
+      try {
+        var swap = Swap.from(ev, event, ethereum.COREDAI2WCORE);
         updatePriceInfo(swap);
         performLogging(swap);
       } catch (e) {
