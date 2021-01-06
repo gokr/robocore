@@ -15,7 +15,7 @@ class PairCommand extends Command {
     // Only !pair
     if (parts.length == 1) {
       try {
-        w.bot.updateBaseMetrics();
+        w.bot.updatePriceInfo(null);
         const intervals = [0, 1, 6, 24, 48];
         var vol1 = ethereum.CORE2ETH.statsArray(intervals, 'volumeUSD');
         vol1 = vol1.baseline(vol1.first);

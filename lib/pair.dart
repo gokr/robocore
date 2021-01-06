@@ -126,7 +126,7 @@ class Pair extends Contract {
     return (amount / powLP).toDouble();
   }
 
-  update() async {
+  Future update() async {
     var reserves = await getReserves();
     pool1 = raw1(reserves[0]);
     pool2 = raw2(reserves[1]);

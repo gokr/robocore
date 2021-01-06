@@ -169,6 +169,11 @@ class Ethereum {
     return null;
   }
 
+  updatePairs() async {
+    // Parallell update of all Pairs
+    await Future.wait(pairs.values.map((pair) => pair.update()));
+  }
+
   Pair? findCOREPair(String name) {
     var p = findPair(name);
     if (p?.token1name == "CORE") {
