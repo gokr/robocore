@@ -111,7 +111,7 @@ class Ethereum {
 
     COREDAI2WCORE = Pair(7, client, "coredai-wcore",
         '0x01ac08e821185b6d87e68c67f9dc79a8988688eb');
-    bal = BalancerPool(client, '0x020da2cabb4c8ff5637c8180d2755943f442071c');
+    bal = BalancerPool(client, '0x405906bf12452ec996757d9997144ee0042aafec');
     await bal.initialize();
     COREDAI2WCORE
       ..token1name = "coreDAI"
